@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pinhaopian</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #030303;
+        }
+        header {
+            background-color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        .logo h1 {
+            margin-left: 0.5rem;
+            color: #338afb;
+            font-size: 1.5rem;
+        }
+        .search-bar {
+            display: flex;
+            flex-grow: 0.5;
+            margin: 0 2rem;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 2px 0 0 2px;
+        }
+        .search-bar button {
+            padding: 0.5rem 1rem;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 0 2px 2px 0;
+            cursor: pointer;
+        }
+        .user-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        .sidebar {
+            width: 240px;
+            background-color: white;
+            position: fixed;
+            top: 60px;
+            bottom: 0;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .sidebar-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .sidebar-item:hover {
+            background-color: #f2f2f2;
+        }
+        .sidebar-item i {
+            margin-right: 1rem;
+        }
+        main {
+            margin-left: 240px;
+            padding: 1.5rem;
+        }
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .video-card {
+            margin-bottom: 1rem;
+        }
+        .video-thumbnail {
+            width: 100%;
+            border-radius: 8px;
+        }
+        .video-info {
+            display: flex;
+            margin-top: 0.5rem;
+        }
+        .channel-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+        }
+        .video-details h3 {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .video-details p {
+            margin: 0.25rem 0 0;
+            font-size: 0.8rem;
+            color: #606060;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i>≡</i>
+            <h1>pinhaopian</h1>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="搜索">
+            <button>🔍</button>
+        </div>
+        <div class="user-actions">
+            <div>📹</div>
+            <div>🔔</div>
+            <div>👤</div>
+        </div>
+    </header>
+    <div class="sidebar">
+        <div class="sidebar-item">
+            <i>🏠</i>
+            <span>首页</span>
+        </div>
+        <div class="sidebar-item">
+            <i>🔥</i>
+            <span>热门</span>
+        </div>
+        <div class="sidebar-item">
+            <i>📺</i>
+            <span>关注</span>
+        </div>
+        <div class="sidebar-item">
+            <i>📚</i>
+            <span>资料库</span>
+        </div>
+        <div class="sidebar-item">
+            <i>⏱️</i>
+            <span>历史记录</span>
+        </div>
+    </div>
+    <main>
+        <div class="video-grid">
+            <div class="video-card">
+                <img class="video-thumbnail" src="https://via.placeholder.com/300x170" alt="视频封面">
+                <div class="video-info">
+                    <img class="channel-icon" src="https://via.placeholder.com/36" alt="频道图标">
+                    <div class="video-details">
+                        <h3>视频标题示例</h3>
+                        <p>频道名称 • 100万次观看 • 1周前</p>
+                    </div>
+                </div>
+            </div>
+            <div class="video-card">
+                <img class="video-thumbnail" src="https://via.placeholder.com/300x170" alt="视频封面">
+                <div class="video-info">
+                    <img class="channel-icon" src="https://via.placeholder.com/36" alt="频道图标">
+                    <div class="video-details">
+                        <h3>另一个视频标题</h3>
+                        <p>其他频道 • 50万次观看 • 3天前</p>
+                    </div>
+                </div>
+            </div>
+            <div class="video-card">
+                <img class="video-thumbnail" src="https://via.placeholder.com/300x170" alt="视频封面">
+                <div class="video-info">
+                    <img class="channel-icon" src="https://via.placeholder.com/36" alt="频道图标">
+                    <div class="video-details">
+                        <h3>更多视频内容</h3>
+                        <p>示例频道 • 25万次观看 • 1天前</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
