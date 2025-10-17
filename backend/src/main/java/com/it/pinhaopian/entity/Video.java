@@ -59,4 +59,7 @@ public class Video {
 
     @Column(name = "updated_at")
     private Date updatedAt;
+
+    public void setId(Long videoId) {
+    }
 }

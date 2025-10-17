@@ -37,4 +37,7 @@ public class Comment {
 
     @Column(name = "created_at", updatable = false)
     private Date createdAt;
+
+    public void setId(Long commentId) {
+    }
 }

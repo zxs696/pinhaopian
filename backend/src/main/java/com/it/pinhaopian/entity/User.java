@@ -54,4 +54,11 @@ public class User {
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
+
+    public String getPassword() {
+        return "";
+    }
+
+    public void setId(Long userId) {
+    }
 }
