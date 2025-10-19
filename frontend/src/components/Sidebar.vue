@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="{ 'collapsed': state === 'collapsed' }">
     <div class="sidebar-section">
       <div class="sidebar-item active">
         <span class="icon">🏠</span>
@@ -110,6 +110,15 @@
 </template>
 
 <script setup>
+import { defineProps } from 'vue'
+
+const props = defineProps({
+  state: {
+    type: String,
+    default: 'expanded',
+    validator: value => ['expanded', 'collapsed'].includes(value)
+  }
+})
 </script>
 
 <style scoped>
@@ -120,6 +129,23 @@
   overflow-y: auto;
   height: 100%;
   padding: 20px 0;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 95px;
+}
+
+.sidebar.collapsed .sidebar-title {
+  display: none;
+}
+
+.sidebar.collapsed .text {
+  display: none;
+}
+
+.sidebar.collapsed .channel-avatar {
+  margin-right: 0;
 }
 
 .sidebar-section {
@@ -139,7 +165,12 @@
   align-items: center;
   padding: 12px 20px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, padding 0.3s ease;
+  justify-content: center;
+}
+
+.sidebar:not(.collapsed) .sidebar-item {
+  justify-content: flex-start;
 }
 
 .sidebar-item:hover {
@@ -156,6 +187,11 @@
   width: 24px;
   text-align: center;
   margin-right: 20px;
+  transition: margin-right 0.3s ease;
+}
+
+.sidebar.collapsed .icon {
+  margin-right: 0;
 }
 
 .text {
@@ -169,11 +205,21 @@
 }
 
 .channel-avatar {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
   margin-right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar.collapsed .channel-avatar {
+  width: 30px;
+  height: 30px;
+  margin-right: 0;
+  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .channel-avatar img {

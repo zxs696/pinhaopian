@@ -5,7 +5,7 @@
         ☰
       </button>
       <div class="logo">
-        <span class="logo-text">Pinghaopian</span>
+        <span class="logo-text">拼好片</span>
       </div>
     </div>
     
@@ -26,17 +26,34 @@
       <button class="create-button">
         +
       </button>
-      <div class="profile-icon">
-        <img src="https://picsum.photos/id/64/40/40" alt="用户头像" />
+      <div 
+        class="profile-icon" 
+        @click="handleProfileClick"
+        :title="currentUser ? `欢迎，${currentUser.username}` : '点击登录'"
+      >
+        <img 
+          :src="currentUser ? currentUser.avatar : 'https://picsum.photos/id/64/40/40'" 
+          :alt="currentUser ? `${currentUser.username}的头像` : '用户头像'" 
+        />
       </div>
     </div>
   </nav>
 </template>
 
 <script setup>
-import { defineEmits } from 'vue'
+import { defineEmits, defineProps } from 'vue'
 
-const emit = defineEmits(['toggle-sidebar'])
+const emit = defineEmits(['toggle-sidebar', 'login-click'])
+const props = defineProps({
+  currentUser: {
+    type: Object,
+    default: null
+  }
+})
+
+const handleProfileClick = () => {
+  emit('login-click')
+}
 </script>
 
 <style scoped>

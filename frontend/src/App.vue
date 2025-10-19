@@ -4,10 +4,13 @@ import Navbar from './components/Navbar.vue'
 import Sidebar from './components/Sidebar.vue'
 import VideoGrid from './components/VideoGrid.vue'
 import VideoPlayer from './components/VideoPlayer.vue'
+import LoginModal from './components/LoginModal.vue'
 
-const showSidebar = ref(true)
+const sidebarState = ref('expanded') // expanded: 展开状态, collapsed: 折叠状态
 const showVideoPlayer = ref(false)
 const selectedVideo = ref(null)
+const showLogin = ref(false)
+const currentUser = ref(null)
 
 const handleVideoSelect = (video) => {
   selectedVideo.value = video
@@ -20,21 +23,44 @@ const handleBackToList = () => {
 }
 
 const toggleSidebar = () => {
-  showSidebar.value = !showSidebar.value
+  sidebarState.value = sidebarState.value === 'expanded' ? 'collapsed' : 'expanded'
+}
+
+const handleLoginClick = () => {
+  if (!currentUser.value) {
+    showLogin.value = true
+  }
+}
+
+const handleLoginClose = () => {
+  showLogin.value = false
+}
+
+const handleLoginSuccess = (userData) => {
+  // 模拟登录成功，实际应用中这里应该调用API进行验证
+  currentUser.value = {
+    username: userData.username,
+    avatar: `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/40/40`
+  }
+  showLogin.value = false
 }
 </script>
 
 <template>
   <div class="app-container">
     <!-- 导航栏 -->
-    <Navbar @toggle-sidebar="toggleSidebar" />
+    <Navbar 
+      @toggle-sidebar="toggleSidebar" 
+      @login-click="handleLoginClick"
+      :current-user="currentUser"
+    />
     
     <div class="main-content">
       <!-- 侧边栏 -->
-      <Sidebar v-if="showSidebar" />
+      <Sidebar :state="sidebarState" />
       
       <!-- 内容区域 -->
-      <div class="content-wrapper" :class="{ 'sidebar-hidden': !showSidebar }">
+      <div class="content-wrapper" :class="{ 'sidebar-collapsed': sidebarState === 'collapsed' }">
         <button 
           class="back-button" 
           v-if="showVideoPlayer" 
@@ -56,6 +82,13 @@ const toggleSidebar = () => {
         />
       </div>
     </div>
+    
+    <!-- 登录模态框 -->
+    <LoginModal 
+      :show="showLogin" 
+      @close="handleLoginClose"
+      @login="handleLoginSuccess"
+    />
   </div>
 </template>
 
@@ -81,8 +114,9 @@ const toggleSidebar = () => {
   transition: margin-left 0.3s ease;
 }
 
-.content-wrapper.sidebar-hidden {
+.content-wrapper.sidebar-collapsed {
   margin-left: 0;
+  transition: margin-left 0.3s ease;
 }
 
 .back-button {
