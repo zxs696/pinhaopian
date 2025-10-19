@@ -29,8 +29,9 @@
         <div class="login-body">
           <!-- 标签切换 -->
           <div class="login-tabs">
-            <div class="tab active" @click="activeTab = 'password'">密码登录</div>
-            <div class="tab" @click="activeTab = 'qrcode'">扫码登录</div>
+            <div class="tab" :class="{ active: activeTab === 'password' }" @click="activeTab = 'password'">密码登录</div>
+            <div class="tab" :class="{ active: activeTab === 'qrcode' }" @click="activeTab = 'qrcode'">扫码登录</div>
+            <div class="tab-underline" :class="{ qrcode: activeTab === 'qrcode' }"></div>
           </div>
           
           <!-- 密码登录表单 -->
@@ -295,6 +296,7 @@ const handleLogin = () => {
   display: flex;
   border-bottom: 1px solid #e8e8e8;
   margin-bottom: 30px;
+  position: relative;
 }
 
 .tab {
@@ -303,7 +305,6 @@ const handleLogin = () => {
   cursor: pointer;
   color: #999;
   font-size: 16px;
-  position: relative;
   transition: color 0.2s;
 }
 
@@ -312,15 +313,20 @@ const handleLogin = () => {
   font-weight: 500;
 }
 
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: #fb7299;
-}
+.tab-underline {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 63px; /* 调整宽度，使右端对齐"录"字 */
+    height: 2px;
+    background-color: #fb7299;
+    transition: all 0.3s ease;
+  }
+
+.tab-underline.qrcode {
+    left: 95px; /* 调整为精确对齐"扫"字的左端 */
+    width: 72px; /* 调整宽度，使右端对齐"录"字 */
+  }
 
 /* 登录表单 */
 .input-group {

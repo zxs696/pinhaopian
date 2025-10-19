@@ -6,7 +6,7 @@ import VideoGrid from './components/VideoGrid.vue'
 import VideoPlayer from './components/VideoPlayer.vue'
 import LoginModal from './components/LoginModal.vue'
 
-const showSidebar = ref(true)
+const sidebarState = ref('expanded') // expanded: 展开状态, collapsed: 折叠状态
 const showVideoPlayer = ref(false)
 const selectedVideo = ref(null)
 const showLogin = ref(false)
@@ -23,7 +23,7 @@ const handleBackToList = () => {
 }
 
 const toggleSidebar = () => {
-  showSidebar.value = !showSidebar.value
+  sidebarState.value = sidebarState.value === 'expanded' ? 'collapsed' : 'expanded'
 }
 
 const handleLoginClick = () => {
@@ -57,10 +57,10 @@ const handleLoginSuccess = (userData) => {
     
     <div class="main-content">
       <!-- 侧边栏 -->
-      <Sidebar v-if="showSidebar" />
+      <Sidebar :state="sidebarState" />
       
       <!-- 内容区域 -->
-      <div class="content-wrapper" :class="{ 'sidebar-hidden': !showSidebar }">
+      <div class="content-wrapper" :class="{ 'sidebar-collapsed': sidebarState === 'collapsed' }">
         <button 
           class="back-button" 
           v-if="showVideoPlayer" 
@@ -114,8 +114,9 @@ const handleLoginSuccess = (userData) => {
   transition: margin-left 0.3s ease;
 }
 
-.content-wrapper.sidebar-hidden {
+.content-wrapper.sidebar-collapsed {
   margin-left: 0;
+  transition: margin-left 0.3s ease;
 }
 
 .back-button {
