@@ -145,7 +145,6 @@ const handleVideoClick = (video) => {
     gap: 16px;
   }
 }
-
 .video-card {
   cursor: pointer;
   transition: transform 0.2s;
