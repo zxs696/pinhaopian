@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/videos")
+@RequestMapping("/videos")
 public class VideoController {
 
     @Autowired
@@ -22,9 +23,9 @@ public class VideoController {
 
     @GetMapping("/{videoId}")
     public ResponseEntity<Video> getVideoById(@PathVariable Long videoId) {
-        Video video = videoService.getVideoById(videoId);
-        if (video != null) {
-            return ResponseEntity.ok(video);
+        Optional<Video> videoOpt = videoService.findById(videoId);
+        if (videoOpt.isPresent()) {
+            return ResponseEntity.ok(videoOpt.get());
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -68,9 +69,9 @@ public class VideoController {
 
     @PostMapping
     public ResponseEntity<Video> addVideo(@RequestBody Video video) {
-        boolean success = videoService.addVideo(video);
-        if (success) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(video);
+        Video savedVideo = videoService.save(video);
+        if (savedVideo != null) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedVideo);
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -79,9 +80,9 @@ public class VideoController {
     @PutMapping("/{videoId}")
     public ResponseEntity<Video> updateVideo(@PathVariable Long videoId, @RequestBody Video video) {
         video.setId(videoId);
-        boolean success = videoService.updateVideo(video);
-        if (success) {
-            return ResponseEntity.ok(video);
+        Video updatedVideo = videoService.save(video);
+        if (updatedVideo != null) {
+            return ResponseEntity.ok(updatedVideo);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -89,10 +90,10 @@ public class VideoController {
 
     @DeleteMapping("/{videoId}")
     public ResponseEntity<Void> deleteVideo(@PathVariable Long videoId) {
-        boolean success = videoService.deleteVideo(videoId);
-        if (success) {
+        try {
+            videoService.deleteById(videoId);
             return ResponseEntity.noContent().build();
-        } else {
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }

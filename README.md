@@ -1,7 +1,7 @@
 # 拼好片（PinHaoPian）
 
 前后端分离视频站示例：
-- 前端：Vite + Vue3 + Naive UI + Pinia + Axios + Vue Router
+- 前端：Vite + Vue3 + Element Plus + Pinia + Axios + Vue Router
 - 后端：Spring Boot + Shiro + JWT + MyBatis-Plus + MySQL + Redis
 
 ## 运行

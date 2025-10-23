@@ -8,9 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/comments")
+@RequestMapping("/comments")
 public class CommentController {
 
     @Autowired
@@ -18,9 +19,9 @@ public class CommentController {
 
     @GetMapping("/{commentId}")
     public ResponseEntity<Comment> getCommentById(@PathVariable Long commentId) {
-        Comment comment = commentService.getCommentById(commentId);
-        if (comment != null) {
-            return ResponseEntity.ok(comment);
+        Optional<Comment> commentOpt = commentService.findById(commentId);
+        if (commentOpt.isPresent()) {
+            return ResponseEntity.ok(commentOpt.get());
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -52,9 +53,9 @@ public class CommentController {
 
     @PostMapping
     public ResponseEntity<Comment> addComment(@RequestBody Comment comment) {
-        boolean success = commentService.addComment(comment);
-        if (success) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(comment);
+        Comment savedComment = commentService.save(comment);
+        if (savedComment != null) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedComment);
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -62,10 +63,10 @@ public class CommentController {
 
     @PutMapping("/{commentId}")
     public ResponseEntity<Comment> updateComment(@PathVariable Long commentId, @RequestBody Comment comment) {
-        comment.setId(commentId);
-        boolean success = commentService.updateComment(comment);
-        if (success) {
-            return ResponseEntity.ok(comment);
+        comment.setCommentId(commentId);
+        Comment updatedComment = commentService.save(comment);
+        if (updatedComment != null) {
+            return ResponseEntity.ok(updatedComment);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -73,10 +74,10 @@ public class CommentController {
 
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {
-        boolean success = commentService.deleteComment(commentId);
-        if (success) {
+        try {
+            commentService.deleteById(commentId);
             return ResponseEntity.noContent().build();
-        } else {
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }

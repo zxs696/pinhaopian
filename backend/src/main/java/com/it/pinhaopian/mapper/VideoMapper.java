@@ -1,21 +1,21 @@
 package com.it.pinhaopian.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.it.pinhaopian.entity.Video;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
+/**
+ * 视频Mapper接口
+ */
 @Mapper
-public interface VideoMapper {
-    Video findById(@Param("videoId") Long videoId);
+public interface VideoMapper extends BaseMapper<Video> {
+    // 保留自定义方法
     List<Video> findByCategoryId(@Param("categoryId") Integer categoryId);
     List<Video> findByAuthorId(@Param("authorId") Long authorId);
-    List<Video> findAll();
     List<Video> searchByTitle(@Param("keyword") String keyword);
-    int insert(Video video);
-    int update(Video video);
-    int delete(@Param("videoId") Long videoId);
     int incrementViewCount(@Param("videoId") Long videoId);
     int incrementLikeCount(@Param("videoId") Long videoId);
     int incrementDislikeCount(@Param("videoId") Long videoId);

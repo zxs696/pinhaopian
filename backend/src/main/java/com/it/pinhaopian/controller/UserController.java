@@ -9,9 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 public class UserController {
 
     @Autowired
@@ -19,9 +20,9 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<User> getUserById(@PathVariable Long userId) {
-        User user = userService.getUserById(userId);
-        if (user != null) {
-            return ResponseEntity.ok(user);
+        Optional<User> userOpt = userService.findById(userId);
+        if (userOpt.isPresent()) {
+            return ResponseEntity.ok(userOpt.get());
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -49,44 +50,18 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
+        List<User> users = userService.findAll();
         return ResponseEntity.ok(users);
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody User user) {
-        // 检查用户名和邮箱是否已存在
-        if (userService.existsByUsername(user.getUsername())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).header("Error-Message", "用户名已存在").build();
-        }
-        if (userService.existsByEmail(user.getEmail())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).header("Error-Message", "邮箱已存在").build();
-        }
 
-        boolean success = userService.registerUser(user);
-        if (success) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(user);
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<User> login(@RequestBody User loginRequest) {
-        User user = userService.login(loginRequest.getUsername(), loginRequest.getPassword());
-        if (user != null) {
-            return ResponseEntity.ok(user);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).header("Error-Message", "用户名或密码错误").build();
-        }
-    }
 
     @PutMapping("/{userId}")
     public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody User user) {
         user.setId(userId);
-        boolean success = userService.updateUser(user);
-        if (success) {
-            return ResponseEntity.ok(user);
+        User updatedUser = userService.save(user);
+        if (updatedUser != null) {
+            return ResponseEntity.ok(updatedUser);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -94,10 +69,10 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
-        boolean success = userService.deleteUser(userId);
-        if (success) {
+        try {
+            userService.deleteById(userId);
             return ResponseEntity.noContent().build();
-        } else {
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }

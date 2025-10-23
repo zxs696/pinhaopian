@@ -8,9 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/categories")
 public class CategoryController {
 
     @Autowired
@@ -18,9 +19,9 @@ public class CategoryController {
 
     @GetMapping("/{categoryId}")
     public ResponseEntity<Category> getCategoryById(@PathVariable Long categoryId) {
-        Category category = categoryService.getCategoryById(categoryId);
-        if (category != null) {
-            return ResponseEntity.ok(category);
+        Optional<Category> categoryOpt = categoryService.findById(categoryId);
+        if (categoryOpt.isPresent()) {
+            return ResponseEntity.ok(categoryOpt.get());
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -28,7 +29,7 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<List<Category>> getAllCategories() {
-        List<Category> categories = categoryService.getAllCategories();
+        List<Category> categories = categoryService.findAll();
         return ResponseEntity.ok(categories);
     }
 
@@ -45,9 +46,9 @@ public class CategoryController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).header("Error-Message", "分类名称已存在").build();
         }
 
-        boolean success = categoryService.addCategory(category);
-        if (success) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(category);
+        Category savedCategory = categoryService.save(category);
+        if (savedCategory != null) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedCategory);
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -56,9 +57,9 @@ public class CategoryController {
     @PutMapping("/{categoryId}")
     public ResponseEntity<Category> updateCategory(@PathVariable Long categoryId, @RequestBody Category category) {
         category.setId(categoryId);
-        boolean success = categoryService.updateCategory(category);
-        if (success) {
-            return ResponseEntity.ok(category);
+        Category updatedCategory = categoryService.save(category);
+        if (updatedCategory != null) {
+            return ResponseEntity.ok(updatedCategory);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -66,10 +67,10 @@ public class CategoryController {
 
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long categoryId) {
-        boolean success = categoryService.deleteCategory(categoryId);
-        if (success) {
+        try {
+            categoryService.deleteById(categoryId);
             return ResponseEntity.noContent().build();
-        } else {
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }
