@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Setter;
+
 import java.util.Date;
 
 @Data
@@ -43,6 +45,7 @@ public class User {
     private Date updatedAt;
 
     // 临时字段，不持久化到数据库，用于接收前端传入的明文密码
+    @Setter
     @TableField(exist = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
@@ -50,17 +53,5 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setId(Long userId) {
-
     }
 }

@@ -272,16 +272,9 @@ const handleLogin = async () => {
       }
     }
   } catch (error) {
-    // 只在真正登录失败时显示错误提示
-    // 检查authStore中是否有错误信息，以及用户是否真的没有登录
-    if (authStore.errorMessage && !authStore.isLoggedIn) {
-      console.error('登录失败，显示错误提示:', authStore.errorMessage)
-      showError(authStore.errorMessage)
-    } else if (error && error.message && !authStore.isLoggedIn) {
-      console.error('登录失败，显示错误提示:', error.message)
-      showError(error.message || '登录失败，请检查账号和密码')
-    }
-    // 如果用户实际上已经登录（isLoggedIn为true），则不显示错误提示
+    // 错误已在store中通过showError显示，此处不需要重复显示
+    // 保留error处理以防止Promise未捕获的异常
+    console.log('登录错误已在store中处理')
   }
 }
 
@@ -298,19 +291,14 @@ const handleRegister = async () => {
     // 注册成功后自动切换到登录模式
     isRegisterMode.value = false
   } catch (error) {
-    showError(authStore.errorMessage || '注册失败，请重试')
+    // 错误已在store中通过showError显示，此处不需要重复显示
+    // 保留error处理以防止Promise未捕获的异常
   }
 }
 
 // 方法 - 关闭模态框
 const handleClose = () => {
   emit('close')
-  
-  // 清理倒计时
-  if (registerCountdownTimer) {
-    clearInterval(registerCountdownTimer)
-    registerCountingDown.value = false
-  }
   
   // 重置表单
   loginForm.value = {

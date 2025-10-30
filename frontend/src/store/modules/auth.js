@@ -37,14 +37,32 @@ export const useAuthStore = defineStore('auth', {
         const response = await authAPI.login(userData)
         console.log('登录API响应:', response)
         
-        // 灵活处理不同的响应格式
-        const token = response.token || response.data?.token
-        const user = response.user || response.data?.user
-        const expiresAt = response.expiresAt || response.data?.expiresAt
+        // 首先检查响应是否包含错误信息（code不为成功值或message表示错误）
+        if (response.code && response.code !== 200 && response.code !== 20000) {
+          this.errorMessage = response.message || '登录失败'
+          this.clearAuthData()
+          throw new Error(this.errorMessage)
+        }
+        
+        // 灵活处理不同的响应格式，考虑ApiResponse结构
+        let responseData = response
+        // 如果响应有data字段，使用data中的内容
+        if (response.data) {
+          responseData = response.data
+        }
+        
+        const token = responseData.token || (responseData.data && responseData.data.token)
+        const user = responseData.user || (responseData.data && responseData.data.user)
+        const expiresAt = responseData.expiresAt || (responseData.data && responseData.data.expiresAt)
         
         // 验证必要字段
         if (!token || !user) {
-          this.errorMessage = '登录响应不完整，请稍后重试'
+          // 如果响应中包含错误消息，优先使用该消息
+          if (response.message) {
+            this.errorMessage = response.message
+          } else {
+            this.errorMessage = '登录响应不完整，请稍后重试'
+          }
           this.clearAuthData()
           throw new Error(this.errorMessage)
         }
@@ -82,6 +100,9 @@ export const useAuthStore = defineStore('auth', {
         } else {
           this.errorMessage = '登录失败，请检查账号和密码'
         }
+        
+        // 使用message.js统一显示错误消息
+        showError(this.errorMessage)
         
         // 只在真正的错误情况下抛出异常
         // 避免在登录成功但有其他小问题时抛出异常
@@ -130,27 +151,38 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       try {
         this.errorMessage = ''
-        // 这里应该是真实的API调用
-        // const response = await api.post('/auth/register', { username, password })
         
-        // 模拟API响应
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const response = await authAPI.register({ username, password })
+        console.log('注册API响应:', response)
         
-        // 模拟成功响应
-        const mockResponse = {
-          data: {
-            token: 'mock-register-token-' + Date.now(),
-            user: {
-              id: 'user-' + Date.now(),
-              username,
-              nickname: username.includes('@') ? username.split('@')[0] : username,
-              userType: 1 // 普通用户
-            }
+        // 首先检查响应是否包含错误信息（code不为成功值或message表示错误）
+        if (response.code && response.code !== 200 && response.code !== 20000) {
+          this.errorMessage = response.message || '注册失败'
+          throw new Error(this.errorMessage)
+        }
+        
+        // 灵活处理不同的响应格式，考虑ApiResponse结构
+        let responseData = response
+        // 如果响应有data字段，使用data中的内容
+        if (response.data) {
+          responseData = response.data
+        }
+        
+        const token = responseData.token || (responseData.data && responseData.data.token)
+        const user = responseData.user || (responseData.data && responseData.data.user)
+        
+        // 验证必要字段
+        if (!token || !user) {
+          // 如果响应中包含错误消息，优先使用该消息
+          if (response.message) {
+            this.errorMessage = response.message
+          } else {
+            this.errorMessage = '注册响应不完整，请稍后重试'
           }
+          throw new Error(this.errorMessage)
         }
         
         // 保存token和用户信息
-        const { token, user } = mockResponse.data
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(user))
         
@@ -158,10 +190,22 @@ export const useAuthStore = defineStore('auth', {
         this.user = user
         this.errorMessage = null
         
-        return mockResponse
+        return response
       } catch (error) {
         console.error('注册错误:', error)
-        this.errorMessage = error.message || '注册失败，请重试'
+        
+        // 处理不同格式的错误信息
+        if (error.response?.data?.message) {
+          this.errorMessage = error.response.data.message
+        } else if (error.response?.data?.error) {
+          this.errorMessage = error.response.data.error
+        } else {
+          this.errorMessage = error.message || '注册失败，请重试'
+        }
+        
+        // 使用message.js统一显示错误消息
+        showError(this.errorMessage)
+        
         throw error
       } finally {
         this.loading = false

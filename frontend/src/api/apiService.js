@@ -14,9 +14,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
  * @returns {Promise} 请求结果
  */
 const request = async (endpoint, options = {}) => {
-  console.log(`开始请求到: ${endpoint}`)
-  console.log('请求选项:', options)
-  
   // 分离查询参数
   const { params, ...fetchOptions } = options
   
@@ -38,8 +35,6 @@ const request = async (endpoint, options = {}) => {
       url += `?${queryString}`
     }
   }
-  
-  console.log(`构建完整URL: ${url}`)
   
   // 默认选项
   const defaultOptions = {
@@ -68,31 +63,19 @@ const request = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token') || sessionStorage.getItem('token')
   if (token) {
     mergedOptions.headers['Authorization'] = `Bearer ${token}`
-    console.log('添加认证token到请求头')
   }
   
   try {
-    console.log(`发送${mergedOptions.method || 'GET'}请求`)
     const response = await fetch(url, mergedOptions)
-    
-    console.log(`收到响应，状态码: ${response.status}`)
     
     // 解析响应数据
     let data
     try {
       data = await response.json()
-      console.log('成功解析JSON响应数据')
     } catch (jsonError) {
-      console.warn('响应不是有效的JSON格式，尝试获取文本内容', jsonError)
       try {
         data = await response.text()
-        console.log('获取文本响应:', data)
-        // 尝试检测是否为登录响应，可能是特殊格式
-        if (endpoint.includes('login') || endpoint.includes('auth')) {
-          console.log('处理可能的登录响应')
-        }
       } catch (textError) {
-        console.error('无法解析响应:', textError)
         data = { error: '无法解析响应内容' }
       }
     }
@@ -100,19 +83,34 @@ const request = async (endpoint, options = {}) => {
     // 处理非2xx响应
     if (!response.ok) {
       const errorMessage = data.message || data.error || data || `请求失败: ${response.status}`
-      console.error(`请求失败: ${response.status} - ${errorMessage}`)
       const error = new Error(errorMessage)
       error.response = { ...response, data }
       throw error
     }
     
-    // 成功响应
-    console.log('请求成功完成')
+    // 无论HTTP状态码是什么，都检查响应体中的code字段和success字段
+    if (data && typeof data === 'object') {
+      // 检查success字段（如果存在）
+      if (data.success !== undefined && data.success === false) {
+        const errorMessage = data.message || data.error || '请求处理失败'
+        const error = new Error(errorMessage)
+        error.response = { ...response, data }
+        throw error
+      }
+      
+      // 检查code字段（如果存在）
+      if (data.code !== undefined && data.code !== 200 && data.code !== 20000) {
+        const errorMessage = data.message || data.error || `业务错误: ${data.code}`
+        const error = new Error(errorMessage)
+        error.response = { ...response, data }
+        throw error
+      }
+    }
+    
     return data
   } catch (error) {
     // 处理网络错误或其他错误
     if (!error.response) {
-      console.error('网络错误或请求失败:', error)
       throw new Error('网络错误，请检查您的网络连接')
     }
     

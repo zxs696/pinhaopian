@@ -49,13 +49,21 @@ public class AuthController {
      * 用户注册
      */
     @PostMapping("/register")
-    public ApiResponse<User> register(@RequestBody User user) {
+    public ApiResponse<Map<String, Object>> register(@RequestBody User user) {
         try {
             // 注册新用户
             User registeredUser = authService.register(user);
               
             if (registeredUser != null) {
-                return ApiResponse.success(registeredUser, "注册成功");
+                // 生成JWT token
+                String token = authService.generateToken(registeredUser.getUsername());
+                
+                // 构造返回结果，包含用户信息和token
+                Map<String, Object> result = new HashMap<>();
+                result.put("user", registeredUser);
+                result.put("token", token);
+                
+                return ApiResponse.success(result, "注册成功");
             } else {
                 return ApiResponse.error(ResultCode.BAD_REQUEST.getCode(), "注册失败");
             }
