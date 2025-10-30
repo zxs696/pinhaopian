@@ -4,7 +4,6 @@ import com.it.pinhaopian.common.ApiResponse;
 import com.it.pinhaopian.common.ResultCode;
 import com.it.pinhaopian.entity.User;
 import com.it.pinhaopian.service.AuthService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -15,8 +14,11 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/auth")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     /**
      * 用户登录
@@ -49,13 +51,21 @@ public class AuthController {
      * 用户注册
      */
     @PostMapping("/register")
-    public ApiResponse<User> register(@RequestBody User user) {
+    public ApiResponse<Map<String, Object>> register(@RequestBody User user) {
         try {
             // 注册新用户
             User registeredUser = authService.register(user);
               
             if (registeredUser != null) {
-                return ApiResponse.success(registeredUser, "注册成功");
+                // 生成JWT token
+                String token = authService.generateToken(registeredUser.getUsername());
+                
+                // 构造返回结果，包含用户信息和token
+                Map<String, Object> result = new HashMap<>();
+                result.put("user", registeredUser);
+                result.put("token", token);
+                
+                return ApiResponse.success(result, "注册成功");
             } else {
                 return ApiResponse.error(ResultCode.BAD_REQUEST.getCode(), "注册失败");
             }

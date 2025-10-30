@@ -1,14 +1,9 @@
 <template>
   <div class="security-settings-container">
-    <div class="breadcrumb">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>安全设置</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
+    <!-- 删除重复的面包屑导航，由AdminLayout统一提供 -->
     <div class="header-actions">
       <el-button type="primary" @click="handleSaveAll">
-                <el-icon><Save /></el-icon>
+                <el-icon><Check /></el-icon>
                 保存所有设置
               </el-button>
             </div>
@@ -335,7 +330,7 @@
       width="400px"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
-      show-close="false"
+      :show-close="false"
     >
       <div class="progress-content">
         <el-progress 
@@ -352,19 +347,7 @@
 // 安全设置页面逻辑
 import { ref, reactive } from 'vue'
 import { 
-  Lock,
-  Search,
-  Download,
-  ShieldFilled,
-  Bell,
-  AlertCircleFilled,
-  InfoFilled,
-  Delete,
-  Edit,
-  Refresh,
-  Filter,
-  Check,
-  Plus
+  Check
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { showSuccess } from '../../utils/message.js'

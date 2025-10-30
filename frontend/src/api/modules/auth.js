@@ -1,4 +1,4 @@
-import request from '../apiService'
+import { apiService } from '../apiService'
 
 /**
  * 认证相关API
@@ -12,10 +12,7 @@ export const authAPI = {
    * @returns {Promise} 登录结果
    */
   login: async (credentials) => {
-    return request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials)
-    })
+    return apiService.post('/auth/login', credentials)
   },
 
   /**
@@ -24,10 +21,7 @@ export const authAPI = {
    * @returns {Promise} 注册结果
    */
   register: async (userData) => {
-    return request('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    })
+    return apiService.post('/auth/register', userData)
   },
 
   /**
@@ -35,9 +29,7 @@ export const authAPI = {
    * @returns {Promise} 登出结果
    */
   logout: async () => {
-    return request('/auth/logout', {
-      method: 'POST'
-    })
+    return apiService.post('/auth/logout')
   },
 
   /**
@@ -45,7 +37,7 @@ export const authAPI = {
    * @returns {Promise} 用户信息
    */
   getCurrentUser: async () => {
-    return request('/auth/me')
+    return apiService.get('/auth/me')
   },
 
   /**
@@ -53,9 +45,7 @@ export const authAPI = {
    * @returns {Promise} 刷新结果
    */
   refreshToken: async () => {
-    return request('/auth/refresh', {
-      method: 'POST'
-    })
+    return apiService.post('/auth/refresh')
   }
 }
 

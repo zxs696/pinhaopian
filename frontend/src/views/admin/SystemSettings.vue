@@ -1,11 +1,6 @@
 <template>
   <div class="system-settings-container">
-    <div class="breadcrumb">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>系统设置</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
+    <!-- 删除重复的面包屑导航，由AdminLayout统一提供 -->
     <div class="header-actions">
       <el-button type="primary" @click="handleRefresh">
         <el-icon>
@@ -399,9 +394,8 @@ import {
   Filter,
   Check,
   Edit,
-  ShieldFilled,
   Bell,
-  AlertCircleFilled,
+  WarningFilled,
   InfoFilled
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
@@ -680,6 +674,16 @@ function handleResetSettings() {
   }).catch(() => {
     // 取消重置
   })
+}
+
+// 方法：刷新页面数据
+function handleRefresh() {
+  loading.value = true
+  // 模拟API调用重新加载设置数据
+  setTimeout(() => {
+    loading.value = false
+    showSuccess('数据已刷新')
+  }, 500)
 }
 
 // 方法：处理测试邮件发送

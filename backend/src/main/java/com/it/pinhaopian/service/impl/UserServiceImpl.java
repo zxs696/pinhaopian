@@ -6,7 +6,6 @@ import com.it.pinhaopian.entity.UserProfile;
 import com.it.pinhaopian.mapper.UserMapper;
 import com.it.pinhaopian.service.UserService;
 import com.it.pinhaopian.utils.PasswordUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.springframework.stereotype.Service;
@@ -22,13 +21,12 @@ import java.util.Optional;
 @Service
 public class UserServiceImpl extends BaseServiceImpl<User, Long> implements UserService {
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    /**
-     * 由于使用MyBatis而非Spring Data JPA，这里返回一个空的Repository
-     * 在实际方法中我们直接使用userMapper
-     */
+    public UserServiceImpl(UserMapper userMapper) {
+        this.userMapper = userMapper;
+    }
+
     @Override
     protected BaseMapper<User> getMapper() {
         return userMapper;
@@ -102,56 +100,6 @@ public class UserServiceImpl extends BaseServiceImpl<User, Long> implements User
     public User getUserByUsername(String username) {
         return findByUsername(username);
     }
-    
-    @Override
-    public User login(String username, String password) {
-        // 根据用户名查询用户
-        User user = findByUsername(username);
-        if (user == null) {
-            return null;
-        }
-        
-        // 验证密码
-        if (PasswordUtils.matches(password, user.getPasswordHash())) {
-            // 登录成功，返回用户信息（不包含密码）
-            user.setPasswordHash(null);
-            return user;
-        }
-        
-        return null;
-    }
-    
-    @Override
-    public boolean register(User user) {
-        try {
-            // 检查用户名是否已存在
-            if (existsByUsername(user.getUsername())) {
-                return false;
-            }
-            
-            // 检查邮箱是否已存在
-            if (existsByEmail(user.getEmail())) {
-                return false;
-            }
-            
-            // 加密密码
-            user.setPasswordHash(PasswordUtils.encryptPassword(user.getPasswordHash()));
-            
-            // 设置创建和更新时间
-            user.setCreatedAt(new Date());
-            user.setUpdatedAt(new Date());
-            
-            // 设置默认用户状态
-            user.setStatus(1); // 1表示启用
-            
-            // 保存用户
-            return userMapper.insert(user) > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
     @Override
     public User getUserByEmail(String email) {
         return userMapper.findByEmail(email);

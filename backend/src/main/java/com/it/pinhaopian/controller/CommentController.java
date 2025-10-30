@@ -2,7 +2,6 @@ package com.it.pinhaopian.controller;
 
 import com.it.pinhaopian.entity.Comment;
 import com.it.pinhaopian.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +13,11 @@ import java.util.Optional;
 @RequestMapping("/comments")
 public class CommentController {
 
-    @Autowired
-    private CommentService commentService;
+    private final CommentService commentService;
+
+    public CommentController(CommentService commentService) {
+        this.commentService = commentService;
+    }
 
     @GetMapping("/{commentId}")
     public ResponseEntity<Comment> getCommentById(@PathVariable Long commentId) {

@@ -11,7 +11,11 @@ export const showMessage = (message, type = 'info', options = {}) => {
     message,
     type,
     duration: options.duration || 3000,
-    showClose: options.showClose !== undefined ? options.showClose : true,
+    plain: true,
+    grouping: true,
+    zIndex: 9000,
+    offset:50,
+    showClose: false,
     ...options
   });
 };

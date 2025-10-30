@@ -4,7 +4,6 @@ import com.it.pinhaopian.common.PageRequest;
 import com.it.pinhaopian.entity.Comment;
 import com.it.pinhaopian.mapper.CommentMapper;
 import com.it.pinhaopian.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -19,8 +18,11 @@ import java.util.stream.Collectors;
 @Service
 public class CommentServiceImpl extends BaseServiceImpl<Comment, Long> implements CommentService {
 
-    @Autowired
-    private CommentMapper commentMapper;
+    private final CommentMapper commentMapper;
+
+    public CommentServiceImpl(CommentMapper commentMapper) {
+        this.commentMapper = commentMapper;
+    }
 
     /**
      * 由于使用MyBatis而非Spring Data JPA，这里返回一个空的Repository

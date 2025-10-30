@@ -1,4 +1,4 @@
-import request from '../apiService'
+import { apiService } from '../apiService'
 
 /**
  * 用户相关API
@@ -12,10 +12,7 @@ export const usersAPI = {
    * @returns {Promise} 用户列表
    */
   getUsers: async (params = {}) => {
-    return request('/users', {
-      method: 'GET',
-      params
-    })
+    return apiService.get('/users', params)
   },
 
   /**
@@ -24,7 +21,7 @@ export const usersAPI = {
    * @returns {Promise} 用户详情
    */
   getUserById: async (id) => {
-    return request(`/users/${id}`)
+    return apiService.get(`/users/${id}`)
   },
 
   /**
@@ -34,10 +31,7 @@ export const usersAPI = {
    * @returns {Promise} 更新结果
    */
   updateUser: async (id, userData) => {
-    return request(`/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData)
-    })
+    return apiService.put(`/users/${id}`, userData)
   },
 
   /**
@@ -46,9 +40,7 @@ export const usersAPI = {
    * @returns {Promise} 删除结果
    */
   deleteUser: async (id) => {
-    return request(`/users/${id}`, {
-      method: 'DELETE'
-    })
+    return apiService.delete(`/users/${id}`)
   },
 
   /**
@@ -58,10 +50,7 @@ export const usersAPI = {
    * @returns {Promise} 更新结果
    */
   updateUserRole: async (id, roleData) => {
-    return request(`/users/${id}/role`, {
-      method: 'PATCH',
-      body: JSON.stringify(roleData)
-    })
+    return apiService.post(`/users/${id}/role`, roleData)
   },
 
   /**
@@ -73,13 +62,7 @@ export const usersAPI = {
     const formData = new FormData()
     formData.append('avatar', file)
     
-    return request('/users/avatar', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    return apiService.upload('/users/avatar', formData)
   }
 }
 

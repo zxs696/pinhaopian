@@ -1,4 +1,4 @@
-import request from '../apiService'
+import { apiService } from '../apiService'
 
 /**
  * 视频相关API
@@ -13,10 +13,7 @@ export const videosAPI = {
    * @returns {Promise} 视频列表
    */
   getVideos: async (params = {}) => {
-    return request('/videos', {
-      method: 'GET',
-      params
-    })
+    return apiService.get('/videos', params)
   },
 
   /**
@@ -25,7 +22,7 @@ export const videosAPI = {
    * @returns {Promise} 视频详情
    */
   getVideoById: async (id) => {
-    return request(`/videos/${id}`)
+    return apiService.get(`/videos/${id}`)
   },
 
   /**
@@ -39,13 +36,7 @@ export const videosAPI = {
       formData.append(key, videoData[key])
     })
     
-    return request('/videos', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    return apiService.upload('/videos', formData)
   },
 
   /**
@@ -55,10 +46,7 @@ export const videosAPI = {
    * @returns {Promise} 更新结果
    */
   updateVideo: async (id, videoData) => {
-    return request(`/videos/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(videoData)
-    })
+    return apiService.put(`/videos/${id}`, videoData)
   },
 
   /**
@@ -67,9 +55,7 @@ export const videosAPI = {
    * @returns {Promise} 删除结果
    */
   deleteVideo: async (id) => {
-    return request(`/videos/${id}`, {
-      method: 'DELETE'
-    })
+    return apiService.delete(`/videos/${id}`)
   },
 
   /**
@@ -77,7 +63,7 @@ export const videosAPI = {
    * @returns {Promise} 分类列表
    */
   getCategories: async () => {
-    return request('/videos/categories')
+    return apiService.get('/videos/categories')
   }
 }
 

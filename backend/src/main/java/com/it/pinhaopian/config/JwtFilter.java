@@ -29,6 +29,13 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         String token = httpServletRequest.getHeader(JwtUtils.AUTHORIZATION_HEADER);
+        String requestUri = httpServletRequest.getRequestURI();
+        
+        // 对分类API特殊处理，即使token无效也允许访问
+        if (requestUri.startsWith("/categories")) {
+            logger.debug("Allowing access to categories API regardless of token");
+            return true;
+        }
 
         // 检查请求头中是否包含JWT token
         if (token == null || token.trim().isEmpty()) {

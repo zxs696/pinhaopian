@@ -11,7 +11,7 @@ const categoriesAPI = {
   async getAllCategories() {
     try {
       const response = await apiService.get('/categories')
-      return response.data || []
+      return response || []
     } catch (error) {
       console.error('获取分类列表失败:', error)
       throw error
@@ -26,7 +26,7 @@ const categoriesAPI = {
   async getCategoryById(id) {
     try {
       const response = await apiService.get(`/categories/${id}`)
-      return response.data
+      return response
     } catch (error) {
       console.error(`获取分类${id}详情失败:`, error)
       throw error
@@ -41,7 +41,7 @@ const categoriesAPI = {
   async createCategory(categoryData) {
     try {
       const response = await apiService.post('/categories', categoryData)
-      return response.data
+      return response
     } catch (error) {
       console.error('创建分类失败:', error)
       throw error
@@ -57,7 +57,7 @@ const categoriesAPI = {
   async updateCategory(id, categoryData) {
     try {
       const response = await apiService.put(`/categories/${id}`, categoryData)
-      return response.data
+      return response
     } catch (error) {
       console.error(`更新分类${id}失败:`, error)
       throw error
@@ -86,10 +86,8 @@ const categoriesAPI = {
    */
   async getCategoryVideos(categoryId, params = {}) {
     try {
-      const response = await apiService.get(`/categories/${categoryId}/videos`, {
-        params
-      })
-      return response.data
+      const response = await apiService.get(`/categories/${categoryId}/videos`, params)
+      return response
     } catch (error) {
       console.error(`获取分类${categoryId}下的视频失败:`, error)
       throw error
@@ -103,10 +101,8 @@ const categoriesAPI = {
    */
   async getHotCategories(limit = 5) {
     try {
-      const response = await apiService.get('/categories/hot', {
-        params: { limit }
-      })
-      return response.data || []
+      const response = await apiService.get('/categories/hot', { limit })
+      return response || []
     } catch (error) {
       console.error('获取热门分类失败:', error)
       throw error
@@ -120,7 +116,7 @@ const categoriesAPI = {
   async getCategoryStats() {
     try {
       const response = await apiService.get('/categories/stats')
-      return response.data || []
+      return response || []
     } catch (error) {
       console.error('获取分类统计失败:', error)
       throw error

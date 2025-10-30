@@ -16,22 +16,7 @@ public interface UserService extends BaseService<User, Long> {
      * @return 用户对象
      */
     User findByUsername(String username);
-    
-    /**
-     * 用户登录
-     * @param username 用户名
-     * @param password 密码
-     * @return 用户对象
-     */
-    User login(String username, String password);
-    
-    /**
-     * 用户注册
-     * @param user 用户对象
-     * @return 是否成功
-     */
-    boolean register(User user);
-    
+
     /**
      * 根据邮箱获取用户
      * @param email 邮箱

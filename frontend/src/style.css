@@ -1,0 +1,31 @@
+/* 仅包含滚动条样式，不影响其他元素 */
+
+/* Webkit浏览器滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #909399;
+}
+
+::-webkit-scrollbar-corner {
+  background: #f1f1f1;
+}
+
+/* Firefox滚动条样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c0c4cc #f1f1f1;
+}

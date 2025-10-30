@@ -2,9 +2,38 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-      <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/png" href="/logo1.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>拼好片</title>
+    <!-- 关键CSS内联 -->
+    <style>
+      /* 防止布局偏移的关键CSS */
+      html {
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+      }
+      body {
+        width: 100vw;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+      }
+      #app {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      /* 预加载关键图片 */
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+    </style>
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="/b3.jpg" as="image">
+    <link rel="preload" href="/b4.jpg" as="image">
+    <link rel="preload" href="/b1.png" as="image">
   </head>
   <body>
     <div id="app"></div>

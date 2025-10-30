@@ -2,7 +2,6 @@ package com.it.pinhaopian.controller;
 
 import com.it.pinhaopian.entity.Category;
 import com.it.pinhaopian.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +13,11 @@ import java.util.Optional;
 @RequestMapping("/categories")
 public class CategoryController {
 
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
+
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     @GetMapping("/{categoryId}")
     public ResponseEntity<Category> getCategoryById(@PathVariable Long categoryId) {

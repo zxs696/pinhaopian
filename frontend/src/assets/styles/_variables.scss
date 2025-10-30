@@ -1,0 +1,61 @@
+// 主题变量（默认浅色主题）
+$light-theme: (
+    primary: #fb7299,
+    // B站粉色主色
+    secondary: #23ade5,
+    // 辅助色（蓝色）
+    background: #f5f5f5,
+    // 背景色（同时用于卡片背景）
+    text-primary: #18191c,
+    // 主要文字色
+    text-secondary: #666666,
+    // 次要文字色
+    border-color: #e5e9ef,
+    // 边框色
+    hover-color: #f0f0f0,
+    //  hover色
+    
+    // 组件背景色变量
+    // 头像组件背景色
+    avatar-bg: #d0d0d0,
+    avatar-bg-hover: #c0c0c0,
+    
+    // 消息组件背景色
+    message-bg: #e8e8e8,
+    message-bg-hover: #d8d8d8,
+    
+    // 主题切换组件背景色
+    theme-switcher-bg: #f0f0f0,
+    theme-switcher-bg-hover: #e0e0e0,
+);
+
+// 深色主题
+$dark-theme: (
+    primary: #fb7299,
+    secondary: #23ade5,
+    background: #121212,
+    // 背景色（同时用于卡片背景）
+    text-primary: #f5f5f5,
+    text-secondary: #aaaaaa,
+    border-color: #333333,
+    hover-color: #2d2d2d,
+    
+    // 组件背景色变量
+    // 头像组件背景色
+    avatar-bg: #404040,
+    avatar-bg-hover: #505050,
+    
+    // 消息组件背景色
+    message-bg: #2a2a2a,
+    message-bg-hover: #3a3a3a,
+    
+    // 主题切换组件背景色
+    theme-switcher-bg: #333333,
+    theme-switcher-bg-hover: #404040,
+);
+
+// 全局样式变量
+$border-radius: 8px;
+$shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+$transition: all 0.3s ease;
+$container-width: 1600px;

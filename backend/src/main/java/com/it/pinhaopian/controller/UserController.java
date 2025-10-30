@@ -3,7 +3,6 @@ package com.it.pinhaopian.controller;
 import com.it.pinhaopian.entity.User;
 import com.it.pinhaopian.entity.UserProfile;
 import com.it.pinhaopian.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +14,11 @@ import java.util.Optional;
 @RequestMapping("/users")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<User> getUserById(@PathVariable Long userId) {
@@ -58,7 +60,7 @@ public class UserController {
 
     @PutMapping("/{userId}")
     public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody User user) {
-        user.setId(userId);
+        user.setUserId(userId);
         User updatedUser = userService.save(user);
         if (updatedUser != null) {
             return ResponseEntity.ok(updatedUser);

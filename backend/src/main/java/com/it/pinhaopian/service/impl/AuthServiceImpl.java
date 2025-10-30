@@ -11,7 +11,6 @@ import com.it.pinhaopian.common.ResultCode;
 import com.it.pinhaopian.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
@@ -25,17 +24,17 @@ public class AuthServiceImpl implements AuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final UserMapper userMapper; // 暂时保留，用于用户注册（插入新用户）
+    private final JwtUtils jwtUtils;
+    private final RedisUtils redisUtils;
 
-    @Autowired
-    private UserMapper userMapper; // 暂时保留，用于用户注册（插入新用户）
-    
-    @Autowired
-    private JwtUtils jwtUtils;
-    
-    @Autowired
-    private RedisUtils redisUtils;
+    public AuthServiceImpl(UserService userService, UserMapper userMapper, JwtUtils jwtUtils, RedisUtils redisUtils) {
+        this.userService = userService;
+        this.userMapper = userMapper;
+        this.jwtUtils = jwtUtils;
+        this.redisUtils = redisUtils;
+    }
 
     @Override
     public User login(String username, String password) {
@@ -87,24 +86,49 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public User register(User user) {
         try {
-            logger.info("Register attempt for username: {}", user.getUsername());
+            // 检查用户名和邮箱，至少提供一个
+            boolean hasUsername = user.getUsername() != null && !user.getUsername().trim().isEmpty();
+            boolean hasEmail = user.getEmail() != null && !user.getEmail().trim().isEmpty();
             
-            // 检查必要字段
-            if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
-                throw new BusinessException(ResultCode.BAD_REQUEST, "用户名不能为空");
+            if (!hasUsername && !hasEmail) {
+                throw new BusinessException(ResultCode.BAD_REQUEST, "用户名或邮箱至少提供一个");
             }
             
-            if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
-                throw new BusinessException(ResultCode.BAD_REQUEST, "邮箱不能为空");
+            // 根据提供的信息记录日志
+            if (hasUsername) {
+                logger.info("Register attempt for username: {}", user.getUsername());
+            } else {
+                logger.info("Register attempt for email: {}", user.getEmail());
             }
             
-            // 检查用户名和邮箱是否已存在
-            if (userService.existsByUsername(user.getUsername())) {
+            // 检查提供的字段是否已存在
+            if (hasUsername && userService.existsByUsername(user.getUsername())) {
                 throw new BusinessException(ResultCode.BAD_REQUEST, "用户名已存在");
             }
             
-            if (userService.existsByEmail(user.getEmail())) {
+            if (hasEmail && userService.existsByEmail(user.getEmail())) {
                 throw new BusinessException(ResultCode.BAD_REQUEST, "邮箱已存在");
+            }
+            
+            // 如果只提供了用户名，为邮箱生成默认值
+            if (hasUsername && !hasEmail) {
+                // 可以生成一个默认邮箱，格式为username@example.com
+                user.setEmail(user.getUsername() + "@example.com");
+                logger.info("Generated default email for username {}: {}", user.getUsername(), user.getEmail());
+            }
+            
+            // 如果只提供了邮箱，从邮箱提取用户名
+            if (hasEmail && !hasUsername) {
+                // 从邮箱中提取用户名部分（@前面的内容）
+                String usernameFromEmail = user.getEmail().split("@")[0];
+                // 检查提取的用户名是否已存在，如果存在则添加随机数
+                String finalUsername = usernameFromEmail;
+                int count = 1;
+                while (userService.existsByUsername(finalUsername)) {
+                    finalUsername = usernameFromEmail + "_" + count++;
+                }
+                user.setUsername(finalUsername);
+                logger.info("Generated username from email {}: {}", user.getEmail(), user.getUsername());
             }
             
             // 获取原始密码并加密
@@ -121,6 +145,7 @@ public class AuthServiceImpl implements AuthService {
             user.setCreatedAt(new Date());
             user.setUpdatedAt(new Date());
             user.setStatus(1); // 默认启用
+            user.setUserType(1); // 默认普通用户
             
             // 插入用户
             int result = userMapper.insert(user);

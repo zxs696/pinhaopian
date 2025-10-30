@@ -2,7 +2,6 @@ package com.it.pinhaopian.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +18,11 @@ public class RedisUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(RedisUtils.class);
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    public RedisUtils(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     /**
      * 设置缓存

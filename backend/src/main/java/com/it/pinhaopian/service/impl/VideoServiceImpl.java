@@ -7,7 +7,6 @@ import com.it.pinhaopian.entity.Category;
 import com.it.pinhaopian.entity.Tag;
 import com.it.pinhaopian.mapper.VideoMapper;
 import com.it.pinhaopian.service.VideoService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -18,8 +17,11 @@ import java.util.*;
 @Service
 public class VideoServiceImpl extends BaseServiceImpl<Video, Long> implements VideoService {
 
-    @Autowired
-    private VideoMapper videoMapper;
+    private final VideoMapper videoMapper;
+
+    public VideoServiceImpl(VideoMapper videoMapper) {
+        this.videoMapper = videoMapper;
+    }
 
     @Override
     protected BaseMapper<Video> getMapper() {

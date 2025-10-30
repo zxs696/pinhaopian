@@ -8,7 +8,6 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -21,8 +20,11 @@ import java.util.Set;
 @Component
 public class JwtRealm extends AuthorizingRealm {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    public JwtRealm(UserService userService) {
+        this.userService = userService;
+    }
 
     /**
      * 支持JwtToken类型

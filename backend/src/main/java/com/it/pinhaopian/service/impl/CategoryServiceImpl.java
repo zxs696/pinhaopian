@@ -4,7 +4,6 @@ import com.it.pinhaopian.common.PageRequest;
 import com.it.pinhaopian.entity.Category;
 import com.it.pinhaopian.mapper.CategoryMapper;
 import com.it.pinhaopian.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.springframework.stereotype.Service;
@@ -18,8 +17,11 @@ import java.util.stream.Collectors;
 @Service
 public class CategoryServiceImpl extends BaseServiceImpl<Category, Long> implements CategoryService {
 
-    @Autowired
-    private CategoryMapper categoryMapper;
+    private final CategoryMapper categoryMapper;
+
+    public CategoryServiceImpl(CategoryMapper categoryMapper) {
+        this.categoryMapper = categoryMapper;
+    }
 
     /**
      * 由于使用MyBatis而非Spring Data JPA，这里返回一个空的Repository

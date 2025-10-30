@@ -1,11 +1,6 @@
 <template>
     <div class="role-management-container">
-        <div class="breadcrumb">
-                            <el-breadcrumb separator="/">
-                                <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
-                                <el-breadcrumb-item>角色管理</el-breadcrumb-item>
-                            </el-breadcrumb>
-                        </div>
+        <!-- 删除重复的面包屑导航，由AdminLayout统一提供 -->
                         <div class="header-actions">
                             <el-button type="primary" @click="handleAddRole">
                                 <el-icon>
@@ -68,32 +63,36 @@
                                     {{ formatDate(scope.row.updatedAt) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="操作" width="250" fixed="right">
+                            <el-table-column label="操作" width="400" fixed="right">
                                 <template #default="scope">
-                                    <el-button type="primary" size="small" @click="handleEditRole(scope.row)">
-                                        <el-icon>
-                                            <Edit />
-                                        </el-icon>
-                                        编辑
-                                    </el-button>
-                                    <el-button type="success" size="small" @click="handlePermission(scope.row)">
-                                        <el-icon>
-                                            <Key />
-                                        </el-icon>
-                                        权限设置
-                                    </el-button>
-                                    <el-button :type="scope.row.status === 1 ? 'warning' : 'success'" size="small"
-                                        @click="handleToggleStatus(scope.row)">
-                                        <el-icon>{{ scope.row.status === 1 ? 'SwitchButton' : 'Play' }}</el-icon>
-                                        {{ scope.row.status === 1 ? '禁用' : '启用' }}
-                                    </el-button>
-                                    <el-button type="danger" size="small" @click="handleDeleteRole(scope.row)"
-                                        :disabled="isDefaultRole(scope.row)">
-                                        <el-icon>
-                                            <Delete />
-                                        </el-icon>
-                                        删除
-                                    </el-button>
+                                    <div class="action-buttons">
+                                        <el-button type="primary" size="small" @click="handleEditRole(scope.row)">
+                                            <el-icon>
+                                                <Edit />
+                                            </el-icon>
+                                            编辑
+                                        </el-button>
+                                        <el-button type="success" size="small" @click="handlePermission(scope.row)" style="margin-left: 5px;">
+                                            <el-icon>
+                                                <Key />
+                                            </el-icon>
+                                            权限设置
+                                        </el-button>
+                                        <el-button :type="scope.row.status === 1 ? 'warning' : 'success'" size="small"
+                                            @click="handleToggleStatus(scope.row)" style="margin-left: 5px;">
+                                            <el-icon>
+                                                <component :is="scope.row.status === 1 ? SwitchButton : VideoPause" />
+                                            </el-icon>
+                                            {{ scope.row.status === 1 ? '禁用' : '启用' }}
+                                        </el-button>
+                                        <el-button type="danger" size="small" @click="handleDeleteRole(scope.row)"
+                                            :disabled="isDefaultRole(scope.row)" style="margin-left: 5px;">
+                                            <el-icon>
+                                                <Delete />
+                                            </el-icon>
+                                            删除
+                                        </el-button>
+                                    </div>
                                 </template>
                             </el-table-column>
                         </el-table>
@@ -196,7 +195,7 @@
                         </el-button>
                         <el-button size="small" type="success" @click="handleSavePermissions">
                             <el-icon>
-                                <Save />
+                                <Check />
                             </el-icon>
                             保存权限
                         </el-button>
@@ -250,32 +249,41 @@
         </el-dialog>
 
         <!-- 右键菜单 -->
-        <el-dropdown v-model="contextMenuVisible" trigger="contextmenu" :show-timeout="0" :hide-on-click="false">
-            <el-dropdown-menu>
-                <el-dropdown-item @click="handleContextEdit">
-                    <el-icon>
-                        <Edit />
-                    </el-icon>
-                    编辑
-                </el-dropdown-item>
-                <el-dropdown-item @click="handleContextPermission">
-                    <el-icon>
-                        <Key />
-                    </el-icon>
-                    权限设置
-                </el-dropdown-item>
-                <el-dropdown-item @click="handleContextToggleStatus">
-                    <el-icon>{{ contextMenuRole.status === 1 ? 'SwitchButton' : 'Play' }}</el-icon>
-                    {{ contextMenuRole.status === 1 ? '禁用' : '启用' }}
-                </el-dropdown-item>
-                <el-dropdown-item @click="handleContextDelete" :disabled="isDefaultRole(contextMenuRole)" divided
-                    :class="{ 'text-danger': !isDefaultRole(contextMenuRole) }">
-                    <el-icon>
-                        <Delete />
-                    </el-icon>
-                    删除
-                </el-dropdown-item>
-            </el-dropdown-menu>
+        <el-dropdown
+            :model-value="contextMenuVisible"
+            trigger="manual"
+            :show-timeout="0"
+            :hide-on-click="false"
+            ref="dropdownRef"
+        >
+            <span class="hidden-trigger" style="display: none;"></span>
+            <template #dropdown>
+                <el-dropdown-menu>
+                    <el-dropdown-item @click="handleContextEdit">
+                        <el-icon>
+                            <Edit />
+                        </el-icon>
+                        编辑
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="handleContextPermission">
+                        <el-icon>
+                            <Key />
+                        </el-icon>
+                        权限设置
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="handleContextToggleStatus">
+                        <el-icon>{{ contextMenuRole.status === 1 ? SwitchButton : VideoPause }}</el-icon>
+                        {{ contextMenuRole.status === 1 ? '禁用' : '启用' }}
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="handleContextDelete" :disabled="isDefaultRole(contextMenuRole)" divided
+                        :class="{ 'text-danger': !isDefaultRole(contextMenuRole) }">
+                        <el-icon>
+                            <Delete />
+                        </el-icon>
+                        删除
+                    </el-dropdown-item>
+                </el-dropdown-menu>
+            </template>
         </el-dropdown>
     </div>
 </template>
@@ -289,9 +297,9 @@ import {
   Edit,
   Key,
   SwitchButton,
-  Play,
+  VideoPause,
   Remove,
-  Save
+  Check
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { showSuccess, showWarning } from '../../utils/message.js'
@@ -316,6 +324,7 @@ const searchKeyword = ref('')
 const assignSearchKeyword = ref('')
 const addUserSearchKeyword = ref('')
 const formRef = ref(null)
+const dropdownRef = ref(null)
 const expandedKeys = ref([])
 const checkedKeys = ref([])
 
@@ -1036,6 +1045,13 @@ const dialogTitle = ref('添加角色')
 .role-name {
   font-weight: 500;
   color: var(--el-text-color-primary);
+}
+
+/* 操作按钮样式 */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* 分配用户相关样式 */

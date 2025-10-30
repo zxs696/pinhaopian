@@ -76,7 +76,7 @@ public class RedisConfig {
      * 确保RedisUtils可以被正确注入到其他组件中
      */
     @Bean
-    public RedisUtils redisUtils() {
-        return new RedisUtils();
+    public RedisUtils redisUtils(RedisTemplate<String, Object> redisTemplate) {
+        return new RedisUtils(redisTemplate);
     }
 }

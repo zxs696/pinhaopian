@@ -1,0 +1,60 @@
+// 使用@use导入变量文件（带下划线的部分文件）
+@use "./_variables" as vars;
+
+// 转发变量供其他文件使用
+@forward "./_variables";
+
+// 主题混入
+@mixin theme($theme) {
+    --color-primary: map-get($theme, primary);
+    --color-secondary: map-get($theme, secondary);
+    --color-background: map-get($theme, background);
+    // 移除color-card-bg，统一使用color-background
+    --color-text-primary: map-get($theme, text-primary);
+    --color-text-secondary: map-get($theme, text-secondary);
+    --color-border: map-get($theme, border-color);
+    --color-hover: map-get($theme, hover-color);
+    --border-radius: vars.$border-radius;
+    --shadow: vars.$shadow;
+    --transition: vars.$transition;
+    
+    // 组件背景色变量
+    --avatar-bg: map-get($theme, avatar-bg);
+    --avatar-bg-hover: map-get($theme, avatar-bg-hover);
+    --message-bg: map-get($theme, message-bg);
+    --message-bg-hover: map-get($theme, message-bg-hover);
+    --theme-switcher-bg: map-get($theme, theme-switcher-bg);
+    --theme-switcher-bg-hover: map-get($theme, theme-switcher-bg-hover);
+}
+
+// 浅色主题（默认）
+.light-theme {
+    @include theme(vars.$light-theme);
+}
+
+// 深色主题
+.dark-theme {
+    @include theme(vars.$dark-theme);
+}
+
+// 全局样式应用
+body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: "Microsoft YaHei", sans-serif;
+    transition: var(--transition);
+}
+
+// 通用组件样式
+.el-card {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.el-button {
+    --el-button-primary-bg-color: var(--color-primary);
+    --el-button-primary-border-color: var(--color-primary);
+    --el-button-primary-hover-bg-color: #f9537b;
+}

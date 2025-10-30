@@ -1,11 +1,6 @@
 <template>
   <div class="user-management-container">
-    <div class="breadcrumb">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>用户管理</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
+    <!-- 删除重复的面包屑导航，由AdminLayout统一提供 -->
     <div class="header-actions">
       <el-button type="warning" @click="exportUserData">
         <el-icon><download /></el-icon>
@@ -705,6 +700,8 @@ function getStatusName(status) {
 
 .user-avatar {
   object-fit: cover;
+  background-color: var(--avatar-bg, #d0d0d0); /* 使用定义的头像背景色变量 */
+  color: var(--color-text-primary, #333); /* 使用定义的主要文字颜色变量 */
 }
 
 .user-info {
@@ -747,6 +744,8 @@ function getStatusName(status) {
 
 .detail-avatar {
   object-fit: cover;
+  background-color: var(--avatar-bg, #d0d0d0); /* 使用定义的头像背景色变量 */
+  color: var(--color-text-primary, #333); /* 使用定义的主要文字颜色变量 */
 }
 
 .detail-info {

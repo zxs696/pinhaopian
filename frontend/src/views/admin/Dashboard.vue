@@ -1,14 +1,7 @@
 <template>
   <div class="dashboard-container">
-    <!-- 只保留核心内容，布局由AdminLayout提供 -->
+    <!-- 只保留核心内容，面包屑导航和整体布局由AdminLayout提供 -->
     <div class="dashboard-content">
-      <div class="breadcrumb">
-        <el-breadcrumb separator="/">
-          <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
-          <el-breadcrumb-item>数据概览</el-breadcrumb-item>
-        </el-breadcrumb>
-      </div>
-      
       <div class="content">
         <div class="stats-cards">
           <el-card class="stats-card">
@@ -165,11 +158,7 @@ function loadDashboardData() {
 .content {
   padding: 20px;
   overflow-y: auto;
-  height: calc(100% - 50px);
-}
-
-.breadcrumb {
-  margin-bottom: 20px;
+  height: 100%;
 }
 
 .stats-cards {

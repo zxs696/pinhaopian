@@ -1,0 +1,60 @@
+import { createPinia } from 'pinia'
+import { useAuthStore } from './modules/auth'
+import { useVideosStore } from './modules/videos'
+import { useUsersStore } from './modules/users'
+import { useSettingsStore } from './modules/settings'
+import { useCategoriesStore } from './modules/categories'
+import { useThemeStore } from './theme'
+
+// 创建pinia实例
+const pinia = createPinia()
+
+/**
+ * 初始化所有Store的方法
+ * 此函数将在应用启动时调用，用于初始化必要的状态
+ */
+export async function initializeStores() {
+  try {
+    const authStore = useAuthStore()
+    const settingsStore = useSettingsStore()
+    const categoriesStore = useCategoriesStore()
+    const themeStore = useThemeStore()
+    
+    // 按顺序初始化：先UI，再设置，再认证
+    themeStore.initializeTheme()
+    settingsStore.initializeSettings()
+    await authStore.initializeAuth()
+    
+    // 尝试获取分类数据
+    // 实际业务中，视频分类通常是公开数据，不需要认证
+    // 即使请求失败（如401），也不应该阻止应用继续运行
+    try {
+      await categoriesStore.fetchAllCategories()
+    } catch (error) {
+      console.error('获取分类数据失败:', error)
+      // 分类数据获取失败不应阻止应用其他功能
+      // 这里只是记录错误，应用会继续运行
+      // 当用户访问需要分类数据的页面时可以再次尝试获取
+    }
+  } catch (error) {
+    console.error('Store初始化失败:', error)
+  }
+}
+
+/**
+ * Store模块导出
+ * 便于组件中使用各个store模块
+ */
+export {
+  useAuthStore,
+  useVideosStore,
+  useUsersStore,
+  useCategoriesStore,
+  useThemeStore
+}
+
+// 导出pinia实例
+export { pinia }
+
+// 默认导出pinia，保持向后兼容性
+export default pinia

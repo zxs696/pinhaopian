@@ -1,11 +1,6 @@
 <template>
   <div class="system-logs-container">
-    <div class="breadcrumb">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>系统日志</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
+    <!-- 删除重复的面包屑导航，由AdminLayout统一提供 -->
     <div class="header-actions">
         <el-button type="primary" @click="handleExportLogs">
                 <el-icon><Download /></el-icon>
@@ -255,7 +250,9 @@
         <el-descriptions-item label="执行时间(ms)">{{ currentLog.executionTime }}ms</el-descriptions-item>
         <el-descriptions-item label="设备信息">{{ getDeviceInfo(currentLog.userAgent) }}</el-descriptions-item>
         <el-descriptions-item v-if="currentLog.params" label="请求参数" :span="2">
-          <el-code :code="JSON.stringify(currentLog.params, null, 2)" />
+          <el-scrollbar height="200px">
+            <pre class="error-stack">{{ JSON.stringify(currentLog.params, null, 2) }}</pre>
+          </el-scrollbar>
         </el-descriptions-item>
         <el-descriptions-item v-if="currentLog.errorMessage" label="错误信息" :span="2">
           <div class="error-message">{{ currentLog.errorMessage }}</div>
@@ -318,13 +315,14 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { 
+import {
   Download,
   Delete,
   Search,
   Bell,
-  AlertCircleFilled,
-  InfoFilled
+  WarningFilled,
+  InfoFilled,
+  View
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { showSuccess } from '../../utils/message.js'
