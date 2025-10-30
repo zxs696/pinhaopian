@@ -2,11 +2,10 @@ package com.it.pinhaopian.config;
 
 import com.it.pinhaopian.utils.JwtUtils;
 import org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter;
-import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.StringUtils;
+
 
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
@@ -32,7 +31,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         String token = httpServletRequest.getHeader(JwtUtils.AUTHORIZATION_HEADER);
 
         // 检查请求头中是否包含JWT token
-        if (StringUtils.isEmpty(token)) {
+        if (token == null || token.trim().isEmpty()) {
             logger.warn("No JWT token found in request header");
             // 没有token，则让下一个过滤器处理（通常是anon过滤器）
             return true;

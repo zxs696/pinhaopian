@@ -3,8 +3,6 @@ package com.it.pinhaopian.service;
 import com.it.pinhaopian.entity.User;
 import com.it.pinhaopian.entity.UserProfile;
 
-import java.util.List;
-import java.util.Optional;
 
 /**
  * 用户服务接口

@@ -47,6 +47,7 @@ public class RedisUtils {
     /**
      * 获取缓存
      */
+    @SuppressWarnings("unchecked")
     public <T> T get(String key) {
         try {
             return (T) redisTemplate.opsForValue().get(key);

@@ -37,7 +37,7 @@ public class JwtRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-        String username = (String) principals.getPrimaryPrincipal();
+        // 直接使用principals.getPrimaryPrincipal()，不单独声明变量
         SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
         
         // 获取用户角色和权限（这里简化处理，实际项目中可能需要从数据库获取）

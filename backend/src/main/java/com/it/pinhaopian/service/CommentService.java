@@ -3,7 +3,6 @@ package com.it.pinhaopian.service;
 import com.it.pinhaopian.entity.Comment;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 评论服务接口

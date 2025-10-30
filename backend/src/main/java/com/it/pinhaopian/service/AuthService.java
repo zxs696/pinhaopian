@@ -1,7 +1,6 @@
 package com.it.pinhaopian.service;
 
 import com.it.pinhaopian.entity.User;
-import java.util.Map;
 
 /**
  * 认证服务接口
