@@ -7,9 +7,7 @@ import com.it.pinhaopian.common.PageRequest;
 import com.it.pinhaopian.exception.BusinessException;
 import com.it.pinhaopian.service.BaseService;
 import com.it.pinhaopian.common.ResultCode;
-import org.springframework.beans.factory.annotation.Autowired;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,6 +83,7 @@ public abstract class BaseServiceImpl<T, ID extends Serializable> implements Bas
     }
 
     @Override
+    @SuppressWarnings("java:S3011")
     public void deleteById(ID id) {
         getMapper().deleteById(id);
     }
@@ -100,6 +99,7 @@ public abstract class BaseServiceImpl<T, ID extends Serializable> implements Bas
     }
 
     @Override
+    @SuppressWarnings({"unchecked", "java:S3011"})
     public void delete(T entity) {
         // 假设实体有getId方法获取主键
         try {

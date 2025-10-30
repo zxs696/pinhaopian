@@ -5,6 +5,7 @@ import com.it.pinhaopian.common.ResultCode;
 import com.it.pinhaopian.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import java.util.List;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -47,10 +48,10 @@ public abstract class BaseController {
      * @param page 分页数据
      * @return 分页成功响应
      */
-    protected <T> ApiResponse<T> success(Page<T> page) {
-        return ApiResponse.success((T) page.getRecords(), 
+    protected <T> ApiResponse<List<T>> success(Page<T> page) {
+        return ApiResponse.success(page.getRecords(), 
                 (int)page.getCurrent(), 
-                 (int)page.getSize(), 
+                (int)page.getSize(), 
                 page.getTotal());
     }
 

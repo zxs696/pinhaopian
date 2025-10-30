@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 16/10/2025 08:54:16
+ Date: 30/10/2025 09:17:50
 */
 
 SET NAMES utf8mb4;
@@ -244,16 +244,19 @@ CREATE TABLE `users`  (
   `gender` tinyint NULL DEFAULT 0 COMMENT '性别：0未知，1男性，2女性',
   `birthday` date NULL DEFAULT NULL COMMENT '生日日期',
   `status` tinyint NULL DEFAULT 1 COMMENT '账户状态：0禁用，1正常',
+  `user_type` tinyint NOT NULL DEFAULT 0 COMMENT '用户类型：0-管理员，1-普通用户，2-游客等',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`user_id`) USING BTREE,
   UNIQUE INDEX `username`(`username` ASC) USING BTREE,
   UNIQUE INDEX `email`(`email` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of users
 -- ----------------------------
+INSERT INTO `users` VALUES (1, 'admin', 'admin@example.com', '$2a$10$7fRqva/UbeVMyoEFIupzcum1MO4.v0tkLi.zNhId31A7KK.OTvsVW', NULL, NULL, NULL, 0, NULL, 1, 0, '2025-10-20 11:31:58', '2025-10-22 12:38:58');
+INSERT INTO `users` VALUES (3, 'testuser', 'test@example.com', '$2a$10$7fRqva/UbeVMyoEFIupzcum1MO4.v0tkLi.zNhId31A7KK.OTvsVW', NULL, NULL, NULL, 0, NULL, 1, 1, '2025-10-22 12:20:18', '2025-10-23 19:51:21');
 
 -- ----------------------------
 -- Table structure for video_files

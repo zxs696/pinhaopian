@@ -6,8 +6,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
@@ -97,11 +95,8 @@ public class JwtUtils {
         }
     }
 
-    private static JwtUtils instance;
-    
     @PostConstruct
     public void init() {
-        instance = this;
         // 初始化静态密钥
         staticSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
         logger.info("[JWT_DEBUG] 初始化静态密钥完成");
@@ -112,8 +107,9 @@ public class JwtUtils {
      */
     public static String getUsernameFromToken(String token) {
         try {
-            Claims claims = Jwts.parser()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(staticSecretKey) // 使用静态密钥
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
             return claims.getSubject();
@@ -128,8 +124,9 @@ public class JwtUtils {
      */
     public static void validateToken(String token) throws Exception {
         try {
-            Jwts.parser()
+            Jwts.parserBuilder()
                     .setSigningKey(staticSecretKey) // 使用静态密钥
+                    .build()
                     .parseClaimsJws(token);
         } catch (Exception e) {
             logger.error("[JWT_DEBUG] Token验证失败: {}", e.getMessage());
@@ -155,8 +152,9 @@ public class JwtUtils {
      * 从token中获取claims
      */
     private Claims getClaimsFromToken(String token) {
-        return Jwts.parser()
+        return Jwts.parserBuilder()
                 .setSigningKey(staticSecretKey)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
