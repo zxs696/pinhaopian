@@ -40,6 +40,9 @@ public class SessionWebSocketManager {
     // 用户会话映射：userId -> SessionWebSocketManager
     private static ConcurrentHashMap<String, SessionWebSocketManager> userSessionMap = new ConcurrentHashMap<>();
     
+    // 用户多连接映射：userId -> Set<SessionWebSocketManager>，支持同一用户多窗口连接
+    private static ConcurrentHashMap<String, CopyOnWriteArraySet<SessionWebSocketManager>> userMultiSessionMap = new ConcurrentHashMap<>();
+    
     // 注入RedisUtils（静态方法注入）
     @SuppressWarnings("unused")
     private static com.it.pinhaopian.utils.RedisUtils redisUtils;
@@ -65,25 +68,51 @@ public class SessionWebSocketManager {
             if (userIdLong != null) {
                 this.userId = String.valueOf(userIdLong);
                 
-                // 如果该用户已有连接，先发送下线通知再关闭旧连接
-                SessionWebSocketManager oldConnection = userSessionMap.get(this.userId);
-                if (oldConnection != null && oldConnection != this) {
-                    try {
-                        // 向旧连接发送下线通知
-                        String jsonMessage = String.format("{\"type\":\"SESSION_INVALID\",\"message\":\"账号在其他设备登录\"}");
-                        oldConnection.sendMessage(jsonMessage);
-                        log.info("已向用户{}的旧连接发送下线通知", this.userId);
+                // 检查是否是不同设备或浏览器的连接（通过检查是否已有来自同一IP的连接）
+                String currentClientIp = getClientIpAddress(session);
+                boolean isSameDevice = false;
+                
+                // 获取用户的所有连接
+                CopyOnWriteArraySet<SessionWebSocketManager> userSessions = userMultiSessionMap.get(this.userId);
+                if (userSessions != null && !userSessions.isEmpty()) {
+                    // 检查是否有来自同一IP的连接
+                    for (SessionWebSocketManager existingSession : userSessions) {
+                        String existingClientIp = getClientIpAddress(existingSession.session);
+                        if (currentClientIp.equals(existingClientIp)) {
+                            isSameDevice = true;
+                            break;
+                        }
+                    }
+                    
+                    // 如果不是同一设备，则向所有现有连接发送下线通知
+                    if (!isSameDevice) {
+                        for (SessionWebSocketManager existingSession : userSessions) {
+                            try {
+                                // 向旧连接发送下线通知
+                                String jsonMessage = String.format("{\"type\":\"SESSION_INVALID\",\"message\":\"账号在其他设备登录\"}");
+                                existingSession.sendMessage(jsonMessage);
+                                log.info("已向用户{}的旧设备连接发送下线通知", this.userId);
+                                
+                                // 延迟关闭旧连接，确保通知能够发送
+                                existingSession.session.close();
+                            } catch (IOException e) {
+                                log.error("关闭旧连接失败: {}", e.getMessage());
+                            }
+                        }
                         
-                        // 延迟关闭旧连接，确保通知能够发送
-                        oldConnection.session.close();
-                    } catch (IOException e) {
-                        log.error("关闭旧连接失败: {}", e.getMessage());
+                        // 清空该用户的所有连接
+                        userMultiSessionMap.remove(this.userId);
                     }
                 }
                 
-                // 存储新连接
+                // 添加到多连接映射
+                userMultiSessionMap.computeIfAbsent(this.userId, k -> new CopyOnWriteArraySet<>()).add(this);
+                
+                // 更新单连接映射（保持向后兼容）
                 userSessionMap.put(this.userId, this);
-                log.info("用户{}建立WebSocket连接，当前在线人数: {}", this.userId, getOnlineCount());
+                
+                log.info("用户{}建立WebSocket连接，当前在线人数: {}，该用户连接数: {}", 
+                    this.userId, getOnlineCount(), userMultiSessionMap.get(this.userId).size());
             }
         } catch (Exception e) {
             log.error("解析token失败: {}", e.getMessage());
@@ -105,8 +134,22 @@ public class SessionWebSocketManager {
         
         // 从用户会话映射中移除
         if (userId != null && !userId.isEmpty()) {
+            // 从多连接映射中移除
+            CopyOnWriteArraySet<SessionWebSocketManager> userSessions = userMultiSessionMap.get(userId);
+            if (userSessions != null) {
+                userSessions.remove(this);
+                // 如果该用户没有其他连接了，清空映射
+                if (userSessions.isEmpty()) {
+                    userMultiSessionMap.remove(userId);
+                }
+            }
+            
+            // 从单连接映射中移除（保持向后兼容）
             userSessionMap.remove(userId);
-            log.info("用户{}关闭WebSocket连接，当前在线人数: {}", userId, getOnlineCount());
+            
+            log.info("用户{}关闭WebSocket连接，当前在线人数: {}，该用户剩余连接数: {}", 
+                userId, getOnlineCount(), 
+                userMultiSessionMap.containsKey(userId) ? userMultiSessionMap.get(userId).size() : 0);
         }
     }
     
@@ -150,11 +193,26 @@ public class SessionWebSocketManager {
      */
     public static void sendInfo(String message, String userId) throws IOException {
         log.info("发送消息到用户: {}, 消息内容: {}", userId, message);
-        SessionWebSocketManager manager = userSessionMap.get(userId);
-        if (manager != null) {
-            manager.sendMessage(message);
+        
+        // 优先使用多连接映射发送消息
+        CopyOnWriteArraySet<SessionWebSocketManager> userSessions = userMultiSessionMap.get(userId);
+        if (userSessions != null && !userSessions.isEmpty()) {
+            // 向用户的所有连接发送消息
+            for (SessionWebSocketManager manager : userSessions) {
+                try {
+                    manager.sendMessage(message);
+                } catch (IOException e) {
+                    log.error("向用户{}的某个连接发送消息失败: {}", userId, e.getMessage());
+                }
+            }
         } else {
-            log.warn("用户{}不在线", userId);
+            // 回退到单连接映射（向后兼容）
+            SessionWebSocketManager manager = userSessionMap.get(userId);
+            if (manager != null) {
+                manager.sendMessage(message);
+            } else {
+                log.warn("用户{}不在线", userId);
+            }
         }
     }
     
@@ -172,10 +230,53 @@ public class SessionWebSocketManager {
     }
     
     /**
+     * 获取客户端IP地址
+     */
+    private String getClientIpAddress(Session session) {
+        try {
+            // 尝试从请求属性中获取X-Forwarded-For头
+            String forwardedFor = (String) session.getUserProperties().get("javax.websocket.endpoint.remoteAddress");
+            if (forwardedFor != null && !forwardedFor.isEmpty()) {
+                return forwardedFor.split(":")[0]; // 提取IP部分
+            }
+            
+            // 尝试从请求属性中获取其他可能的IP头
+            String realIp = (String) session.getUserProperties().get("javax.websocket.endpoint.remoteAddress");
+            if (realIp != null && !realIp.isEmpty()) {
+                return realIp.split(":")[0]; // 提取IP部分
+            }
+            
+            // 如果无法获取IP，返回默认值
+            return "unknown";
+        } catch (Exception e) {
+            log.error("获取客户端IP地址失败: {}", e.getMessage());
+            return "unknown";
+        }
+    }
+    
+    /**
      * 检查用户是否在线
      */
     public static boolean isUserOnline(String userId) {
+        // 优先检查多连接映射
+        CopyOnWriteArraySet<SessionWebSocketManager> userSessions = userMultiSessionMap.get(userId);
+        if (userSessions != null && !userSessions.isEmpty()) {
+            return true;
+        }
+        
+        // 回退到单连接映射（向后兼容）
         return userSessionMap.containsKey(userId);
+    }
+    
+    /**
+     * 获取用户当前连接数
+     */
+    public static int getUserConnectionCount(String userId) {
+        CopyOnWriteArraySet<SessionWebSocketManager> userSessions = userMultiSessionMap.get(userId);
+        if (userSessions != null) {
+            return userSessions.size();
+        }
+        return 0;
     }
     
     public static synchronized int getOnlineCount() {

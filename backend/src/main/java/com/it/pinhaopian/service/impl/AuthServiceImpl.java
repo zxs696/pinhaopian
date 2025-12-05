@@ -277,7 +277,7 @@ public class AuthServiceImpl implements AuthService {
             }
             
             // 生成新的token
-            String newToken = generateToken(username);
+            String newToken = generateToken(username, user.getUserId(), null);
             logger.info("Token refreshed successfully for user: {}", username);
             
             // 可选：将旧token加入黑名单
@@ -299,13 +299,8 @@ public class AuthServiceImpl implements AuthService {
     public String generateToken(String username) {
         return generateToken(username, null);
     }
-    
-    /**
-     * 生成token并可选择将旧token加入黑名单
-     * @param username 用户名
-     * @param oldToken 旧token（可选）
-     * @return 新token
-     */
+
+    @Override
     public String generateToken(String username, String oldToken) {
         try {
             if (username == null || username.trim().isEmpty()) {
@@ -322,6 +317,23 @@ public class AuthServiceImpl implements AuthService {
                 return null;
             }
             
+            return generateToken(username, user.getUserId(), oldToken);
+        } catch (Exception e) {
+            logger.error("Error generating token: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    @Override
+    public String generateToken(String username, Long userId, String oldToken) {
+        try {
+            if (username == null || username.trim().isEmpty() || userId == null) {
+                logger.warn("Attempting to generate token with invalid parameters");
+                return null;
+            }
+            
+            logger.debug("Generating token for user: {} (userId: {})", username, userId);
+            
             // 如果提供了旧token，将其加入黑名单（实现被顶号功能）
             if (oldToken != null && !oldToken.isEmpty()) {
                 try {
@@ -329,8 +341,11 @@ public class AuthServiceImpl implements AuthService {
                     logger.info("Old token added to blacklist for user: {}", username);
                     
                     // 从用户的token集合中移除旧token
-                    String userTokenKey = "user_tokens:" + user.getUserId();
+                    String userTokenKey = "user_tokens:" + userId;
                     redisUtils.removeSet(userTokenKey, oldToken);
+                    
+                    // 通知所有连接的客户端该用户已被顶号
+                    SessionWebSocketManager.sendSessionInvalidNotification(String.valueOf(userId), "您的账号已在其他设备登录，请重新登录");
                 } catch (Exception e) {
                     // Redis不可用时记录日志但不影响token生成
                     logger.warn("Failed to blacklist old token: {}", e.getMessage());
@@ -338,12 +353,12 @@ public class AuthServiceImpl implements AuthService {
             }
             
             // 使用带用户ID的token生成方法
-            String token = jwtUtils.generateToken(username, user.getUserId());
-             
+            String token = jwtUtils.generateToken(username, userId);
+              
             if (token != null) {
                 // 将token与用户关联存储在Redis中
                 try {
-                    String userTokenKey = "user_tokens:" + user.getUserId();
+                    String userTokenKey = "user_tokens:" + userId;
                     redisUtils.addSet(userTokenKey, token);
                     
                     // 设置token集合的过期时间为24小时

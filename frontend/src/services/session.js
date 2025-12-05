@@ -5,6 +5,7 @@
 
 import axios from 'axios'
 import webSocketService from './websocket'
+import crossWindowService from './crossWindow'
 import { useAuthStore } from '@/stores/modules/auth'
 
 class SessionService {
@@ -13,11 +14,62 @@ class SessionService {
     this.pollingIntervalTime = 30000 // 30秒轮询一次
     this.isPolling = false
     this.isWebSocketConnected = false
-    this.sessionCheckUrl = '/api/auth/checkSession'
+    this.sessionCheckUrl = '/auth/checkSession'
     this.eventHandlers = new Map()
     this.lastCheckTime = null
     this.checkFailedCount = 0
     this.maxCheckFailedCount = 3
+    this.isHandlingSessionInvalid = false
+    this.sessionInvalidTimestamp = null // 记录会话失效时间戳，防止重复处理
+    this.initCrossWindowCommunication()
+  }
+
+  /**
+   * 初始化跨窗口通信
+   */
+  initCrossWindowCommunication() {
+    // 监听来自其他窗口的会话失效通知
+    crossWindowService.on('sessionInvalid', (data) => {
+      console.log('收到来自其他窗口的会话失效通知:', data)
+      // 检查是否是当前窗口触发的，避免循环处理
+      if (data.windowId !== crossWindowService.getWindowId()) {
+        this.handleSessionInvalid(data.payload)
+      }
+    })
+
+    // 监听来自其他窗口的登录成功通知
+    crossWindowService.on('loginSuccess', (data) => {
+      console.log('收到来自其他窗口的登录成功通知:', data)
+      // 如果不是当前窗口触发的登录，检查当前会话状态
+      if (data.windowId !== crossWindowService.getWindowId()) {
+        this.checkCurrentSessionStatus()
+      }
+    })
+
+    // 监听页面重新获得焦点事件
+    crossWindowService.on('visibilityFocus', (data) => {
+      console.log('页面重新获得焦点，检查会话状态')
+      this.checkCurrentSessionStatus()
+    })
+  }
+
+  /**
+   * 检查当前会话状态
+   */
+  async checkCurrentSessionStatus() {
+    try {
+      const authStore = useAuthStore()
+      const token = authStore.token
+      
+      if (!token) {
+        return // 没有token，无需检查
+      }
+      
+      // 调用会话检查API
+      await this.checkSessionStatus(token)
+    } catch (error) {
+      console.error('检查当前会话状态失败:', error)
+    }
   }
 
   /**
@@ -31,8 +83,16 @@ class SessionService {
       return false
     }
 
-    // 清理之前的会话
-    this.cleanup()
+    // 如果是新登录，通知其他窗口
+    if (isNewLogin) {
+      crossWindowService.broadcast('loginSuccess', { 
+        timestamp: Date.now(),
+        isNewLogin: true
+      })
+      
+      // 只有在新登录时才清理之前的会话，避免重复断开连接
+      this.cleanup()
+    }
 
     // 初始化WebSocket连接
     this.initWebSocket(token, isNewLogin)
@@ -46,8 +106,15 @@ class SessionService {
   /**
    * 初始化WebSocket连接
    * @param {string} token 用户token
+   * @param {boolean} isNewLogin 是否是新登录
    */
-  initWebSocket(token) {
+  initWebSocket(token, isNewLogin = false) {
+    // 先移除现有的事件监听器，避免重复注册
+    webSocketService.off('connected')
+    webSocketService.off('disconnected')
+    webSocketService.off('error')
+    webSocketService.off('sessionInvalid')
+
     // 设置WebSocket事件监听器
     webSocketService.on('connected', () => {
       console.log('WebSocket连接已建立')
@@ -67,13 +134,13 @@ class SessionService {
     })
 
     webSocketService.on('sessionInvalid', (data) => {
-      console.warn('收到会话失效通知:', data.message)
+      console.warn('收到WebSocket会话失效通知:', data.message)
       this.emit('sessionInvalid', data)
       this.handleSessionInvalid(data)
     })
 
     // 连接WebSocket
-    webSocketService.connect(token)
+    webSocketService.connect(token, null, isNewLogin)
   }
 
   /**
@@ -158,7 +225,23 @@ class SessionService {
     const data = typeof messageOrData === 'string' ? { message: messageOrData } : (messageOrData || {});
     console.warn('会话失效，处理中...', data);
     
-    // 防止重复处理
+    // 检查是否是来自同一IP的会话冲突，如果是则不需要处理
+    // 因为现在支持同IP多窗口登录，只有真正不同设备登录才需要处理
+    if (data.message && data.message.includes('同IP')) {
+      console.log('检测到同IP多窗口连接，忽略会话失效通知');
+      return;
+    }
+    
+    // 防止重复处理 - 使用时间戳检查
+    const now = Date.now();
+    if (this.sessionInvalidTimestamp && (now - this.sessionInvalidTimestamp < 5000)) {
+      console.log('会话失效处理已在进行中，跳过重复处理');
+      return;
+    }
+    
+    this.sessionInvalidTimestamp = now;
+    
+    // 防止并发处理
     if (this.isHandlingSessionInvalid) {
       console.log('会话失效处理已在进行中，跳过重复处理');
       return;
@@ -167,6 +250,12 @@ class SessionService {
     this.isHandlingSessionInvalid = true;
     
     try {
+      // 向其他窗口广播会话失效通知
+      crossWindowService.broadcast('sessionInvalid', {
+        message: data.message || '您的账号在其他设备登录，当前会话已失效',
+        timestamp: now
+      });
+      
       // 停止轮询检查
       this.stopPolling();
       
@@ -180,10 +269,15 @@ class SessionService {
       const authStore = useAuthStore();
       authStore.logout();
       
+      // 调用全局会话失效对话框
+      if (window.showSessionInvalidDialog) {
+        window.showSessionInvalidDialog();
+      }
+      
       // 触发会话失效事件，保持兼容性同时增强功能
       this.emit('sessionExpired', {
         message: data.message || '您的账号在其他设备登录，当前会话已失效',
-        timestamp: Date.now()
+        timestamp: now
       });
       
       console.log('会话失效处理完成');
@@ -211,6 +305,9 @@ class SessionService {
     localStorage.removeItem('adminVisitedTabs')
     localStorage.removeItem('visitedTabs')
     
+    // 清除跨窗口通信的storage
+    localStorage.removeItem('pinhaopian_session_sync')
+    
     console.log('已清除本地认证信息')
   }
 
@@ -219,9 +316,20 @@ class SessionService {
    */
   cleanup() {
     this.stopPolling()
-    webSocketService.disconnect()
-    this.eventHandlers.clear()
-    console.log('会话管理已清理')
+    // 检查WebSocket是否正在连接，如果是则等待连接建立或失败后再处理
+    // 避免在连接建立过程中断开连接
+    if (webSocketService.getStatus && webSocketService.getStatus().isConnecting) {
+      console.log('WebSocket正在连接中，延迟清理')
+      setTimeout(() => {
+        webSocketService.disconnect()
+        this.eventHandlers.clear()
+        console.log('会话管理已清理（延迟）')
+      }, 1000)
+    } else {
+      webSocketService.disconnect()
+      this.eventHandlers.clear()
+      console.log('会话管理已清理')
+    }
   }
 
   /**

@@ -145,6 +145,7 @@ import { useAuthStore } from '../../stores/modules/auth.js'
 import { useRouter } from 'vue-router'
 import { ElInput, ElButton, ElCheckbox } from 'element-plus'
 import { showError, showSuccess } from '../../utils/message.js'
+import sessionService from '@/services/session'
 
 // 接收来自父组件的show-modal prop
 const props = defineProps({
@@ -218,6 +219,15 @@ const handleLogin = async () => {
       password: loginForm.value.password,
       rememberMe: loginForm.value.rememberMe
     })
+    
+    // 登录成功后初始化会话管理
+    if (authStore.isAuthenticated) {
+      // 初始化会话服务，标记为新登录
+      sessionService.initialize(authStore.token, true)
+      
+      // 初始化会话监控
+      authStore.initializeSessionMonitoring(true)
+    }
     
     // 无论store状态如何，登录成功后都关闭模态框
     handleClose()

@@ -97,10 +97,10 @@ export const useAuthStore = defineStore('auth', {
         showSuccess(`登录成功-${user.username}-欢迎回来`)
         
         // 延迟初始化会话监控，避免与登录成功提示冲突
+        // 注意：这里传递isNewLogin=true，避免重复初始化
         setTimeout(() => {
           if (this.isAuthenticated && this.token) {
-            this.stopSessionMonitoring()
-            this.initializeSessionMonitoring()
+            this.initializeSessionMonitoring(true)
           }
         }, 1000) // 延迟1秒初始化，确保登录成功提示显示完成
         
@@ -315,6 +315,12 @@ export const useAuthStore = defineStore('auth', {
       initializeSessionMonitoring(isNewLogin = false) {
         if (!this.isAuthenticated || !this.token) {
           console.log('用户未登录或缺少token，跳过会话监控初始化')
+          return
+        }
+        
+        // 如果已经在监控且不是新登录，跳过初始化避免重复断开连接
+        if (this.isSessionMonitoring && !isNewLogin) {
+          console.log('会话监控已在运行且非新登录，跳过重复初始化')
           return
         }
         

@@ -41,10 +41,10 @@ public class AuthController {
                 String token;
                 if (oldToken != null) {
                     // 如果有旧token，使用带oldToken参数的generateToken方法
-                    token = authService.generateToken(loginUser.getUsername(), oldToken);
+                    token = authService.generateToken(loginUser.getUsername(), loginUser.getUserId(), oldToken);
                 } else {
-                    // 如果没有旧token，使用普通的generateToken方法
-                    token = authService.generateToken(loginUser.getUsername());
+                    // 如果没有旧token，使用带userId参数的generateToken方法
+                    token = authService.generateToken(loginUser.getUsername(), loginUser.getUserId(), null);
                 }
                 
                 // 构造返回结果
@@ -72,7 +72,7 @@ public class AuthController {
               
             if (registeredUser != null) {
                 // 生成JWT token
-                String token = authService.generateToken(registeredUser.getUsername());
+                String token = authService.generateToken(registeredUser.getUsername(), registeredUser.getUserId(), null);
                 
                 // 构造返回结果，包含用户信息和token
                 Map<String, Object> result = new HashMap<>();

@@ -53,6 +53,15 @@ public interface AuthService {
     String generateToken(String username, String oldToken);
     
     /**
+     * 生成JWT token并可选择将旧token加入黑名单
+     * @param username 用户名
+     * @param userId 用户ID
+     * @param oldToken 旧token（可选）
+     * @return JWT token
+     */
+    String generateToken(String username, Long userId, String oldToken);
+    
+    /**
      * 验证token是否有效
      * @param token 用户token
      * @return token验证结果

@@ -138,6 +138,9 @@ public class ShiroConfig {
         chainDefinition.addPathDefinition("/", "anon");
         chainDefinition.addPathDefinition("/index.html", "anon");
         
+        // 排除WebSocket路径，不需要Shiro认证
+        chainDefinition.addPathDefinition("/ws/**", "anon");
+        
         // 设置需要认证的路径
         chainDefinition.addPathDefinition("/auth/**", "jwt");
         chainDefinition.addPathDefinition("/user/**", "jwt");
