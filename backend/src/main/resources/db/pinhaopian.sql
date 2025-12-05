@@ -11,12 +11,10 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 27/11/2025 16:59:24
+ Date: 05/12/2025 11:14:22
 */
 
 SET NAMES utf8mb4;
-SET CHARACTER SET utf8mb4;
-SET COLLATION_CONNECTION = utf8mb4_unicode_ci;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
@@ -41,7 +39,7 @@ CREATE TABLE `audit_logs`  (
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_operation`(`operation` ASC) USING BTREE,
   INDEX `idx_created_at`(`created_at` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '操作日志表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '操作日志表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of audit_logs
@@ -62,7 +60,7 @@ CREATE TABLE `categories`  (
   PRIMARY KEY (`category_id`) USING BTREE,
   INDEX `parent_id`(`parent_id` ASC) USING BTREE,
   CONSTRAINT `categories_ibfk_1` FOREIGN KEY (`parent_id`) REFERENCES `categories` (`category_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of categories
@@ -89,7 +87,7 @@ CREATE TABLE `comments`  (
   CONSTRAINT `comments_ibfk_1` FOREIGN KEY (`video_id`) REFERENCES `videos` (`video_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `comments_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `comments_ibfk_3` FOREIGN KEY (`parent_id`) REFERENCES `comments` (`comment_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of comments
@@ -115,7 +113,7 @@ CREATE TABLE `danmaku`  (
   INDEX `user_id`(`user_id` ASC) USING BTREE,
   CONSTRAINT `danmaku_ibfk_1` FOREIGN KEY (`video_id`) REFERENCES `videos` (`video_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `danmaku_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of danmaku
@@ -154,7 +152,7 @@ CREATE TABLE `favorites`  (
   PRIMARY KEY (`favorite_id`) USING BTREE,
   INDEX `user_id`(`user_id` ASC) USING BTREE,
   CONSTRAINT `favorites_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of favorites
@@ -174,7 +172,7 @@ CREATE TABLE `follows`  (
   INDEX `following_id`(`following_id` ASC) USING BTREE,
   CONSTRAINT `follows_ibfk_1` FOREIGN KEY (`follower_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `follows_ibfk_2` FOREIGN KEY (`following_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of follows
@@ -193,7 +191,7 @@ CREATE TABLE `likes`  (
   PRIMARY KEY (`like_id`) USING BTREE,
   UNIQUE INDEX `unique_like`(`user_id` ASC, `target_type` ASC, `target_id` ASC) USING BTREE,
   CONSTRAINT `likes_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of likes
@@ -221,86 +219,164 @@ CREATE TABLE `permissions`  (
   PRIMARY KEY (`permission_id`) USING BTREE,
   UNIQUE INDEX `uk_permission_code`(`permission_code` ASC) USING BTREE,
   INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 55 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '权限表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 67 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '权限表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of permissions
 -- ----------------------------
--- 一级菜单
-INSERT INTO `permissions` VALUES (1, 'home', '首页', 'menu', '/admin/home', NULL, 0, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (2, 'workbench', '工作台', 'menu', '/admin/workbench', NULL, 1, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (3, 'dashboard', '仪表盘', 'menu', '/admin/dashboard', NULL, 0, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (4, 'content', '内容管理', 'menu', '/admin/content', NULL, 0, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (5, 'user', '用户管理', 'menu', '/admin/user', NULL, 0, NULL, 1, 5, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (6, 'system', '系统管理', 'menu', '/admin/system', NULL, 0, NULL, 1, 6, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions` VALUES (1, 'HOME:VIEW', '首页', 'menu', '/admin', 'GET', 0, '系统首页', 1, 1, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 15:18:46');
+INSERT INTO `permissions` VALUES (2, 'HOME:WORKBENCH:VIEW', '工作台', 'menu', '/admin/workbench', 'GET', 1, '首页-工作台', 1, 2, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 15:18:51');
+INSERT INTO `permissions` VALUES (3, 'DASHBOARD:ANALYSIS:VIEW', '控制台', 'menu', '/admin/dashboard', 'GET', 0, '控制台', 1, 3, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 15:20:20');
+INSERT INTO `permissions` VALUES (4, 'DASHBOARD:ANALYSIS:ANALYSIS', '分析页', 'menu', '/admin/dashboard/analysis', 'GET', 3, '控制台-分析页', 1, 4, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 15:21:19');
+INSERT INTO `permissions` VALUES (5, 'DASHBOARD:ANALYSIS:STATISTICS', '统计页', 'menu', '/admin/dashboard/statistics', 'GET', 3, '控制台-统计页', 1, 5, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 15:21:22');
+INSERT INTO `permissions` VALUES (6, 'VIDEO:MANAGEMENT:VIEW', '视频管理', 'menu', '/admin/video', 'GET', 0, '视频管理', 1, 11, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (7, 'VIDEO:LIST:VIEW', '视频列表', 'menu', '/admin/video/list', 'GET', 6, '视频管理-视频列表', 1, 12, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (8, 'VIDEO:REVIEW:VIEW', '视频审核', 'menu', '/admin/video/review', 'GET', 6, '视频管理-视频审核', 1, 13, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (9, 'VIDEO:CATEGORY:VIEW', '视频分类', 'menu', '/admin/video/category', 'GET', 6, '视频管理-视频分类', 1, 14, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (10, 'VIDEO:TAG:VIEW', '视频标签', 'menu', '/admin/video/tag', 'GET', 6, '视频管理-视频标签', 1, 15, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (11, 'USER:MANAGEMENT:VIEW', '用户管理', 'menu', '/admin/user', 'GET', 0, '用户管理', 1, 21, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (12, 'USER:LIST:VIEW', '用户列表', 'menu', '/admin/user/list', 'GET', 11, '用户管理-用户列表', 1, 22, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (13, 'USER:ROLE:VIEW', '角色管理', 'menu', '/admin/user/role', 'GET', 11, '用户管理-角色管理', 1, 23, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (14, 'USER:PERMISSION:VIEW', '权限管理', 'menu', '/admin/user/permission', 'GET', 11, '用户管理-权限管理', 1, 24, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (15, 'CONTENT:MANAGEMENT:VIEW', '内容管理', 'menu', '/admin/content', 'GET', 0, '内容管理', 1, 31, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (16, 'CONTENT:COMMENT:VIEW', '评论管理', 'menu', '/admin/comment/list', 'GET', 15, '内容管理-评论管理', 1, 32, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (17, 'CONTENT:DANMAKU:VIEW', '弹幕管理', 'menu', '/admin/danmu/list', 'GET', 15, '内容管理-弹幕管理', 1, 33, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (18, 'SYSTEM:MANAGEMENT:VIEW', '系统设置', 'menu', '/admin/system', 'GET', 0, '系统设置', 1, 41, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (19, 'SYSTEM:CONFIG:VIEW', '系统配置', 'menu', '/admin/system/config', 'GET', 18, '系统设置-系统配置', 1, 42, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (20, 'SYSTEM:LOG:VIEW', '日志管理', 'menu', '/admin/system/log', 'GET', 18, '系统设置-日志管理', 1, 43, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (21, 'SYSTEM:BACKUP:VIEW', '数据备份', 'menu', '/admin/system/backup', 'GET', 18, '系统设置-数据备份', 1, 44, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (22, 'VIDEO:ADD:BUTTON', '添加视频', 'button', '', '', 0, '添加视频按钮', 1, 101, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (23, 'VIDEO:EDIT:BUTTON', '编辑视频', 'button', '', '', 0, '编辑视频按钮', 1, 102, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (24, 'VIDEO:DELETE:BUTTON', '删除视频', 'button', '', '', 0, '删除视频按钮', 1, 103, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (25, 'VIDEO:APPROVE:BUTTON', '审核通过', 'button', '', '', 0, '审核通过按钮', 1, 104, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (26, 'VIDEO:REJECT:BUTTON', '审核拒绝', 'button', '', '', 0, '审核拒绝按钮', 1, 105, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (27, 'USER:ADD:BUTTON', '添加用户', 'button', '', '', 0, '添加用户按钮', 1, 106, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (28, 'USER:EDIT:BUTTON', '编辑用户', 'button', '', '', 0, '编辑用户按钮', 1, 107, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (29, 'USER:DELETE:BUTTON', '删除用户', 'button', '', '', 0, '删除用户按钮', 1, 108, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (30, 'USER:BAN:BUTTON', '封禁用户', 'button', '', '', 0, '封禁用户按钮', 1, 109, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (31, 'USER:UNBAN:BUTTON', '解封用户', 'button', '', '', 0, '解封用户按钮', 1, 110, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (32, 'ROLE:ADD:BUTTON', '添加角色', 'button', '', '', 0, '添加角色按钮', 1, 111, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (33, 'ROLE:EDIT:BUTTON', '编辑角色', 'button', '', '', 0, '编辑角色按钮', 1, 112, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (34, 'ROLE:DELETE:BUTTON', '删除角色', 'button', '', '', 0, '删除角色按钮', 1, 113, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (35, 'PERMISSION:ADD:BUTTON', '添加权限', 'button', '', '', 0, '添加权限按钮', 1, 114, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (36, 'PERMISSION:EDIT:BUTTON', '编辑权限', 'button', '', '', 0, '编辑权限按钮', 1, 115, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (37, 'PERMISSION:DELETE:BUTTON', '删除权限', 'button', '', '', 0, '删除权限按钮', 1, 116, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (38, 'COMMENT:DELETE:BUTTON', '删除评论', 'button', '', '', 0, '删除评论按钮', 1, 117, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (39, 'COMMENT:REVIEW:BUTTON', '审核评论', 'button', '', '', 0, '审核评论按钮', 1, 118, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (40, 'SYSTEM:BACKUP:BUTTON', '数据备份', 'button', '', '', 0, '数据备份按钮', 1, 119, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (41, 'SYSTEM:RESTORE:BUTTON', '数据恢复', 'button', '', '', 0, '数据恢复按钮', 1, 120, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (42, 'API:VIDEO:LIST', '视频列表API', 'api', '/api/videos', 'GET', 0, '获取视频列表API', 1, 201, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (43, 'API:VIDEO:DETAIL', '视频详情API', 'api', '/api/videos/{id}', 'GET', 0, '获取视频详情API', 1, 202, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (44, 'API:VIDEO:CREATE', '创建视频API', 'api', '/api/videos', 'POST', 0, '创建视频API', 1, 203, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (45, 'API:VIDEO:UPDATE', '更新视频API', 'api', '/api/videos/{id}', 'PUT', 0, '更新视频API', 1, 204, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (46, 'API:VIDEO:DELETE', '删除视频API', 'api', '/api/videos/{id}', 'DELETE', 0, '删除视频API', 1, 205, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (47, 'API:USER:LIST', '用户列表API', 'api', '/api/users', 'GET', 0, '获取用户列表API', 1, 206, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (48, 'API:USER:DETAIL', '用户详情API', 'api', '/api/users/{id}', 'GET', 0, '获取用户详情API', 1, 207, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (49, 'API:USER:CREATE', '创建用户API', 'api', '/api/users', 'POST', 0, '创建用户API', 1, 208, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (50, 'API:USER:UPDATE', '更新用户API', 'api', '/api/users/{id}', 'PUT', 0, '更新用户API', 1, 209, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (51, 'API:USER:DELETE', '删除用户API', 'api', '/api/users/{id}', 'DELETE', 0, '删除用户API', 1, 210, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (52, 'API:ROLE:LIST', '角色列表API', 'api', '/api/roles', 'GET', 0, '获取角色列表API', 1, 211, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (53, 'API:ROLE:DETAIL', '角色详情API', 'api', '/api/roles/{id}', 'GET', 0, '获取角色详情API', 1, 212, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (54, 'API:ROLE:CREATE', '创建角色API', 'api', '/api/roles', 'POST', 0, '创建角色API', 1, 213, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (55, 'API:ROLE:UPDATE', '更新角色API', 'api', '/api/roles/{id}', 'PUT', 0, '更新角色API', 1, 214, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (56, 'API:ROLE:DELETE', '删除角色API', 'api', '/api/roles/{id}', 'DELETE', 0, '删除角色API', 1, 215, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (57, 'API:PERMISSION:LIST', '权限列表API', 'api', '/api/permissions', 'GET', 0, '获取权限列表API', 1, 216, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (58, 'API:PERMISSION:DETAIL', '权限详情API', 'api', '/api/permissions/{id}', 'GET', 0, '获取权限详情API', 1, 217, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (59, 'API:PERMISSION:CREATE', '创建权限API', 'api', '/api/permissions', 'POST', 0, '创建权限API', 1, 218, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (60, 'API:PERMISSION:UPDATE', '更新权限API', 'api', '/api/permissions/{id}', 'PUT', 0, '更新权限API', 1, 219, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (61, 'API:PERMISSION:DELETE', '删除权限API', 'api', '/api/permissions/{id}', 'DELETE', 0, '删除权限API', 1, 220, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (62, 'API:COMMENT:LIST', '评论列表API', 'api', '/api/comments', 'GET', 0, '获取评论列表API', 1, 221, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (63, 'API:COMMENT:DETAIL', '评论详情API', 'api', '/api/comments/{id}', 'GET', 0, '获取评论详情API', 1, 222, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (64, 'API:COMMENT:DELETE', '删除评论API', 'api', '/api/comments/{id}', 'DELETE', 0, '删除评论API', 1, 223, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (65, 'API:SYSTEM:BACKUP', '系统备份API', 'api', '/api/system/backup', 'POST', 0, '系统备份API', 1, 224, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
+INSERT INTO `permissions` VALUES (66, 'API:SYSTEM:RESTORE', '系统恢复API', 'api', '/api/system/restore', 'POST', 0, '系统恢复API', 1, 225, 1, '2025-12-01 14:23:03', NULL, '2025-12-01 14:23:03');
 
--- 仪表盘子菜单
-INSERT INTO `permissions` VALUES (7, 'dashboard_analysis', '分析页', 'menu', '/admin/dashboard/analysis', NULL, 3, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (8, 'dashboard_statistics', '统计页', 'menu', '/admin/dashboard/statistics', NULL, 3, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+-- ----------------------------
+-- Table structure for permissions_backup
+-- ----------------------------
+DROP TABLE IF EXISTS `permissions_backup`;
+CREATE TABLE `permissions_backup`  (
+  `permission_id` bigint NOT NULL DEFAULT 0 COMMENT '权限ID',
+  `permission_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '权限编码',
+  `permission_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '权限名称',
+  `resource_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '资源类型：menu-菜单，button-按钮，api-接口',
+  `resource_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '资源URL/路径',
+  `resource_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '请求方法：GET,POST,PUT,DELETE等',
+  `parent_id` bigint NULL DEFAULT 0 COMMENT '父权限ID',
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '权限描述',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序顺序',
+  `created_by` bigint NULL DEFAULT NULL COMMENT '创建人ID',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_by` bigint NULL DEFAULT NULL COMMENT '更新人ID',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
--- 内容管理子菜单
-INSERT INTO `permissions` VALUES (9, 'video', '视频管理', 'menu', '/admin/video', NULL, 4, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (10, 'video_pending', '待审核视频', 'menu', '/admin/video/pending', NULL, 4, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (11, 'category', '分类管理', 'menu', '/admin/category', NULL, 4, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-
--- 用户管理子菜单
-INSERT INTO `permissions` VALUES (12, 'user_list', '用户列表', 'menu', '/admin/user/list', NULL, 5, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (13, 'role', '角色管理', 'menu', '/admin/role', NULL, 5, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (14, 'permission', '权限管理', 'menu', '/admin/permission', NULL, 5, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (15, 'menu', '菜单管理', 'menu', '/admin/menu', NULL, 5, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-
--- 系统管理子菜单
-INSERT INTO `permissions` VALUES (16, 'system_settings', '系统设置', 'menu', '/admin/system/settings', NULL, 6, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (17, 'system_security', '安全设置', 'menu', '/admin/system/security', NULL, 6, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (18, 'system_logs', '系统日志', 'menu', '/admin/system/logs', NULL, 6, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-
--- 按钮权限
-INSERT INTO `permissions` VALUES (19, 'user_view', '查看用户', 'button', '', NULL, 12, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (20, 'user_add', '添加用户', 'button', '', NULL, 12, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (21, 'user_edit', '编辑用户', 'button', '', NULL, 12, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (22, 'user_delete', '删除用户', 'button', '', NULL, 12, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (23, 'video_view', '查看视频', 'button', '', NULL, 9, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (24, 'video_add', '添加视频', 'button', '', NULL, 9, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (25, 'video_edit', '编辑视频', 'button', '', NULL, 9, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (26, 'video_delete', '删除视频', 'button', '', NULL, 9, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (27, 'video_approve', '审核视频', 'button', '', NULL, 10, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (28, 'video_reject', '拒绝视频', 'button', '', NULL, 10, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (29, 'category_view', '查看分类', 'button', '', NULL, 11, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (30, 'category_add', '添加分类', 'button', '', NULL, 11, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (31, 'category_edit', '编辑分类', 'button', '', NULL, 11, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (32, 'category_delete', '删除分类', 'button', '', NULL, 11, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (33, 'role_view', '查看角色', 'button', '', NULL, 13, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (34, 'role_add', '添加角色', 'button', '', NULL, 13, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (35, 'role_edit', '编辑角色', 'button', '', NULL, 13, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (36, 'role_delete', '删除角色', 'button', '', NULL, 13, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (37, 'permission_view', '查看权限', 'button', '', NULL, 14, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (38, 'permission_add', '添加权限', 'button', '', NULL, 14, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (39, 'permission_edit', '编辑权限', 'button', '', NULL, 14, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (40, 'permission_delete', '删除权限', 'button', '', NULL, 14, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-
--- API权限
-INSERT INTO `permissions` VALUES (41, 'api_user_list', '用户列表API', 'api', '/api/admin/user/list', 'GET', 12, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (42, 'api_user_add', '添加用户API', 'api', '/api/admin/user', 'POST', 12, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (43, 'api_user_edit', '编辑用户API', 'api', '/api/admin/user/*', 'PUT', 12, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (44, 'api_user_delete', '删除用户API', 'api', '/api/admin/user/*', 'DELETE', 12, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (45, 'api_video_list', '视频列表API', 'api', '/api/admin/video', 'GET', 9, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (46, 'api_video_add', '添加视频API', 'api', '/api/admin/video', 'POST', 9, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (47, 'api_video_edit', '编辑视频API', 'api', '/api/admin/video/*', 'PUT', 9, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (48, 'api_video_delete', '删除视频API', 'api', '/api/admin/video/*', 'DELETE', 9, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (49, 'api_video_approve', '审核视频API', 'api', '/api/admin/video/*/approve', 'PUT', 10, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (50, 'api_video_reject', '拒绝视频API', 'api', '/api/admin/video/*/reject', 'PUT', 10, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (51, 'api_category_list', '分类列表API', 'api', '/api/admin/category', 'GET', 11, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (52, 'api_category_add', '添加分类API', 'api', '/api/admin/category', 'POST', 11, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (53, 'api_category_edit', '编辑分类API', 'api', '/api/admin/category/*', 'PUT', 11, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (54, 'api_category_delete', '删除分类API', 'api', '/api/admin/category/*', 'DELETE', 11, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (55, 'api_role_list', '角色列表API', 'api', '/api/admin/role', 'GET', 13, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (56, 'api_role_add', '添加角色API', 'api', '/api/admin/role', 'POST', 13, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (57, 'api_role_edit', '编辑角色API', 'api', '/api/admin/role/*', 'PUT', 13, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (58, 'api_role_delete', '删除角色API', 'api', '/api/admin/role/*', 'DELETE', 13, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (59, 'api_permission_list', '权限列表API', 'api', '/api/admin/permission', 'GET', 14, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (60, 'api_permission_add', '添加权限API', 'api', '/api/admin/permission', 'POST', 14, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (61, 'api_permission_edit', '编辑权限API', 'api', '/api/admin/permission/*', 'PUT', 14, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
-INSERT INTO `permissions` VALUES (62, 'api_permission_delete', '删除权限API', 'api', '/api/admin/permission/*', 'DELETE', 14, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+-- ----------------------------
+-- Records of permissions_backup
+-- ----------------------------
+INSERT INTO `permissions_backup` VALUES (1, 'home', '首页', 'menu', '/admin/home', NULL, 0, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (2, 'workbench', '工作台', 'menu', '/admin/workbench', NULL, 1, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (3, 'dashboard', '仪表盘', 'menu', '/admin/dashboard', NULL, 0, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (4, 'content', '内容管理', 'menu', '/admin/content', NULL, 0, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (5, 'user', '用户管理', 'menu', '/admin/user', NULL, 0, NULL, 1, 5, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (6, 'system', '系统管理', 'menu', '/admin/system', NULL, 0, NULL, 1, 6, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (7, 'dashboard_analysis', '分析页', 'menu', '/admin/dashboard/analysis', NULL, 3, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (8, 'dashboard_statistics', '统计页', 'menu', '/admin/dashboard/statistics', NULL, 3, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (9, 'video', '视频管理', 'menu', '/admin/video', NULL, 4, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (10, 'video_pending', '待审核视频', 'menu', '/admin/video/pending', NULL, 4, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (11, 'category', '分类管理', 'menu', '/admin/category', NULL, 4, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (12, 'user_list', '用户列表', 'menu', '/admin/user/list', NULL, 5, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (13, 'role', '角色管理', 'menu', '/admin/role', NULL, 5, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (14, 'permission', '权限管理', 'menu', '/admin/permission', NULL, 5, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (15, 'menu', '菜单管理', 'menu', '/admin/menu', NULL, 5, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (16, 'system_settings', '系统设置', 'menu', '/admin/system/settings', NULL, 6, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (17, 'system_security', '安全设置', 'menu', '/admin/system/security', NULL, 6, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (18, 'system_logs', '系统日志', 'menu', '/admin/system/logs', NULL, 6, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (19, 'user_view', '查看用户', 'button', '', NULL, 12, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (20, 'user_add', '添加用户', 'button', '', NULL, 12, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (21, 'user_edit', '编辑用户', 'button', '', NULL, 12, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (22, 'user_delete', '删除用户', 'button', '', NULL, 12, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (23, 'video_view', '查看视频', 'button', '', NULL, 9, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (24, 'video_add', '添加视频', 'button', '', NULL, 9, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (25, 'video_edit', '编辑视频', 'button', '', NULL, 9, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (26, 'video_delete', '删除视频', 'button', '', NULL, 9, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (27, 'video_approve', '审核视频', 'button', '', NULL, 10, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (28, 'video_reject', '拒绝视频', 'button', '', NULL, 10, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (29, 'category_view', '查看分类', 'button', '', NULL, 11, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (30, 'category_add', '添加分类', 'button', '', NULL, 11, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (31, 'category_edit', '编辑分类', 'button', '', NULL, 11, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (32, 'category_delete', '删除分类', 'button', '', NULL, 11, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (33, 'role_view', '查看角色', 'button', '', NULL, 13, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (34, 'role_add', '添加角色', 'button', '', NULL, 13, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (35, 'role_edit', '编辑角色', 'button', '', NULL, 13, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (36, 'role_delete', '删除角色', 'button', '', NULL, 13, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (37, 'permission_view', '查看权限', 'button', '', NULL, 14, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (38, 'permission_add', '添加权限', 'button', '', NULL, 14, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (39, 'permission_edit', '编辑权限', 'button', '', NULL, 14, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (40, 'permission_delete', '删除权限', 'button', '', NULL, 14, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (41, 'api_user_list', '用户列表API', 'api', '/api/admin/user/list', 'GET', 12, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (42, 'api_user_add', '添加用户API', 'api', '/api/admin/user', 'POST', 12, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (43, 'api_user_edit', '编辑用户API', 'api', '/api/admin/user/*', 'PUT', 12, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (44, 'api_user_delete', '删除用户API', 'api', '/api/admin/user/*', 'DELETE', 12, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (45, 'api_video_list', '视频列表API', 'api', '/api/admin/video', 'GET', 9, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (46, 'api_video_add', '添加视频API', 'api', '/api/admin/video', 'POST', 9, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (47, 'api_video_edit', '编辑视频API', 'api', '/api/admin/video/*', 'PUT', 9, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (48, 'api_video_delete', '删除视频API', 'api', '/api/admin/video/*', 'DELETE', 9, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (49, 'api_video_approve', '审核视频API', 'api', '/api/admin/video/*/approve', 'PUT', 10, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (50, 'api_video_reject', '拒绝视频API', 'api', '/api/admin/video/*/reject', 'PUT', 10, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (51, 'api_category_list', '分类列表API', 'api', '/api/admin/category', 'GET', 11, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (52, 'api_category_add', '添加分类API', 'api', '/api/admin/category', 'POST', 11, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (53, 'api_category_edit', '编辑分类API', 'api', '/api/admin/category/*', 'PUT', 11, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (54, 'api_category_delete', '删除分类API', 'api', '/api/admin/category/*', 'DELETE', 11, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (55, 'api_role_list', '角色列表API', 'api', '/api/admin/role', 'GET', 13, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (56, 'api_role_add', '添加角色API', 'api', '/api/admin/role', 'POST', 13, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (57, 'api_role_edit', '编辑角色API', 'api', '/api/admin/role/*', 'PUT', 13, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (58, 'api_role_delete', '删除角色API', 'api', '/api/admin/role/*', 'DELETE', 13, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (59, 'api_permission_list', '权限列表API', 'api', '/api/admin/permission', 'GET', 14, NULL, 1, 1, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (60, 'api_permission_add', '添加权限API', 'api', '/api/admin/permission', 'POST', 14, NULL, 1, 2, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (61, 'api_permission_edit', '编辑权限API', 'api', '/api/admin/permission/*', 'PUT', 14, NULL, 1, 3, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
+INSERT INTO `permissions_backup` VALUES (62, 'api_permission_delete', '删除权限API', 'api', '/api/admin/permission/*', 'DELETE', 14, NULL, 1, 4, NULL, '2025-11-27 16:52:39', NULL, '2025-11-27 16:52:39');
 
 -- ----------------------------
 -- Table structure for play_history
@@ -319,7 +395,7 @@ CREATE TABLE `play_history`  (
   INDEX `video_id`(`video_id` ASC) USING BTREE,
   CONSTRAINT `play_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `play_history_ibfk_2` FOREIGN KEY (`video_id`) REFERENCES `videos` (`video_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of play_history
@@ -341,107 +417,189 @@ CREATE TABLE `role_permissions`  (
   INDEX `fk_role_permissions_permission_id`(`permission_id` ASC) USING BTREE,
   CONSTRAINT `fk_role_permissions_permission_id` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`permission_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_role_permissions_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 82 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色权限关联表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 161 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of role_permissions
 -- ----------------------------
--- 管理员角色权限 (role_id = 1)
--- 一级菜单权限
-INSERT INTO `role_permissions` VALUES (1, 1, 1, NULL, '2025-11-27 16:52:39');  -- 首页
-INSERT INTO `role_permissions` VALUES (2, 1, 3, NULL, '2025-11-27 16:52:39');  -- 仪表盘
-INSERT INTO `role_permissions` VALUES (3, 1, 4, NULL, '2025-11-27 16:52:39');  -- 内容管理
-INSERT INTO `role_permissions` VALUES (4, 1, 5, NULL, '2025-11-27 16:52:39');  -- 用户管理
-INSERT INTO `role_permissions` VALUES (5, 1, 6, NULL, '2025-11-27 16:52:39');  -- 系统管理
+INSERT INTO `role_permissions` VALUES (1, 1, 1, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (2, 1, 6, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (3, 1, 11, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (4, 1, 15, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (5, 1, 18, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (6, 1, 22, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (7, 1, 23, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (8, 1, 24, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (9, 1, 25, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (10, 1, 26, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (11, 1, 27, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (12, 1, 28, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (13, 1, 29, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (14, 1, 30, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (15, 1, 31, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (16, 1, 32, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (17, 1, 33, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (18, 1, 34, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (19, 1, 35, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (20, 1, 36, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (21, 1, 37, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (22, 1, 38, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (23, 1, 39, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (24, 1, 40, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (25, 1, 41, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (26, 1, 42, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (27, 1, 43, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (28, 1, 44, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (29, 1, 45, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (30, 1, 46, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (31, 1, 47, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (32, 1, 48, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (33, 1, 49, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (34, 1, 50, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (35, 1, 51, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (36, 1, 52, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (37, 1, 53, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (38, 1, 54, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (39, 1, 55, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (40, 1, 56, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (41, 1, 57, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (42, 1, 58, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (43, 1, 59, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (44, 1, 60, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (45, 1, 61, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (46, 1, 62, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (47, 1, 63, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (48, 1, 64, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (49, 1, 65, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (50, 1, 66, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (51, 1, 2, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (52, 1, 3, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (53, 1, 4, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (54, 1, 5, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (55, 1, 7, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (56, 1, 8, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (57, 1, 9, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (58, 1, 10, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (59, 1, 12, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (60, 1, 13, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (61, 1, 14, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (62, 1, 16, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (63, 1, 17, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (64, 1, 19, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (65, 1, 20, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (66, 1, 21, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (128, 2, 16, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (129, 2, 17, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (130, 2, 15, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (131, 2, 4, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (132, 2, 5, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (133, 2, 3, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (134, 2, 1, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (135, 2, 2, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (136, 2, 22, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (137, 2, 25, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (138, 2, 9, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (139, 2, 24, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (140, 2, 23, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (141, 2, 7, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (142, 2, 6, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (143, 2, 26, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (144, 2, 8, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (145, 2, 10, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (159, 3, 1, NULL, '2025-12-01 14:23:03');
+INSERT INTO `role_permissions` VALUES (160, 3, 2, NULL, '2025-12-01 14:23:03');
 
--- 首页子菜单权限
-INSERT INTO `role_permissions` VALUES (6, 1, 2, NULL, '2025-11-27 16:52:39');  -- 工作台
+-- ----------------------------
+-- Table structure for role_permissions_backup
+-- ----------------------------
+DROP TABLE IF EXISTS `role_permissions_backup`;
+CREATE TABLE `role_permissions_backup`  (
+  `id` bigint NOT NULL DEFAULT 0 COMMENT '主键ID',
+  `role_id` bigint NOT NULL COMMENT '角色ID',
+  `permission_id` bigint NOT NULL COMMENT '权限ID',
+  `created_by` bigint NULL DEFAULT NULL COMMENT '创建人ID',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
--- 仪表盘子菜单权限
-INSERT INTO `role_permissions` VALUES (7, 1, 7, NULL, '2025-11-27 16:52:39');  -- 分析页
-INSERT INTO `role_permissions` VALUES (8, 1, 8, NULL, '2025-11-27 16:52:39');  -- 统计页
-
--- 内容管理子菜单权限
-INSERT INTO `role_permissions` VALUES (9, 1, 9, NULL, '2025-11-27 16:52:39');  -- 视频管理
-INSERT INTO `role_permissions` VALUES (10, 1, 10, NULL, '2025-11-27 16:52:39'); -- 待审核视频
-INSERT INTO `role_permissions` VALUES (11, 1, 11, NULL, '2025-11-27 16:52:39'); -- 分类管理
-
--- 用户管理子菜单权限
-INSERT INTO `role_permissions` VALUES (12, 1, 12, NULL, '2025-11-27 16:52:39'); -- 用户列表
-INSERT INTO `role_permissions` VALUES (13, 1, 13, NULL, '2025-11-27 16:52:39'); -- 角色管理
-INSERT INTO `role_permissions` VALUES (14, 1, 14, NULL, '2025-11-27 16:52:39'); -- 权限管理
-INSERT INTO `role_permissions` VALUES (15, 1, 15, NULL, '2025-11-27 16:52:39'); -- 菜单管理
-
--- 系统管理子菜单权限
-INSERT INTO `role_permissions` VALUES (16, 1, 16, NULL, '2025-11-27 16:52:39'); -- 系统设置
-INSERT INTO `role_permissions` VALUES (17, 1, 17, NULL, '2025-11-27 16:52:39'); -- 安全设置
-INSERT INTO `role_permissions` VALUES (18, 1, 18, NULL, '2025-11-27 16:52:39'); -- 系统日志
-
--- 按钮权限
-INSERT INTO `role_permissions` VALUES (19, 1, 19, NULL, '2025-11-27 16:52:39'); -- 查看用户
-INSERT INTO `role_permissions` VALUES (20, 1, 20, NULL, '2025-11-27 16:52:39'); -- 添加用户
-INSERT INTO `role_permissions` VALUES (21, 1, 21, NULL, '2025-11-27 16:52:39'); -- 编辑用户
-INSERT INTO `role_permissions` VALUES (22, 1, 22, NULL, '2025-11-27 16:52:39'); -- 删除用户
-INSERT INTO `role_permissions` VALUES (23, 1, 23, NULL, '2025-11-27 16:52:39'); -- 查看视频
-INSERT INTO `role_permissions` VALUES (24, 1, 24, NULL, '2025-11-27 16:52:39'); -- 添加视频
-INSERT INTO `role_permissions` VALUES (25, 1, 25, NULL, '2025-11-27 16:52:39'); -- 编辑视频
-INSERT INTO `role_permissions` VALUES (26, 1, 26, NULL, '2025-11-27 16:52:39'); -- 删除视频
-INSERT INTO `role_permissions` VALUES (27, 1, 27, NULL, '2025-11-27 16:52:39'); -- 审核视频
-INSERT INTO `role_permissions` VALUES (28, 1, 28, NULL, '2025-11-27 16:52:39'); -- 拒绝视频
-INSERT INTO `role_permissions` VALUES (29, 1, 29, NULL, '2025-11-27 16:52:39'); -- 查看分类
-INSERT INTO `role_permissions` VALUES (30, 1, 30, NULL, '2025-11-27 16:52:39'); -- 添加分类
-INSERT INTO `role_permissions` VALUES (31, 1, 31, NULL, '2025-11-27 16:52:39'); -- 编辑分类
-INSERT INTO `role_permissions` VALUES (32, 1, 32, NULL, '2025-11-27 16:52:39'); -- 删除分类
-INSERT INTO `role_permissions` VALUES (33, 1, 33, NULL, '2025-11-27 16:52:39'); -- 查看角色
-INSERT INTO `role_permissions` VALUES (34, 1, 34, NULL, '2025-11-27 16:52:39'); -- 添加角色
-INSERT INTO `role_permissions` VALUES (35, 1, 35, NULL, '2025-11-27 16:52:39'); -- 编辑角色
-INSERT INTO `role_permissions` VALUES (36, 1, 36, NULL, '2025-11-27 16:52:39'); -- 删除角色
-INSERT INTO `role_permissions` VALUES (37, 1, 37, NULL, '2025-11-27 16:52:39'); -- 查看权限
-INSERT INTO `role_permissions` VALUES (38, 1, 38, NULL, '2025-11-27 16:52:39'); -- 添加权限
-INSERT INTO `role_permissions` VALUES (39, 1, 39, NULL, '2025-11-27 16:52:39'); -- 编辑权限
-INSERT INTO `role_permissions` VALUES (40, 1, 40, NULL, '2025-11-27 16:52:39'); -- 删除权限
-
--- API权限
-INSERT INTO `role_permissions` VALUES (41, 1, 41, NULL, '2025-11-27 16:52:39'); -- 用户列表API
-INSERT INTO `role_permissions` VALUES (42, 1, 42, NULL, '2025-11-27 16:52:39'); -- 添加用户API
-INSERT INTO `role_permissions` VALUES (43, 1, 43, NULL, '2025-11-27 16:52:39'); -- 编辑用户API
-INSERT INTO `role_permissions` VALUES (44, 1, 44, NULL, '2025-11-27 16:52:39'); -- 删除用户API
-INSERT INTO `role_permissions` VALUES (45, 1, 45, NULL, '2025-11-27 16:52:39'); -- 视频列表API
-INSERT INTO `role_permissions` VALUES (46, 1, 46, NULL, '2025-11-27 16:52:39'); -- 添加视频API
-INSERT INTO `role_permissions` VALUES (47, 1, 47, NULL, '2025-11-27 16:52:39'); -- 编辑视频API
-INSERT INTO `role_permissions` VALUES (48, 1, 48, NULL, '2025-11-27 16:52:39'); -- 删除视频API
-INSERT INTO `role_permissions` VALUES (49, 1, 49, NULL, '2025-11-27 16:52:39'); -- 审核视频API
-INSERT INTO `role_permissions` VALUES (50, 1, 50, NULL, '2025-11-27 16:52:39'); -- 拒绝视频API
-INSERT INTO `role_permissions` VALUES (51, 1, 51, NULL, '2025-11-27 16:52:39'); -- 分类列表API
-INSERT INTO `role_permissions` VALUES (52, 1, 52, NULL, '2025-11-27 16:52:39'); -- 添加分类API
-INSERT INTO `role_permissions` VALUES (53, 1, 53, NULL, '2025-11-27 16:52:39'); -- 编辑分类API
-INSERT INTO `role_permissions` VALUES (54, 1, 54, NULL, '2025-11-27 16:52:39'); -- 删除分类API
-INSERT INTO `role_permissions` VALUES (55, 1, 55, NULL, '2025-11-27 16:52:39'); -- 角色列表API
-INSERT INTO `role_permissions` VALUES (56, 1, 56, NULL, '2025-11-27 16:52:39'); -- 添加角色API
-INSERT INTO `role_permissions` VALUES (57, 1, 57, NULL, '2025-11-27 16:52:39'); -- 编辑角色API
-INSERT INTO `role_permissions` VALUES (58, 1, 58, NULL, '2025-11-27 16:52:39'); -- 删除角色API
-INSERT INTO `role_permissions` VALUES (59, 1, 59, NULL, '2025-11-27 16:52:39'); -- 权限列表API
-INSERT INTO `role_permissions` VALUES (60, 1, 60, NULL, '2025-11-27 16:52:39'); -- 添加权限API
-INSERT INTO `role_permissions` VALUES (61, 1, 61, NULL, '2025-11-27 16:52:39'); -- 编辑权限API
-INSERT INTO `role_permissions` VALUES (62, 1, 62, NULL, '2025-11-27 16:52:39'); -- 删除权限API
-
--- 审核员角色权限 (role_id = 2) - 确保可以访问首页和工作台
-INSERT INTO `role_permissions` VALUES (63, 2, 1, NULL, '2025-11-27 16:52:39');  -- 首页
-INSERT INTO `role_permissions` VALUES (64, 2, 2, NULL, '2025-11-27 16:52:39');  -- 工作台
-INSERT INTO `role_permissions` VALUES (65, 2, 3, NULL, '2025-11-27 16:52:39');  -- 仪表盘
-INSERT INTO `role_permissions` VALUES (66, 2, 4, NULL, '2025-11-27 16:52:39');  -- 内容管理
-INSERT INTO `role_permissions` VALUES (67, 2, 9, NULL, '2025-11-27 16:52:39');  -- 视频管理
-INSERT INTO `role_permissions` VALUES (68, 2, 10, NULL, '2025-11-27 16:52:39'); -- 待审核视频
-INSERT INTO `role_permissions` VALUES (69, 2, 23, NULL, '2025-11-27 16:52:39'); -- 查看视频
-INSERT INTO `role_permissions` VALUES (70, 2, 27, NULL, '2025-11-27 16:52:39'); -- 审核视频
-INSERT INTO `role_permissions` VALUES (71, 2, 28, NULL, '2025-11-27 16:52:39'); -- 拒绝视频
-INSERT INTO `role_permissions` VALUES (72, 2, 45, NULL, '2025-11-27 16:52:39'); -- 视频列表API
-INSERT INTO `role_permissions` VALUES (73, 2, 49, NULL, '2025-11-27 16:52:39'); -- 审核视频API
-INSERT INTO `role_permissions` VALUES (74, 2, 50, NULL, '2025-11-27 16:52:39'); -- 拒绝视频API
-
--- 普通用户角色权限 (role_id = 3) - 只有基础按钮权限和API权限，无后台管理菜单权限
-INSERT INTO `role_permissions` VALUES (75, 3, 23, NULL, '2025-11-27 16:52:39'); -- 查看视频
-INSERT INTO `role_permissions` VALUES (76, 3, 45, NULL, '2025-11-27 16:52:39'); -- 视频列表API
+-- ----------------------------
+-- Records of role_permissions_backup
+-- ----------------------------
+INSERT INTO `role_permissions_backup` VALUES (1, 1, 1, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (2, 1, 3, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (3, 1, 4, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (4, 1, 5, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (5, 1, 6, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (6, 1, 2, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (7, 1, 7, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (8, 1, 8, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (9, 1, 9, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (10, 1, 10, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (11, 1, 11, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (12, 1, 12, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (13, 1, 13, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (14, 1, 14, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (15, 1, 15, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (16, 1, 16, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (17, 1, 17, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (18, 1, 18, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (19, 1, 19, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (20, 1, 20, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (21, 1, 21, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (22, 1, 22, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (23, 1, 23, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (24, 1, 24, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (25, 1, 25, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (26, 1, 26, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (27, 1, 27, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (28, 1, 28, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (29, 1, 29, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (30, 1, 30, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (31, 1, 31, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (32, 1, 32, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (33, 1, 33, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (34, 1, 34, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (35, 1, 35, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (36, 1, 36, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (37, 1, 37, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (38, 1, 38, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (39, 1, 39, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (40, 1, 40, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (41, 1, 41, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (42, 1, 42, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (43, 1, 43, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (44, 1, 44, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (45, 1, 45, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (46, 1, 46, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (47, 1, 47, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (48, 1, 48, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (49, 1, 49, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (50, 1, 50, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (51, 1, 51, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (52, 1, 52, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (53, 1, 53, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (54, 1, 54, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (55, 1, 55, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (56, 1, 56, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (57, 1, 57, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (58, 1, 58, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (59, 1, 59, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (60, 1, 60, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (61, 1, 61, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (62, 1, 62, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (63, 2, 1, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (64, 2, 2, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (65, 2, 3, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (66, 2, 4, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (67, 2, 9, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (68, 2, 10, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (69, 2, 23, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (70, 2, 27, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (71, 2, 28, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (72, 2, 45, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (73, 2, 49, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (74, 2, 50, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (75, 3, 23, NULL, '2025-11-27 16:52:39');
+INSERT INTO `role_permissions_backup` VALUES (76, 3, 45, NULL, '2025-11-27 16:52:39');
 
 -- ----------------------------
 -- Table structure for roles
@@ -460,7 +618,7 @@ CREATE TABLE `roles`  (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`role_id`) USING BTREE,
   UNIQUE INDEX `uk_role_code`(`role_code` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of roles
@@ -500,7 +658,7 @@ CREATE TABLE `user_profiles`  (
   PRIMARY KEY (`profile_id`) USING BTREE,
   UNIQUE INDEX `user_id`(`user_id` ASC) USING BTREE,
   CONSTRAINT `user_profiles_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user_profiles
@@ -522,7 +680,7 @@ CREATE TABLE `user_roles`  (
   INDEX `fk_user_roles_role_id`(`role_id` ASC) USING BTREE,
   CONSTRAINT `fk_user_roles_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_user_roles_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户角色关联表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户角色关联表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user_roles
@@ -576,7 +734,7 @@ CREATE TABLE `video_files`  (
   PRIMARY KEY (`file_id`) USING BTREE,
   INDEX `video_id`(`video_id` ASC) USING BTREE,
   CONSTRAINT `video_files_ibfk_1` FOREIGN KEY (`video_id`) REFERENCES `videos` (`video_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of video_files
@@ -625,7 +783,7 @@ CREATE TABLE `videos`  (
   INDEX `author_id`(`author_id` ASC) USING BTREE,
   CONSTRAINT `videos_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `videos_ibfk_2` FOREIGN KEY (`author_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of videos
