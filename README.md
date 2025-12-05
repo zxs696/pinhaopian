@@ -14,7 +14,7 @@ mvn spring-boot:run
 ```
 cd frontend
 npm i
-npm run serve
+npm run dev
 ```
 
 ## 配置
