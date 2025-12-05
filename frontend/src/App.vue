@@ -1,26 +1,39 @@
 <template>
   <div class="app-container" :data-theme="themeStore.actualTheme">
+    <!-- 动态布局组件 -->
     <component
       :is="currentLayout"
-      :key="layoutKey"
       @open-login-modal="openLoginModal"
+      v-if="currentLayout"
     >
-      <router-view />
-      </component>
-      <!-- 全局登录模态框 -->
+      <router-view v-slot="{ Component, route }">
+        <transition name="fade" mode="out-in">
+          <keep-alive :include="cachedViews">
+            <component :is="Component" :key="route.path" v-if="Component" />
+            <LoadingSpinner v-else text="页面加载中..." />
+          </keep-alive>
+        </transition>
+      </router-view>
+    </component>
+    
+    <!-- 布局加载中状态 -->
+    <div v-else class="layout-loading">
+      <LoadingSpinner text="布局加载中..." />
+    </div>
+    
+    <!-- 全局登录模态框 -->
     <AuthModal :show-modal="showLoginModal" @close="closeLoginModal" />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, watch, onBeforeUnmount, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, onBeforeMount, onBeforeUnmount, ref, watch, shallowRef, markRaw } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/modules/auth'
 import { useThemeStore } from './stores/theme'
-import IndexLayout from './layouts/IndexLayout.vue'
-import AdminLayout from './layouts/AdminLayout.vue'
-import ErrorLayout from './layouts/ErrorLayout.vue'
-import AuthModal from './components/Auth/AuthModal.vue'
+import { useLayoutStore } from './stores/modules/layout'
+import AuthModal from './views/auth/AuthModal.vue'
+import LoadingSpinner from './components/common/LoadingSpinner.vue'
 
 // 设置组件名称
 defineOptions({
@@ -28,111 +41,105 @@ defineOptions({
 })
 
 // 初始化路由和状态管理
-const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
+const layoutStore = useLayoutStore()
 
-// 用于控制登录模态框显示的ref
-const showLoginModal = ref(false)
+// 控制登录模态框显示的ref
+const showLoginModal = computed(() => authStore.isLoginModalVisible)
 
-// 控制登录模态框显示的方法
-function openLoginModal() {
-  showLoginModal.value = true
-}
+// 需要缓存的视图组件
+const cachedViews = ref([
+  'Home', 
+  'VideoList', 
+  'Dashboard',
+  // 管理后台页面
+  'Workbench',
+  'VideoManagement',
+  'VideoReview',
+  'PendingVideos',
+  'UserManagement',
+  'RoleManagement',
+  'PermissionManagement',
+  'CategoryManagement',
+  'CommentManagement',
+  'DanmakuManagement',
+  'SystemLog',
+  'SystemBackup',
+  'SecuritySettings',
+  'SystemSettings'
+])
 
-// 控制登录模态框关闭的方法
-function closeLoginModal() {
-  showLoginModal.value = false
-}
+// 获取当前布局组件
+const currentLayout = shallowRef(null)
 
-// 计算当前应该使用的布局
-const currentLayout = computed(() => {
-  // 如果路由标记为管理员类型，就使用管理员布局
-  if (route.meta.type === 'ADMIN') {
-    return AdminLayout
-  }
-  // 如果路由标记为错误页面类型，就使用错误页面布局
-  if (route.meta.layout === 'ERROR') {
-    return ErrorLayout
-  }
-  // 默认使用普通用户布局
-  return IndexLayout
-})
-
-// 布局切换的key，用于强制重新渲染布局组件
-const layoutKey = computed(() => {
-    // 从组件名称中获取布局类型
-    let layoutType = 'IndexLayout'
-    if (currentLayout.value === AdminLayout) {
-      layoutType = 'AdminLayout'
-    } else if (currentLayout.value === ErrorLayout) {
-      layoutType = 'ErrorLayout'
-    }
-    return `${layoutType}-${themeStore.theme}`
-  })
-
-
-
-// 路由守卫 - 处理需要认证和需要管理员权限的路由
-router.beforeEach((to, from, next) => {
-  // 设置页面标题
-  if (to.meta.title) {
-    document.title = to.meta.title
-  }
-
-  // 检查是否需要认证
-  if (to.meta.requiresAuth) {
-    if (!authStore.isLoggedIn) {
-      // 如果未登录，显示登录模态框
-      showLoginModal.value = true
-      // 可以选择重定向到登录页或保持当前页面
-      next(false) // 取消导航
-      return
-    }
-
-    // 检查是否需要管理员权限
-    if (to.meta.requiresAdmin && !authStore.isAdmin) {
-      // 没有管理员权限，重定向到首页
-      next('/')
-      return
-    }
-  }
-
-  next()
-})
-
-// 监听路由变化，更新布局
+// 监听布局store中的currentLayout变化
 watch(
-  () => route,
-  () => {
-    // 路由变化时自动处理布局切换
+  () => layoutStore.currentLayout,
+  (newLayout) => {
+    if (newLayout) {
+      currentLayout.value = markRaw(newLayout)
+    } else {
+      currentLayout.value = null
+    }
   },
   { immediate: true }
 )
 
-onMounted(() => {
-    // 初始化认证状态
-    authStore.initializeAuth()
-    // 初始化UI主题和布局偏好
-    themeStore.initTheme()
-  })
+// 控制登录模态框显示的方法
+function openLoginModal() {
+  authStore.setLoginModalVisible(true)
+}
 
-  // 组件销毁前清理主题监听器
-  onBeforeUnmount(() => {
-    if (themeStore.cleanupListeners) {
-      themeStore.cleanupListeners()
-    }
-  })
+// 控制登录模态框关闭的方法
+function closeLoginModal() {
+  authStore.setLoginModalVisible(false)
+}
+
+// 监听路由变化，但只在布局类型改变时才重新加载布局
+watch(
+  () => route.path,
+  () => {
+    layoutStore.setupLayout(route)
+  },
+  { immediate: false } // 不立即执行，因为我们会在onBeforeMount中调用
+)
+
+// 在组件挂载前初始化所有状态和监听器
+onBeforeMount(async () => {
+  // 初始化认证状态
+  await authStore.initializeAuth()
+  // 初始化UI主题和布局偏好
+  themeStore.initTheme()
+  // 设置初始布局
+  await layoutStore.setupLayout(route)
+})
+
+// 组件销毁前清理所有监听器
+onBeforeUnmount(() => {
+  // 清理主题监听器
+  if (themeStore.cleanupListeners) {
+    themeStore.cleanupListeners()
+  }
+})
 </script>
 
 <style lang="scss">
 #app {
   min-height: 100vh;
+  width: 100vw;
   display: flex;
   flex-direction: column;
   background-color: var(--color-background);
   transition: var(--transition);
+}
+
+.app-container {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 // 主题切换过渡动画
@@ -149,5 +156,25 @@ onMounted(() => {
   .path {
     stroke: var(--color-primary);
   }
+}
+
+// 布局加载状态
+.layout-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+}
+
+// 路由过渡动画
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

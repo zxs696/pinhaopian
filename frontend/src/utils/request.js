@@ -1,5 +1,5 @@
 /**
- * 基础API服务
+ * HTTP请求工具
  * 提供统一的HTTP请求功能，处理认证、错误和响应
  */
 
@@ -53,7 +53,8 @@ axiosInstance.interceptors.response.use(
       }
     }
     
-    return data
+    // 如果响应中有data字段，则返回data字段，否则返回整个响应
+    return data.data !== undefined ? data.data : data
   },
   error => {
     // 处理HTTP错误状态码
@@ -66,8 +67,20 @@ axiosInstance.interceptors.response.use(
           errorMessage = '请求参数错误'
           break
         case 401:
-          errorMessage = '未授权，请重新登录'
-          // 可以在这里处理token过期，跳转到登录页
+          errorMessage = 'Token已失效，请重新登录'
+          // 清除本地存储的所有认证信息
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          sessionStorage.removeItem('token')
+          sessionStorage.removeItem('user')
+          // 显示登录模态框
+          import('../stores/modules/auth.js').then(({ useAuthStore }) => {
+            const authStore = useAuthStore()
+            // 重置认证状态
+            authStore.clearAuthData()
+            // 显示登录模态框
+            authStore.setLoginModalVisible(true)
+          })
           break
         case 403:
           errorMessage = '拒绝访问'
@@ -153,8 +166,8 @@ const upload = (endpoint, formData) => {
   })
 }
 
-// 创建API服务对象
-export const apiService = {
+// 导出请求工具
+export const request = {
   axiosInstance,
   get,
   post,
@@ -163,23 +176,5 @@ export const apiService = {
   upload
 }
 
-// 兼容api导入（为了组件兼容性）
-export const api = apiService
-
-// 模拟数据
-export const mockData = {
-  users: [
-    { id: 1, username: 'admin', role: 'admin', email: 'admin@example.com', status: 'active' },
-    { id: 2, username: 'editor', role: 'editor', email: 'editor@example.com', status: 'active' },
-    { id: 3, username: 'user1', role: 'user', email: 'user1@example.com', status: 'active' }
-  ],
-  videos: [
-    { id: 1, title: '示例视频1', categoryId: 1, authorId: 1, duration: '12:34', views: 12345 },
-    { id: 2, title: '示例视频2', categoryId: 2, authorId: 2, duration: '23:45', views: 23456 }
-  ],
-  categories: [
-    { id: 1, name: '科技', icon: '💻' },
-    { id: 2, name: '娱乐', icon: '🎮' },
-    { id: 3, name: '教育', icon: '📚' }
-  ]
-}
+// 默认导出axios实例，以便直接使用
+export default axiosInstance

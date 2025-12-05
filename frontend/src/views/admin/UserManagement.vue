@@ -2,20 +2,23 @@
   <div class="user-management-container">
     <!-- 删除重复的面包屑导航，由AdminLayout统一提供 -->
     <div class="header-actions">
+      <el-button type="success" @click="addUser">
+        <el-icon><User /></el-icon>
+        添加用户
+      </el-button>
       <el-button type="warning" @click="exportUserData">
-        <el-icon><download /></el-icon>
+        <el-icon><Download /></el-icon>
         导出数据
       </el-button>
       <el-button type="primary" @click="handleRefresh">
-                <el-icon><Refresh /></el-icon>
-                刷新
-              </el-button>
-            </div>
+        <el-icon><Refresh /></el-icon>
+        刷新
+      </el-button>
+    </div>
           <el-card>
             <template #header>
               <div class="card-header">
-                <span>用户管理</span>
-                <span class="user-count">（共 {{ users.length }} 个用户）</span>
+                <span class="user-count">共 {{ users.length }} 个用户</span>
               </div>
             </template>
             
@@ -35,9 +38,8 @@
               </el-select>
               <el-select v-model="filterStatus" placeholder="选择状态" class="status-select">
                 <el-option label="所有状态" value="" />
-                <el-option label="正常" value="active" />
-                <el-option label="禁用" value="disabled" />
-                <el-option label="未激活" value="inactive" />
+                <el-option label="正常" value="1" />
+                <el-option label="禁用" value="0" />
               </el-select>
               <el-date-picker
                 v-model="dateRange"
@@ -52,13 +54,13 @@
             </div>
             
             <el-table 
-              :data="paginatedUsers" 
+              :data="users" 
               style="width: 100%"
               @selection-change="handleSelectionChange"
               v-loading="loading"
             >
               <el-table-column type="selection" width="55" />
-              <el-table-column prop="id" label="用户ID" width="100" />
+              <el-table-column prop="userId" label="用户ID" width="100" />
               <el-table-column prop="username" label="用户名" min-width="150">
                 <template #default="scope">
                   <div class="user-item">
@@ -79,35 +81,34 @@
               </el-table-column>
               <el-table-column prop="videoCount" label="发布视频" width="120">
                 <template #default="scope">
-                  <el-tag size="small">{{ scope.row.videoCount }}</el-tag>
+                  <el-tag size="small">{{ scope.row.videoCount || 0 }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column prop="viewCount" label="观看次数" width="120" />
               <el-table-column prop="status" label="状态" width="100">
                 <template #default="scope">
                   <el-switch 
-                    v-model="scope.row.status" 
-                    active-value="active" 
-                    inactive-value="disabled"
-                    @change="handleStatusChange(scope.row)"
+                    :model-value="scope.row.status === 1" 
+                    @change="(value) => handleStatusChange(scope.row, value)"
                   />
                 </template>
               </el-table-column>
-              <el-table-column prop="registrationDate" label="注册日期" width="180">
+              <el-table-column prop="createdAt" label="注册日期" width="180">
                 <template #default="scope">
-                  {{ formatDate(scope.row.registrationDate) }}
+                  {{ formatDate(scope.row.createdAt) }}
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="220" fixed="right">
                 <template #default="scope">
                   <el-button type="primary" size="small" @click="viewUser(scope.row)">查看</el-button>
                   <el-button type="warning" size="small" @click="editUser(scope.row)">编辑</el-button>
+                  <el-button type="info" size="small" @click="resetPassword(scope.row)">重置密码</el-button>
                   <el-button 
-                    :type="scope.row.status === 'active' ? 'danger' : 'success'" 
+                    :type="scope.row.status === 1 ? 'danger' : 'success'" 
                     size="small" 
-                    @click="toggleUserStatus(scope.row)"
+                    @click="handleStatusChange(scope.row, scope.row.status === 0)"
                   >
-                    {{ scope.row.status === 'active' ? '禁用' : '启用' }}
+                    {{ scope.row.status === 1 ? '禁用' : '启用' }}
                   </el-button>
                 </template>
               </el-table-column>
@@ -125,7 +126,7 @@
                   v-model:page-size="pagination.pageSize"
                   :page-sizes="[10, 20, 50, 100]"
                   layout="total, sizes, prev, pager, next, jumper"
-                  :total="filteredUsers.length"
+                  :total="pagination.total"
                   @size-change="handleSizeChange"
                   @current-change="handleCurrentChange"
                 />
@@ -156,10 +157,10 @@
         <el-divider />
         <div class="detail-content">
           <el-descriptions border :column="2">
-            <el-descriptions-item label="用户ID">{{ viewingUser.id }}</el-descriptions-item>
+            <el-descriptions-item label="用户ID">{{ viewingUser.userId }}</el-descriptions-item>
             <el-descriptions-item label="角色">{{ getRoleName(viewingUser.role) }}</el-descriptions-item>
             <el-descriptions-item label="用户状态">{{ getStatusName(viewingUser.status) }}</el-descriptions-item>
-            <el-descriptions-item label="注册日期">{{ formatDate(viewingUser.registrationDate) }}</el-descriptions-item>
+            <el-descriptions-item label="注册日期">{{ formatDate(viewingUser.createdAt) }}</el-descriptions-item>
             <el-descriptions-item label="最后登录时间">{{ viewingUser.lastLoginTime ? formatDate(viewingUser.lastLoginTime) : '从未登录' }}</el-descriptions-item>
             <el-descriptions-item label="账号等级">{{ viewingUser.level }}</el-descriptions-item>
             <el-descriptions-item label="简介" :span="2">{{ viewingUser.bio || '暂无简介' }}</el-descriptions-item>
@@ -195,10 +196,12 @@
           </el-form-item>
           <el-form-item label="用户状态">
             <el-select v-model="editingUser.status" placeholder="请选择状态">
-              <el-option label="正常" value="active" />
-              <el-option label="禁用" value="disabled" />
-              <el-option label="未激活" value="inactive" />
+              <el-option label="正常" :value="1" />
+              <el-option label="禁用" :value="0" />
             </el-select>
+          </el-form-item>
+          <el-form-item label="密码" v-if="!editingUser.userId" prop="password">
+            <el-input v-model="editingUser.password" type="password" placeholder="请输入密码" />
           </el-form-item>
           <el-form-item label="用户简介" prop="bio">
             <el-input
@@ -226,7 +229,7 @@
 
 <script setup>
 // 用户管理页面逻辑
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { 
   DataLine, 
   VideoPlay, 
@@ -239,6 +242,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { showSuccess, showWarning, showError } from '../../utils/message.js'
+import { usersAPI } from '../../api'
 
 const activeMenu = ref('user-management')
 const searchKeyword = ref('')
@@ -256,7 +260,8 @@ const editFormRef = ref()
 // 分页配置
 const pagination = ref({
   currentPage: 1,
-  pageSize: 10
+  pageSize: 10,
+  total: 0
 })
 
 // 表单验证规则
@@ -274,129 +279,84 @@ const rules = {
   ]
 }
 
-// 模拟用户数据
-const users = ref([
-  {
-    id: '1001',
-    username: 'admin',
-    email: 'admin@example.com',
-    role: 'admin',
-    status: 'active',
-    avatar: '/logo.png',
-    videoCount: 0,
-    viewCount: 1560,
-    followerCount: 12,
-    registrationDate: '2024-01-01 00:00:00',
-    lastLoginTime: '2024-01-14 10:30:00',
-    level: 'VIP5',
-    bio: '系统管理员'
-  },
-  {
-    id: '1002',
-    username: 'zhangwei',
-    email: 'zhangwei@example.com',
-    role: 'user',
-    status: 'active',
-    avatar: '/logo.png',
-    videoCount: 28,
-    viewCount: 35600,
-    followerCount: 256,
-    registrationDate: '2024-01-02 14:23:00',
-    lastLoginTime: '2024-01-13 18:45:00',
-    level: 'VIP3',
-    bio: '热爱摄影和旅行的视频创作者'
-  },
-  {
-    id: '1003',
-    username: 'lisi',
-    email: 'lisi@example.com',
-    role: 'reviewer',
-    status: 'active',
-    avatar: '/logo.png',
-    videoCount: 5,
-    viewCount: 12300,
-    followerCount: 45,
-    registrationDate: '2024-01-03 09:15:00',
-    lastLoginTime: '2024-01-14 09:20:00',
-    level: 'VIP2',
-    bio: '内容审核员'
-  },
-  {
-    id: '1004',
-    username: 'wangwu',
-    email: 'wangwu@example.com',
-    role: 'user',
-    status: 'active',
-    avatar: '/logo.png',
-    videoCount: 15,
-    viewCount: 28900,
-    followerCount: 178,
-    registrationDate: '2024-01-04 16:40:00',
-    lastLoginTime: '2024-01-12 21:30:00',
-    level: 'VIP2',
-    bio: '科技爱好者，分享数码产品评测'
-  },
-  {
-    id: '1005',
-    username: 'zhaoliu',
-    email: 'zhaoliu@example.com',
-    role: 'user',
-    status: 'disabled',
-    avatar: '/logo.png',
-    videoCount: 8,
-    viewCount: 9800,
-    followerCount: 32,
-    registrationDate: '2024-01-05 11:25:00',
-    lastLoginTime: '2024-01-08 14:10:00',
-    level: 'VIP1',
-    bio: '美食爱好者'
-  },
-  {
-    id: '1006',
-    username: 'sunqi',
-    email: 'sunqi@example.com',
-    role: 'user',
-    status: 'inactive',
-    avatar: '/logo.png',
-    videoCount: 0,
-    viewCount: 120,
-    followerCount: 0,
-    registrationDate: '2024-01-10 19:30:00',
-    lastLoginTime: null,
-    level: '普通用户',
-    bio: ''
-  },
-  {
-    id: '1007',
-    username: 'zhouba',
-    email: 'zhouba@example.com',
-    role: 'user',
-    status: 'active',
-    avatar: '/logo.png',
-    videoCount: 42,
-    viewCount: 67800,
-    followerCount: 890,
-    registrationDate: '2024-01-07 08:50:00',
-    lastLoginTime: '2024-01-14 11:45:00',
-    level: 'VIP4',
-    bio: '音乐制作人，分享音乐创作和乐器教学'
-  },
-  {
-    id: '1008',
-    username: 'wujiu',
-    email: 'wujiu@example.com',
-    role: 'user',
-    status: 'active',
-    avatar: '/logo.png',
-    videoCount: 12,
-    viewCount: 18900,
-    followerCount: 123,
-    registrationDate: '2024-01-08 15:20:00',
-    lastLoginTime: '2024-01-13 20:15:00',
-    level: 'VIP2',
-    bio: '教育工作者，分享教学经验和学习方法'
+// 用户数据
+const users = ref([])
+
+// 加载用户数据
+const loadUsers = async () => {
+  loading.value = true
+  try {
+    const params = {
+      current: pagination.value.currentPage,
+      size: pagination.value.pageSize,
+      username: searchKeyword.value,
+      email: searchKeyword.value, // 后端支持username和email搜索
+      status: filterStatus.value
+    }
+    
+    if (dateRange.value && dateRange.value.length === 2) {
+      params.startDate = dateRange.value[0]
+      params.endDate = dateRange.value[1]
+    }
+    
+    const response = await usersAPI.getUsers(params)
+    console.log('API响应:', response) // 添加调试日志
+    
+    // 检查响应结构并正确提取数据
+    // 响应拦截器可能已经提取了data.data，所以我们需要检查多种可能的结构
+    let userData = []
+    let total = 0
+    let current = 1
+    let size = 10
+    
+    if (response) {
+      // 情况1: 直接返回分页数据 {records: [], total: 0, current: 1, size: 10}
+      if (response.records !== undefined) {
+        userData = response.records || []
+        total = response.total || 0
+        current = response.current || 1
+        size = response.size || 10
+      }
+      // 情况2: 返回的数据被包装在data中 {data: {records: [], total: 0, current: 1, size: 10}}
+      else if (response.data && response.data.records !== undefined) {
+        userData = response.data.records || []
+        total = response.data.total || 0
+        current = response.data.current || 1
+        size = response.data.size || 10
+      }
+      // 情况3: 直接返回用户数组
+      else if (Array.isArray(response)) {
+        userData = response
+        total = response.length
+      }
+      // 情况4: 返回的数据被包装在data中，且data是数组
+      else if (response.data && Array.isArray(response.data)) {
+        userData = response.data
+        total = response.data.length
+      }
+    }
+    
+    users.value = userData
+    pagination.value.total = total
+    pagination.value.currentPage = current
+    pagination.value.pageSize = size
+    
+    console.log('提取的用户数据:', users.value) // 添加调试日志
+    console.log('分页信息:', pagination.value) // 添加调试日志
+  } catch (error) {
+    showError('获取用户数据失败')
+    console.error('加载用户数据失败:', error)
+    users.value = []
+    pagination.value.total = 0
+  } finally {
+    loading.value = false
   }
-])
+}
+
+// 组件挂载时加载数据
+onMounted(() => {
+  loadUsers()
+})
 
 // 计算过滤后的用户列表
 const filteredUsers = computed(() => {
@@ -428,13 +388,13 @@ const filteredUsers = computed(() => {
     endDate.setHours(23, 59, 59, 999)
     
     result = result.filter(user => {
-      const regDate = new Date(user.registrationDate)
+      const regDate = new Date(user.createdAt)
       return regDate >= startDate && regDate <= endDate
     })
   }
   
   // 按注册日期倒序排序
-  result.sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate))
+  result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   
   return result
 })
@@ -448,16 +408,12 @@ const paginatedUsers = computed(() => {
 
 function handleMenuSelect(key) {
   activeMenu.value = key
-  console.log('选择菜单:', key)
   // 根据选择的菜单项跳转到相应页面
 }
 
 function handleSearch() {
-  console.log('搜索关键词:', searchKeyword.value)
-  console.log('选择角色:', filterRole.value)
-  console.log('选择状态:', filterStatus.value)
-  console.log('日期范围:', dateRange.value)
   pagination.value.currentPage = 1
+  loadUsers()
 }
 
 function resetFilters() {
@@ -466,6 +422,7 @@ function resetFilters() {
   filterStatus.value = ''
   dateRange.value = []
   pagination.value.currentPage = 1
+  loadUsers()
 }
 
 function handleSelectionChange(selection) {
@@ -473,17 +430,11 @@ function handleSelectionChange(selection) {
 }
 
 function handleRefresh() {
-  loading.value = true
-  // 模拟加载数据
-  setTimeout(() => {
-    loading.value = false
-    showSuccess('数据已刷新')
-  }, 500)
+  loadUsers()
 }
 
 function exportUserData() {
   showSuccess('用户数据导出成功')
-  console.log('导出用户数据')
 }
 
 function viewUser(user) {
@@ -497,7 +448,30 @@ function handleCloseView() {
 }
 
 function editUser(user) {
-  editingUser.value = { ...user }
+  editingUser.value = {
+    userId: user.userId,
+    username: user.username,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    status: user.status,
+    videoCount: user.videoCount || 0
+  }
+  editVisible.value = true
+}
+
+// 打开添加用户对话框
+const addUser = () => {
+  editingUser.value = {
+    userId: null,
+    username: '',
+    email: '',
+    phone: '',
+    role: 'user',
+    status: 1,
+    videoCount: 0,
+    password: ''
+  }
   editVisible.value = true
 }
 
@@ -510,112 +484,168 @@ function handleCloseEdit() {
 }
 
 function submitEditForm() {
-  editFormRef.value.validate((valid) => {
+  editFormRef.value.validate(async (valid) => {
     if (valid) {
-      // 模拟更新用户信息
-      const index = users.value.findIndex(u => u.id === editingUser.value.id)
-      if (index !== -1) {
-        // 保留不可编辑的字段
-        const original = users.value[index]
-        users.value[index] = {
-          ...editingUser.value,
-          videoCount: original.videoCount,
-          viewCount: original.viewCount,
-          followerCount: original.followerCount,
-          registrationDate: original.registrationDate,
-          lastLoginTime: original.lastLoginTime,
-          level: original.level,
-          avatar: original.avatar
+      try {
+        if (editingUser.value.userId) {
+          // 更新现有用户
+          await usersAPI.updateUser(editingUser.value.userId, editingUser.value)
+          showSuccess('用户信息已更新')
+        } else {
+          // 创建新用户
+          await usersAPI.createUser(editingUser.value)
+          showSuccess('用户创建成功')
         }
         handleCloseEdit()
-        showSuccess('用户信息已更新')
+        loadUsers()
+      } catch (error) {
+        showError(editingUser.value.userId ? '更新用户信息失败' : '创建用户失败')
+        console.error(editingUser.value.userId ? '更新用户信息失败:' : '创建用户失败:', error)
       }
     } else {
-      console.log('表单验证失败')
       return false
     }
   })
 }
 
-function resetPassword() {
-  ElMessageBox.confirm('确定要重置此用户的密码为默认密码吗？', '重置密码', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    showSuccess('密码已重置为: 123456')
-  }).catch(() => {
-    // 取消操作
-  })
-}
-
-function toggleUserStatus(user) {
-  const newStatus = user.status === 'active' ? 'disabled' : 'active'
-  const action = newStatus === 'active' ? '启用' : '禁用'
-  
-  ElMessageBox.confirm(`确定要${action}用户 "${user.username}" 吗？`, '操作确认', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    const index = users.value.findIndex(u => u.id === user.id)
-    if (index !== -1) {
-      users.value[index].status = newStatus
-      showSuccess(`用户已${action}`)
+// 重置密码
+const resetPassword = async (user) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要重置用户 ${user.username} 的密码吗？`,
+      '重置密码',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    await usersAPI.resetPassword(user.userId)
+    showSuccess('密码重置成功，新密码已发送到用户邮箱')
+  } catch (error) {
+    if (error !== 'cancel') {
+      showError('重置密码失败')
+      console.error('重置密码失败:', error)
     }
-  }).catch(() => {
-    // 取消操作
-  })
+  }
 }
 
-function handleStatusChange(user) {
-  console.log('用户状态更新:', user.username, '新状态:', user.status)
-}
-
-function batchActivate() {
-  ElMessageBox.confirm(`确定要启用选中的 ${selectedUsers.value.length} 个用户吗？`, '批量启用', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    selectedUsers.value.forEach(user => {
-      const index = users.value.findIndex(u => u.id === user.id)
-      if (index !== -1) {
-        users.value[index].status = 'active'
+// 切换用户状态
+const handleStatusChange = async (user, value) => {
+  const newStatus = value ? 1 : 0 // 1表示启用，0表示禁用
+  const statusText = newStatus === 1 ? '启用' : '禁用'
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要${statusText}用户 ${user.username} 吗？`,
+      `${statusText}用户`,
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
       }
-    })
-    selectedUsers.value = []
-    showSuccess('批量启用成功')
-  }).catch(() => {
-    // 取消操作
-  })
+    )
+    
+    await usersAPI.updateUserStatus(user.userId, newStatus)
+    showSuccess(`用户${statusText}成功`)
+    loadUsers()
+  } catch (error) {
+    if (error !== 'cancel') {
+      showError(`${statusText}用户失败`)
+      console.error(`${statusText}用户失败:`, error)
+    }
+  }
 }
 
-function batchDisable() {
-  ElMessageBox.confirm(`确定要禁用选中的 ${selectedUsers.value.length} 个用户吗？`, '批量禁用', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    selectedUsers.value.forEach(user => {
-      const index = users.value.findIndex(u => u.id === user.id)
-      if (index !== -1) {
-        users.value[index].status = 'disabled'
+// 批量启用
+const batchActivate = async () => {
+  if (selectedUsers.value.length === 0) {
+    showWarning('请选择要启用的用户')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm('确定要启用选中的用户吗？', '批量启用', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const userIds = selectedUsers.value.map(user => user.userId)
+    await usersAPI.updateUserStatus(userIds, 1) // 1表示启用状态
+    showSuccess('用户批量启用成功')
+    selectedUsers.value = []
+    loadUsers()
+  } catch (error) {
+    if (error !== 'cancel') {
+      showError('批量启用用户失败')
+      console.error('批量启用用户失败:', error)
+    }
+  }
+}
+
+// 批量禁用
+const batchDisable = async () => {
+  if (selectedUsers.value.length === 0) {
+    showWarning('请选择要禁用的用户')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm('确定要禁用选中的用户吗？', '批量禁用', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const userIds = selectedUsers.value.map(user => user.userId)
+    await usersAPI.updateUserStatus(userIds, 0) // 0表示禁用状态
+    showSuccess('用户批量禁用成功')
+    selectedUsers.value = []
+    loadUsers()
+  } catch (error) {
+    if (error !== 'cancel') {
+      showError('批量禁用用户失败')
+      console.error('批量禁用用户失败:', error)
+    }
+  }
+}
+
+// 删除用户
+const deleteUser = async (user) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除用户 ${user.username} 吗？此操作不可恢复！`,
+      '删除用户',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
       }
-    })
-    selectedUsers.value = []
-    showSuccess('批量禁用成功')
-  }).catch(() => {
-    // 取消操作
-  })
+    )
+    
+    await usersAPI.deleteUser(user.userId)
+    showSuccess('用户删除成功')
+    loadUsers()
+  } catch (error) {
+    if (error !== 'cancel') {
+      showError('删除用户失败')
+      console.error('删除用户失败:', error)
+    }
+  }
 }
 
+// 分页大小改变
 function handleSizeChange(size) {
   pagination.value.pageSize = size
+  loadUsers()
 }
 
+// 当前页改变
 function handleCurrentChange(current) {
   pagination.value.currentPage = current
+  loadUsers()
 }
 
 function formatDate(dateString) {
@@ -642,11 +672,10 @@ function getRoleType(role) {
 
 function getStatusName(status) {
   const statusMap = {
-    'active': '正常',
-    'disabled': '禁用',
-    'inactive': '未激活'
+    1: '正常',
+    0: '禁用'
   }
-  return statusMap[status] || status
+  return statusMap[status] || '未知'
 }
 </script>
 

@@ -1,7 +1,5 @@
 // 使用@use导入主题文件
 @use "./theme" as theme;
-// 导入View Transition API样式系统
-@use "./view-transition";
 
 // 重置样式
 * {
@@ -12,6 +10,8 @@
 
 // 解决滚动条重载导致的布局偏移问题
 html {
+    // 设置为100%宽度，确保占满整个视口
+    width: 100%;
     // 始终显示滚动条，防止滚动条出现/消失导致的布局偏移
     overflow-y: scroll;
     // 确保滚动条宽度固定
@@ -19,9 +19,15 @@ html {
 }
 
 body {
-    // 确保页面宽度固定，不受滚动条影响
+    // 确保页面宽度固定，占满整个视口宽度，包括滚动条区域
     width: 100vw;
+    // 防止水平滚动
     overflow-x: hidden;
+    // 确保内边距不会增加总宽度
+    box-sizing: border-box;
+    // 移除默认边距
+    margin: 0;
+    padding: 0;
 }
 
 // 防止字体加载导致的布局偏移
@@ -107,6 +113,10 @@ ol {
 }
 
 // 间距工具类
+.mt-5 {
+    margin-top: 5px;
+}
+
 .mt-10 {
     margin-top: 10px;
 }

@@ -142,4 +142,53 @@ public class RedisUtils {
             return null;
         }
     }
+    
+    /**
+     * 获取Set中的所有元素
+     */
+    @SuppressWarnings("unchecked")
+    public <T> java.util.Set<T> members(String key) {
+        try {
+            return (java.util.Set<T>) redisTemplate.opsForSet().members(key);
+        } catch (Exception e) {
+            logger.warn("Redis members operation failed for key {}: {}", key, e.getMessage());
+            return java.util.Collections.emptySet();
+        }
+    }
+    
+    /**
+     * 向Set中添加元素
+     */
+    public Long addSet(String key, Object... values) {
+        try {
+            return redisTemplate.opsForSet().add(key, values);
+        } catch (Exception e) {
+            logger.warn("Redis addSet operation failed for key {}: {}", key, e.getMessage());
+            return 0L;
+        }
+    }
+    
+    /**
+     * 从Set中移除元素
+     */
+    public Long removeSet(String key, Object... values) {
+        try {
+            return redisTemplate.opsForSet().remove(key, values);
+        } catch (Exception e) {
+            logger.warn("Redis removeSet operation failed for key {}: {}", key, e.getMessage());
+            return 0L;
+        }
+    }
+    
+    /**
+     * 检查元素是否是Set的成员
+     */
+    public Boolean isMemberOfSet(String key, Object value) {
+        try {
+            return redisTemplate.opsForSet().isMember(key, value);
+        } catch (Exception e) {
+            logger.warn("Redis isMemberOfSet operation failed for key {}: {}", key, e.getMessage());
+            return false;
+        }
+    }
 }

@@ -8,6 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
 /**
  * 拼好片应用启动类
@@ -22,7 +23,8 @@ import org.springframework.web.client.RestTemplate;
         "com.it.pinhaopian.mapper",
         "com.it.pinhaopian.config",
         "com.it.pinhaopian.common",
-        "com.it.pinhaopian.exception"
+        "com.it.pinhaopian.exception",
+        "com.it.pinhaopian.websocket"
 })
 public class PinhaopianApplication {
 
@@ -37,5 +39,14 @@ public class PinhaopianApplication {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+    
+    /**
+     * 注入ServerEndpointExporter，
+     * 这个bean会自动注册使用了@ServerEndpoint注解声明的WebSocket endpoint
+     */
+    @Bean
+    public ServerEndpointExporter serverEndpointExporter() {
+        return new ServerEndpointExporter();
     }
 }

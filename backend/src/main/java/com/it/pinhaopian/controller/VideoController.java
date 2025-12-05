@@ -81,7 +81,7 @@ public class VideoController {
 
     @PutMapping("/{videoId}")
     public ResponseEntity<Video> updateVideo(@PathVariable Long videoId, @RequestBody Video video) {
-        video.setId(videoId);
+        video.setVideoId(videoId);
         Video updatedVideo = videoService.save(video);
         if (updatedVideo != null) {
             return ResponseEntity.ok(updatedVideo);

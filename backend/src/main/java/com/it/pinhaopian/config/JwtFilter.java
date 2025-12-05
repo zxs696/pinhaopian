@@ -1,10 +1,12 @@
 package com.it.pinhaopian.config;
 
 import com.it.pinhaopian.utils.JwtUtils;
+import com.it.pinhaopian.utils.RedisUtils;
 import org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 import org.apache.shiro.authc.AuthenticationToken;
@@ -21,6 +23,9 @@ import javax.servlet.http.HttpServletResponse;
 public class JwtFilter extends BasicHttpAuthenticationFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
+    
+    @Autowired
+    private RedisUtils redisUtils;
 
     /**
      * 执行登录认证
@@ -50,8 +55,53 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
                 token = token.substring(JwtUtils.TOKEN_PREFIX.length());
             }
             
-            // 验证token
+            // 验证token格式和签名
             JwtUtils.validateToken(token);
+            
+            // 检查token是否在黑名单中
+            try {
+                if (redisUtils != null && redisUtils.hasKey("blacklist:" + token)) {
+                    logger.warn("Token is in blacklist: {}", token.substring(0, Math.min(10, token.length())) + "...");
+                    // token在黑名单中，返回401错误
+                    HttpServletResponse httpResponse = (HttpServletResponse) response;
+                    httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    httpResponse.setContentType("application/json;charset=utf-8");
+                    httpResponse.getWriter().write("{\"code\": 401, \"message\": \"Token已失效，请重新登录\"}");
+                    return false;
+                }
+            } catch (Exception e) {
+                // Redis不可用时记录日志但继续处理
+                logger.warn("Failed to check token blacklist in Redis: {}", e.getMessage());
+            }
+            
+            // 检查token是否在用户的token集合中（实现登录互斥）
+            try {
+                if (redisUtils != null) {
+                    String username = JwtUtils.getUsernameFromToken(token);
+                    if (username != null) {
+                        // 从token中获取用户ID
+                        Long userId = JwtUtils.getUserIdFromToken(token);
+                        if (userId != null) {
+                            String userTokenKey = "user_tokens:" + userId;
+                            // 检查token是否在用户的token集合中
+                            if (!redisUtils.isMemberOfSet(userTokenKey, token)) {
+                                logger.warn("Token not found in user's valid token set: {}", token.substring(0, Math.min(10, token.length())) + "...");
+                                
+                                // token不在用户的token集合中，返回401错误
+                                HttpServletResponse httpResponse = (HttpServletResponse) response;
+                                httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+                                httpResponse.setContentType("application/json;charset=utf-8");
+                                httpResponse.getWriter().write("{\"code\": 401, \"message\": \"您的账号已在别处登录\"}");
+                                return false;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // Redis不可用时或检查失败时记录日志但继续处理
+                logger.warn("Failed to check token in user's token set: {}", e.getMessage());
+            }
+            
             // 将处理后的token设置到请求属性中，供后续使用
             request.setAttribute(JwtUtils.TOKEN_KEY, token);
             // 执行登录
@@ -62,7 +112,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
             HttpServletResponse httpResponse = (HttpServletResponse) response;
             httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
             httpResponse.setContentType("application/json;charset=utf-8");
-            httpResponse.getWriter().write("{\"code\": 401, \"message\": \"Unauthorized: Invalid token\"}");
+            httpResponse.getWriter().write("{\"code\": 401, \"message\": \"Token已失效，请重新登录\"}");
             return false;
         }
     }

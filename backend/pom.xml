@@ -106,6 +106,18 @@
             <artifactId>spring-security-crypto</artifactId>
             <version>5.7.7</version>
         </dependency>
+        
+        <!-- Spring AOP 依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        
+        <!-- WebSocket 依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

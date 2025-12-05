@@ -39,12 +39,13 @@
                         <el-table v-loading="loading" :data="filteredRoles" style="width: 100%"
                             @selection-change="handleSelectionChange" @row-contextmenu="handleRowContextMenu">
                             <el-table-column type="selection" width="55" :selectable="isSelectable" />
-                            <el-table-column prop="id" label="角色ID" width="80" />
-                            <el-table-column prop="name" label="角色名称" min-width="150">
+                            <el-table-column prop="roleId" label="角色ID" width="80" />
+                            <el-table-column prop="roleName" label="角色名称" min-width="150">
                                 <template #default="scope">
-                                    <span class="role-name">{{ scope.row.name }}</span>
+                                    <span class="role-name">{{ scope.row.roleName }}</span>
                                 </template>
                             </el-table-column>
+                            <el-table-column prop="roleCode" label="角色代码" min-width="120" />
                             <el-table-column prop="description" label="角色描述" min-width="200" />
                             <el-table-column prop="status" label="状态" width="100">
                                 <template #default="scope">
@@ -53,14 +54,14 @@
                                     </el-tag>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="createdAt" label="创建时间" width="180">
+                            <el-table-column prop="createTime" label="创建时间" width="180">
                                 <template #default="scope">
-                                    {{ formatDate(scope.row.createdAt) }}
+                                    {{ formatDate(scope.row.createTime) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="updatedAt" label="更新时间" width="180">
+                            <el-table-column prop="updateTime" label="更新时间" width="180">
                                 <template #default="scope">
-                                    {{ formatDate(scope.row.updatedAt) }}
+                                    {{ formatDate(scope.row.updateTime) }}
                                 </template>
                             </el-table-column>
                             <el-table-column label="操作" width="400" fixed="right">
@@ -100,7 +101,8 @@
                         <!-- 分页 -->
                         <el-pagination v-model:current-page="pagination.currentPage"
                             v-model:page-size="pagination.pageSize" :page-sizes="[10, 20, 50, 100]"
-                            layout="total, sizes, prev, pager, next, jumper" :total="filteredRoles.length"
+                            layout="total, sizes, prev, pager, next, jumper" :total="rolesTotal"
+                            @size-change="handleSizeChange" @current-change="handleCurrentChange"
                             class="pagination" />
                     </el-card>
 
@@ -108,7 +110,7 @@
                     <el-card class="assign-card" v-if="showAssign">
                         <template #header>
                             <div class="card-header">
-                                <span>{{ currentRole.name }} - 人员分配</span>
+                                <span>{{ currentRole.roleName }} - 人员分配</span>
                                 <el-button type="primary" @click="handleAddUserToRole">
                                     <el-icon>
                                         <Plus />
@@ -128,7 +130,7 @@
                         <el-table v-loading="assignLoading" :data="assignedUsers" style="width: 100%"
                             @selection-change="handleAssignSelectionChange">
                             <el-table-column type="selection" width="55" />
-                            <el-table-column prop="id" label="用户ID" width="80" />
+                            <el-table-column prop="userId" label="用户ID" width="80" />
                             <el-table-column prop="username" label="用户名" width="120" />
                             <el-table-column prop="nickname" label="昵称" min-width="150" />
                             <el-table-column prop="email" label="邮箱" min-width="200" />
@@ -167,6 +169,9 @@
                 <el-form-item label="角色名称" prop="name">
                     <el-input v-model="formData.name" placeholder="请输入角色名称" :disabled="isDefaultRole(formData)" />
                 </el-form-item>
+                <el-form-item label="角色代码" prop="code">
+                    <el-input v-model="formData.code" placeholder="请输入角色代码" :disabled="!!formData.id" />
+                </el-form-item>
                 <el-form-item label="角色描述" prop="description">
                     <el-input v-model="formData.description" type="textarea" :rows="4" placeholder="请输入角色描述" />
                 </el-form-item>
@@ -185,7 +190,7 @@
             :before-close="handleClosePermissionDialog">
             <div class="permission-dialog">
                 <div class="permission-header">
-                    <h3>{{ permissionRole.name }} - 权限配置</h3>
+                    <h3>{{ permissionRole.roleName }} - 权限配置</h3>
                     <div class="permission-actions">
                         <el-button size="small" type="primary" @click="handleSelectAllPermissions">
                             全选
@@ -203,9 +208,16 @@
                 </div>
 
                 <div class="permission-content">
-                    <el-tree v-loading="permissionLoading" :data="permissionsTree" show-checkbox node-key="id"
-                        :default-expanded-keys="expandedKeys" :default-checked-keys="checkedKeys"
-                        :props="permissionTreeProps" @check-change="handlePermissionChange" class="permission-tree" />
+                    <el-tree v-loading="permissionLoading" :data="permissionsTree" show-checkbox node-key="permissionId"
+    :default-expanded-keys="expandedKeys" :default-checked-keys="checkedKeys"
+    :props="permissionTreeProps" @check-change="handlePermissionChange" class="permission-tree" />
+                    <!-- 添加调试信息 -->
+                    <div v-if="!permissionLoading && (!permissionsTree || permissionsTree.length === 0)" class="empty-tree">
+                        权限树数据为空
+                    </div>
+                    <div v-if="permissionsTree && permissionsTree.length > 0" class="tree-info">
+                        权限树节点数: {{ permissionsTree.length }}
+                    </div>
                 </div>
             </div>
         </el-dialog>
@@ -303,6 +315,21 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { showSuccess, showWarning } from '../../utils/message.js'
+import { 
+  getRolesList, 
+  getAllRoles, 
+  addRole, 
+  updateRole, 
+  deleteRole, 
+  batchDeleteRoles,
+  getRolePermissions,
+  assignRolePermissions,
+  getRoleUsers,
+  addUsersToRole,
+  removeUsersFromRole
+} from '../../api/modules/roles.js'
+import { getPermissionsTree } from '../../api/modules/permissions.js'
+import { usersAPI } from '../../api/modules/users.js'
 
 
 const loading = ref(false)
@@ -341,6 +368,7 @@ const addUserPagination = reactive({
 const formData = reactive({
   id: '',
   name: '',
+  code: '',
   description: '',
   status: 1
 })
@@ -350,6 +378,10 @@ const formRules = {
     { required: true, message: '请输入角色名称', trigger: 'blur' },
     { min: 1, max: 50, message: '角色名称长度应在1-50个字符之间', trigger: 'blur' }
   ],
+  code: [
+    { required: true, message: '请输入角色代码', trigger: 'blur' },
+    { min: 1, max: 50, message: '角色代码长度应在1-50个字符之间', trigger: 'blur' }
+  ],
   description: [
     { max: 200, message: '角色描述不能超过200个字符', trigger: 'blur' }
   ]
@@ -357,141 +389,21 @@ const formRules = {
 
 const permissionTreeProps = {
   children: 'children',
-  label: 'name'
+  label: 'permissionName'
 }
 
-// 模拟角色数据
-const roles = ref([
-  {
-    id: '1',
-    name: '超级管理员',
-    description: '系统最高权限角色',
-    status: 1,
-    createdAt: '2024-01-01 00:00:00',
-    updatedAt: '2024-01-01 00:00:00',
-    isDefault: true
-  },
-  {
-    id: '2',
-    name: '管理员',
-    description: '拥有系统管理权限',
-    status: 1,
-    createdAt: '2024-01-01 00:00:00',
-    updatedAt: '2024-01-01 00:00:00',
-    isDefault: true
-  },
-  {
-    id: '3',
-    name: '编辑',
-    description: '内容编辑权限',
-    status: 1,
-    createdAt: '2024-01-10 10:30:00',
-    updatedAt: '2024-01-10 10:30:00',
-    isDefault: false
-  },
-  {
-    id: '4',
-    name: '审核员',
-    description: '视频审核权限',
-    status: 1,
-    createdAt: '2024-01-12 15:45:00',
-    updatedAt: '2024-01-12 15:45:00',
-    isDefault: false
-  },
-  {
-    id: '5',
-    name: '普通用户',
-    description: '普通注册用户',
-    status: 1,
-    createdAt: '2024-01-01 00:00:00',
-    updatedAt: '2024-01-01 00:00:00',
-    isDefault: true
-  }
-])
+// 角色数据
+const roles = ref([])
+const rolesTotal = ref(0)
 
-// 模拟权限树数据
-const permissionsTree = ref([
-  {
-    id: 'dashboard',
-    name: '仪表盘',
-    children: [
-      { id: 'dashboard:view', name: '查看仪表盘' }
-    ]
-  },
-  {
-    id: 'video',
-    name: '视频管理',
-    children: [
-      { id: 'video:list', name: '查看视频列表' },
-      { id: 'video:add', name: '添加视频' },
-      { id: 'video:edit', name: '编辑视频' },
-      { id: 'video:delete', name: '删除视频' },
-      { id: 'video:review', name: '审核视频' }
-    ]
-  },
-  {
-    id: 'user',
-    name: '用户管理',
-    children: [
-      { id: 'user:list', name: '查看用户列表' },
-      { id: 'user:add', name: '添加用户' },
-      { id: 'user:edit', name: '编辑用户' },
-      { id: 'user:delete', name: '删除用户' },
-      { id: 'user:resetpwd', name: '重置密码' }
-    ]
-  },
-  {
-    id: 'category',
-    name: '分类管理',
-    children: [
-      { id: 'category:list', name: '查看分类列表' },
-      { id: 'category:add', name: '添加分类' },
-      { id: 'category:edit', name: '编辑分类' },
-      { id: 'category:delete', name: '删除分类' }
-    ]
-  },
-  {
-    id: 'role',
-    name: '角色管理',
-    children: [
-      { id: 'role:list', name: '查看角色列表' },
-      { id: 'role:add', name: '添加角色' },
-      { id: 'role:edit', name: '编辑角色' },
-      { id: 'role:delete', name: '删除角色' },
-      { id: 'role:assign', name: '分配权限' }
-    ]
-  },
-  {
-    id: 'security',
-    name: '安全设置',
-    children: [
-      { id: 'security:login', name: '登录安全设置' },
-      { id: 'security:content', name: '内容安全设置' },
-      { id: 'security:ip', name: 'IP管理' },
-      { id: 'security:log', name: '系统日志' },
-      { id: 'security:backup', name: '备份恢复' }
-    ]
-  }
-])
+// 权限树数据
+const permissionsTree = ref([])
 
-// 模拟用户数据
-const users = ref([
-  { id: '1', username: 'admin', nickname: '超级管理员', email: 'admin@example.com', mobile: '13800138000' },
-  { id: '2', username: 'manager', nickname: '管理员', email: 'manager@example.com', mobile: '13800138001' },
-  { id: '3', username: 'editor', nickname: '内容编辑', email: 'editor@example.com', mobile: '13800138002' },
-  { id: '4', username: 'reviewer', nickname: '审核员', email: 'reviewer@example.com', mobile: '13800138003' },
-  { id: '5', username: 'user1', nickname: '测试用户1', email: 'user1@example.com', mobile: '13800138004' },
-  { id: '6', username: 'user2', nickname: '测试用户2', email: 'user2@example.com', mobile: '13800138005' }
-])
+// 用户数据
+const users = ref([])
 
-// 模拟角色用户关联数据
-const roleUsers = reactive({
-  '1': [users.value[0]],
-  '2': [users.value[1]],
-  '3': [users.value[2]],
-  '4': [users.value[3]],
-  '5': [users.value[4], users.value[5]]
-})
+// 角色用户关联数据
+const roleUsers = reactive({})
 
 // 计算属性：过滤后的角色列表
 const filteredRoles = computed(() => {
@@ -499,16 +411,16 @@ const filteredRoles = computed(() => {
     return roles.value
   }
   return roles.value.filter(role => 
-    role.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
+    role.roleName.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
     role.description.toLowerCase().includes(searchKeyword.value.toLowerCase())
   )
 })
 
 // 计算属性：角色分配的用户列表
 const assignedUsers = computed(() => {
-  if (!currentRole.id) return []
+  if (!currentRole.roleId) return []
   
-  let userList = roleUsers[currentRole.id] || []
+  let userList = roleUsers[currentRole.roleId] || []
   if (!assignSearchKeyword.value) {
     return userList
   }
@@ -523,10 +435,10 @@ const assignedUsers = computed(() => {
 
 // 计算属性：可添加到角色的用户列表（未分配的用户）
 const availableUsers = computed(() => {
-  if (!currentRole.id) return []
+  if (!currentRole.roleId) return []
   
-  const assignedUserIds = (roleUsers[currentRole.id] || []).map(user => user.id)
-  let userList = users.value.filter(user => !assignedUserIds.includes(user.id))
+  const assignedUserIds = (roleUsers[currentRole.roleId] || []).map(user => user.userId)
+  let userList = users.value.filter(user => !assignedUserIds.includes(user.userId))
   
   if (!addUserSearchKeyword.value) {
     return userList
@@ -557,20 +469,101 @@ function formatDate(dateString) {
 // 方法：处理菜单选择
 function handleMenuSelect(key) {
   activeMenu.value = key
-  console.log('选择菜单:', key)
   // 根据选择的菜单项跳转到相应页面
+}
+
+// 方法：获取角色列表
+async function fetchRoles() {
+  loading.value = true
+  try {
+    const params = {
+      current: pagination.currentPage,
+      size: pagination.pageSize
+    }
+    
+    if (searchKeyword.value) {
+      params.keyword = searchKeyword.value
+    }
+    
+    const response = await getRolesList(params)
+    roles.value = response.records || []
+    rolesTotal.value = response.total || 0
+  } catch (error) {
+    showWarning('获取角色列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 方法：获取权限树
+async function fetchPermissionsTree() {
+  try {
+    const response = await getPermissionsTree()
+    permissionsTree.value = response || []
+  } catch (error) {
+    showWarning('获取权限树失败')
+  }
+}
+
+// 方法：获取用户列表
+async function fetchUsers() {
+  try {
+    const response = await usersAPI.getUsers({ current: 1, size: 1000 })
+    users.value = response.records || []
+  } catch (error) {
+    showWarning('获取用户列表失败')
+  }
+}
+
+// 方法：获取角色用户关联
+async function fetchRoleUsers(roleId) {
+  if (!roleId) return
+  
+  try {
+    const response = await getRoleUsers(roleId)
+    roleUsers[roleId] = response || []
+  } catch (error) {
+    showWarning('获取角色用户失败')
+  }
+}
+
+// 方法：获取角色权限
+async function fetchRolePermissions(roleId) {
+  if (!roleId) return
+  
+  try {
+    const response = await getRolePermissions(roleId)
+    return response || []
+  } catch (error) {
+    showWarning('获取角色权限失败')
+    return []
+  }
 }
 
 // 方法：处理搜索
 function handleSearch() {
   pagination.currentPage = 1
-  console.log('搜索角色:', searchKeyword.value)
+  fetchRoles()
 }
 
 // 方法：处理重置
 function handleReset() {
   searchKeyword.value = ''
   pagination.currentPage = 1
+  fetchRoles()
+}
+
+// 方法：处理分页大小变化
+function handleSizeChange(size) {
+  pagination.pageSize = size
+  pagination.currentPage = 1
+  fetchRoles()
+}
+
+// 方法：处理当前页变化
+function handleCurrentChange(page) {
+  pagination.currentPage = page
+  fetchRoles()
 }
 
 // 方法：处理选择变更
@@ -583,6 +576,7 @@ function handleAddRole() {
   dialogTitle.value = '添加角色'
   formData.id = ''
   formData.name = ''
+  formData.code = ''
   formData.description = ''
   formData.status = 1
   dialogVisible.value = true
@@ -591,47 +585,43 @@ function handleAddRole() {
 // 方法：处理编辑角色
 function handleEditRole(role) {
   dialogTitle.value = '编辑角色'
-  formData.id = role.id
-  formData.name = role.name
+  formData.id = role.roleId
+  formData.name = role.roleName
+  formData.code = role.roleCode
   formData.description = role.description
   formData.status = role.status
   dialogVisible.value = true
 }
 
 // 方法：处理提交表单
-function handleSubmit() {
-  formRef.value.validate((valid) => {
-    if (valid) {
-      if (formData.id) {
-        // 编辑现有角色
-        const index = roles.value.findIndex(role => role.id === formData.id)
-        if (index !== -1) {
-          roles.value[index] = {
-            ...roles.value[index],
-            name: formData.name,
-            description: formData.description,
-            status: formData.status,
-            updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
-          }
-          showSuccess('角色编辑成功')
-        }
-      } else {
-        // 添加新角色
-        const newRole = {
-          id: String(Date.now()),
-          name: formData.name,
-          description: formData.description,
-          status: formData.status,
-          createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
-          updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
-          isDefault: false
-        }
-        roles.value.push(newRole)
-        showSuccess('角色添加成功')
-      }
-      dialogVisible.value = false
+async function handleSubmit() {
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+  
+  try {
+    const roleData = {
+      roleName: formData.name,
+      roleCode: formData.code,
+      description: formData.description,
+      status: formData.status
     }
-  })
+    
+    if (formData.id) {
+      // 编辑现有角色
+      await updateRole(formData.id, roleData)
+      showSuccess('角色编辑成功')
+    } else {
+      // 添加新角色
+      await addRole(roleData)
+      showSuccess('角色添加成功')
+    }
+    
+    dialogVisible.value = false
+    fetchRoles() // 重新获取角色列表
+  } catch (error) {
+    console.error('保存角色失败:', error)
+    showWarning('保存角色失败')
+  }
 }
 
 // 方法：处理关闭对话框
@@ -641,143 +631,138 @@ function handleCloseDialog() {
 }
 
 // 方法：处理删除角色
-function handleDeleteRole(role) {
+async function handleDeleteRole(role) {
   if (isDefaultRole(role)) {
     showWarning('默认角色不可删除')
     return
   }
   
-  ElMessageBox.confirm(
-    `确定要删除角色 "${role.name}" 吗？`,
-    '删除确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'danger'
-    }
-  ).then(() => {
-    const index = roles.value.findIndex(r => r.id === role.id)
-    if (index !== -1) {
-      roles.value.splice(index, 1)
-      // 清理相关的角色用户关联
-      if (roleUsers[role.id]) {
-        delete roleUsers[role.id]
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除角色 "${role.roleName}" 吗？`,
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'danger'
       }
-      showSuccess('角色删除成功')
+    )
+    
+    await deleteRole(role.roleId)
+    showSuccess('角色删除成功')
+    fetchRoles() // 重新获取角色列表
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除角色失败:', error)
+      showWarning('删除角色失败')
     }
-  }).catch(() => {
-    // 取消删除
-  })
+  }
 }
 
 // 方法：处理批量删除
-function handleDeleteSelected() {
+async function handleDeleteSelected() {
   if (selectedRoles.value.length === 0) {
     showWarning('请选择要删除的角色')
     return
   }
   
-  const defaultRoles = selectedRoles.value.filter(role => role.isDefault)
+  const defaultRoles = selectedRoles.value.filter(role => isDefaultRole(role))
   if (defaultRoles.length > 0) {
     showWarning('选择的角色中包含默认角色，默认角色不可删除')
     return
   }
   
-  ElMessageBox.confirm(
-    `确定要删除选中的 ${selectedRoles.value.length} 个角色吗？`,
-    '批量删除确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'danger'
-    }
-  ).then(() => {
-    selectedRoles.value.forEach(role => {
-      const index = roles.value.findIndex(r => r.id === role.id)
-      if (index !== -1) {
-        roles.value.splice(index, 1)
-        // 清理相关的角色用户关联
-        if (roleUsers[role.id]) {
-          delete roleUsers[role.id]
-        }
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRoles.value.length} 个角色吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'danger'
       }
-    })
-    selectedRoles.value = []
+    )
+    
+    const roleIds = selectedRoles.value.map(role => role.roleId)
+    await batchDeleteRoles(roleIds)
     showSuccess('角色批量删除成功')
-  }).catch(() => {
-    // 取消删除
-  })
+    selectedRoles.value = []
+    fetchRoles() // 重新获取角色列表
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除角色失败:', error)
+      showWarning('批量删除角色失败')
+    }
+  }
 }
 
 // 方法：处理角色状态切换
-function handleToggleStatus(role) {
+async function handleToggleStatus(role) {
+  if (isDefaultRole(role)) {
+    showWarning('默认角色不可修改状态')
+    return
+  }
+  
   const newStatus = role.status === 1 ? 0 : 1
   const statusText = newStatus === 1 ? '启用' : '禁用'
   
-  ElMessageBox.confirm(
-    `确定要${statusText}角色 "${role.name}" 吗？`,
-    `${statusText}确认`,
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: newStatus === 1 ? 'success' : 'warning'
-    }
-  ).then(() => {
-    const index = roles.value.findIndex(r => r.id === role.id)
+  try {
+    await ElMessageBox.confirm(
+      `确定要${statusText}角色 "${role.roleName}" 吗？`,
+      `${statusText}确认`,
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: newStatus === 1 ? 'success' : 'warning'
+      }
+    )
+    
+    // 调用API更新状态
+    await updateRoleStatus(role.roleId, newStatus)
+    
+    // 更新本地数据
+    const index = roles.value.findIndex(r => r.roleId === role.roleId)
     if (index !== -1) {
       roles.value[index].status = newStatus
-      roles.value[index].updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
+      roles.value[index].updateTime = new Date().toISOString().slice(0, 19).replace('T', ' ')
       showSuccess(`角色${statusText}成功`)
     }
-  }).catch(() => {
-    // 取消操作
-  })
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('修改角色状态失败:', error)
+      showWarning('修改角色状态失败')
+    }
+  }
 }
 
 // 方法：处理权限设置
-function handlePermission(role) {
+async function handlePermission(role) {
   Object.assign(permissionRole, role)
-  
-  // 模拟加载权限数据（实际应该从后端获取）
+  permissionDialogVisible.value = true
   permissionLoading.value = true
-  setTimeout(() => {
-    // 模拟权限数据，根据角色ID设置默认选中
-    if (role.id === '1') {
-      // 超级管理员拥有所有权限
-      checkedKeys.value = collectAllPermissionIds(permissionsTree.value)
-    } else if (role.id === '2') {
-      // 管理员拥有大部分权限
-      checkedKeys.value = [
-        'dashboard:view',
-        'video:list', 'video:add', 'video:edit', 'video:delete', 'video:review',
-        'user:list', 'user:add', 'user:edit', 'user:delete', 'user:resetpwd',
-        'category:list', 'category:add', 'category:edit', 'category:delete',
-        'role:list', 'role:add', 'role:edit', 'role:delete', 'role:assign',
-        'security:login', 'security:content', 'security:ip'
-      ]
-    } else if (role.id === '3') {
-      // 编辑拥有内容编辑权限
-      checkedKeys.value = [
-        'dashboard:view',
-        'video:list', 'video:add', 'video:edit',
-        'category:list', 'category:add', 'category:edit'
-      ]
-    } else if (role.id === '4') {
-      // 审核员拥有审核权限
-      checkedKeys.value = [
-        'dashboard:view',
-        'video:list', 'video:review'
-      ]
+  
+  try {
+    // 获取角色的权限
+    const rolePermissions = await getRolePermissions(role.roleId)
+    
+    // 获取权限树
+    await fetchPermissionsTree()
+    
+    // 展开所有父节点
+    expandedKeys.value = collectAllParentIds(permissionsTree.value)
+    
+    // 根据角色权限设置选中状态
+    if (rolePermissions && rolePermissions.length > 0) {
+      checkedKeys.value = rolePermissions
     } else {
-      // 普通用户没有后台权限
       checkedKeys.value = []
     }
     
-    // 展开所有节点
-    expandedKeys.value = collectAllParentIds(permissionsTree.value)
     permissionLoading.value = false
-    permissionDialogVisible.value = true
-  }, 300)
+  } catch (error) {
+    showWarning('获取角色权限失败')
+    permissionLoading.value = false
+  }
 }
 
 // 方法：收集所有权限ID
@@ -787,7 +772,7 @@ function collectAllPermissionIds(tree) {
     if (node.children && node.children.length > 0) {
       ids = ids.concat(collectAllPermissionIds(node.children))
     } else {
-      ids.push(node.id)
+      ids.push(node.permissionId)
     }
   })
   return ids
@@ -798,7 +783,7 @@ function collectAllParentIds(tree) {
   let ids = []
   tree.forEach(node => {
     if (node.children && node.children.length > 0) {
-      ids.push(node.id)
+      ids.push(node.permissionId)
       ids = ids.concat(collectAllParentIds(node.children))
     }
   })
@@ -821,10 +806,19 @@ function handleDeselectAllPermissions() {
 }
 
 // 方法：处理保存权限
-function handleSavePermissions() {
-  console.log('保存权限:', permissionRole.name, checkedKeys.value)
-  showSuccess('权限设置保存成功')
-  permissionDialogVisible.value = false
+async function handleSavePermissions() {
+  if (!permissionRole.roleId) return
+  
+  try {
+    // 调用API保存角色权限
+    await assignRolePermissions(permissionRole.roleId, checkedKeys.value)
+    
+    showSuccess('权限设置保存成功')
+    permissionDialogVisible.value = false
+  } catch (error) {
+    console.error('保存角色权限失败:', error)
+    showWarning('保存角色权限失败')
+  }
 }
 
 // 方法：处理关闭权限对话框
@@ -835,14 +829,29 @@ function handleClosePermissionDialog() {
 }
 
 // 方法：处理角色用户分配
-function handleUserAssignment(role) {
+async function handleUserAssignment(role) {
   Object.assign(currentRole, role)
   showAssign.value = true
+  assignLoading.value = true
+  
+  try {
+    // 获取角色用户关联
+    await fetchRoleUsers(role.roleId)
+    
+    // 获取用户列表
+    await fetchUsers()
+    
+    assignLoading.value = false
+  } catch (error) {
+    console.error('获取角色用户关联失败:', error)
+    showWarning('获取角色用户关联失败')
+    assignLoading.value = false
+  }
 }
 
 // 方法：处理搜索分配用户
 function handleAssignSearch() {
-  console.log('搜索分配用户:', assignSearchKeyword.value)
+  // 搜索分配用户的处理逻辑
 }
 
 // 方法：处理重置分配搜索
@@ -864,7 +873,7 @@ function handleAddUserToRole() {
 
 // 方法：处理搜索添加用户
 function handleAddUserSearch() {
-  console.log('搜索添加用户:', addUserSearchKeyword.value)
+  // 搜索添加用户的处理逻辑
 }
 
 // 方法：处理重置添加用户搜索
@@ -878,27 +887,26 @@ function handleAddUserSelectionChange(selection) {
 }
 
 // 方法：处理添加选中用户
-function handleAddSelectedUsers() {
+async function handleAddSelectedUsers() {
   if (selectedAddUsers.value.length === 0) {
     showWarning('请选择要添加的用户')
     return
   }
   
-  // 确保角色用户数组存在
-  if (!roleUsers[currentRole.id]) {
-    roleUsers[currentRole.id] = []
+  try {
+    const userIds = selectedAddUsers.value.map(user => user.userId)
+    await addUsersToRole(currentRole.roleId, userIds)
+    
+    showSuccess(`成功添加 ${selectedAddUsers.value.length} 个用户到角色`)
+    selectedAddUsers.value = []
+    addUserDialogVisible.value = false
+    
+    // 重新获取角色用户关联
+    await fetchRoleUsers(currentRole.roleId)
+  } catch (error) {
+    console.error('添加用户到角色失败:', error)
+    showWarning('添加用户到角色失败')
   }
-  
-  // 添加新用户
-  selectedAddUsers.value.forEach(user => {
-    if (!roleUsers[currentRole.id].some(u => u.id === user.id)) {
-      roleUsers[currentRole.id].push(user)
-    }
-  })
-  
-  showSuccess(`成功添加 ${selectedAddUsers.value.length} 个用户到角色`)
-  addUserDialogVisible.value = false
-  selectedAddUsers.value = []
 }
 
 // 方法：处理关闭添加用户对话框
@@ -908,57 +916,63 @@ function handleCloseAddUserDialog() {
 }
 
 // 方法：处理从角色移除用户
-function handleRemoveUserFromRole(user) {
-  ElMessageBox.confirm(
-    `确定要将用户 "${user.nickname}" 从角色中移除吗？`,
-    '移除确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    if (roleUsers[currentRole.id]) {
-      const index = roleUsers[currentRole.id].findIndex(u => u.id === user.id)
-      if (index !== -1) {
-        roleUsers[currentRole.id].splice(index, 1)
-        showSuccess('用户移除成功')
+async function handleRemoveUserFromRole(user) {
+  try {
+    await ElMessageBox.confirm(
+      `确定要将用户 "${user.nickname}" 从角色中移除吗？`,
+      '移除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
       }
+    )
+    
+    await removeUsersFromRole(currentRole.roleId, [user.userId])
+    showSuccess('用户移除成功')
+    
+    // 重新获取角色用户关联
+    await fetchRoleUsers(currentRole.roleId)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('移除用户失败:', error)
+      showWarning('移除用户失败')
     }
-  }).catch(() => {
-    // 取消操作
-  })
+  }
 }
 
 // 方法：处理批量移除用户
-function handleRemoveSelectedUsers() {
+async function handleRemoveSelectedUsers() {
   if (selectedAssignedUsers.value.length === 0) {
     showWarning('请选择要移除的用户')
     return
   }
   
-  ElMessageBox.confirm(
-    `确定要移除选中的 ${selectedAssignedUsers.value.length} 个用户吗？`,
-    '批量移除确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
+  try {
+    await ElMessageBox.confirm(
+      `确定要移除选中的 ${selectedAssignedUsers.value.length} 个用户吗？`,
+      '批量移除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    const userIds = selectedAssignedUsers.value.map(user => user.userId)
+    await removeUsersFromRole(currentRole.roleId, userIds)
+    
+    showSuccess(`成功移除 ${selectedAssignedUsers.value.length} 个用户`)
+    selectedAssignedUsers.value = []
+    
+    // 重新获取角色用户关联
+    await fetchRoleUsers(currentRole.roleId)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量移除用户失败:', error)
+      showWarning('批量移除用户失败')
     }
-  ).then(() => {
-    if (roleUsers[currentRole.id]) {
-      selectedAssignedUsers.value.forEach(user => {
-        const index = roleUsers[currentRole.id].findIndex(u => u.id === user.id)
-        if (index !== -1) {
-          roleUsers[currentRole.id].splice(index, 1)
-        }
-      })
-      selectedAssignedUsers.value = []
-      showSuccess('用户批量移除成功')
-    }
-  }).catch(() => {
-    // 取消操作
-  })
+  }
 }
 
 // 方法：处理行右键菜单
@@ -994,11 +1008,9 @@ function handleContextDelete() {
 
 // 组件挂载时的处理
 onMounted(() => {
-  // 初始化数据加载逻辑
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-  }, 300)
+  // 初始化数据加载
+  fetchRoles()
+  fetchPermissionsTree()
 })
 
 // 对话框标题需要是响应式的
@@ -1108,6 +1120,24 @@ const dialogTitle = ref('添加角色')
 
 .permission-tree {
   min-height: 400px;
+}
+
+.empty-tree {
+  padding: 20px;
+  text-align: center;
+  color: var(--el-color-warning);
+  background-color: var(--el-color-warning-light-9);
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.tree-info {
+  padding: 10px;
+  text-align: center;
+  color: var(--el-color-success);
+  background-color: var(--el-color-success-light-9);
+  border-radius: 4px;
+  margin-top: 10px;
 }
 
 /* 添加用户对话框样式 */

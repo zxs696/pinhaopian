@@ -41,9 +41,9 @@
                   
                   <el-form-item label="验证码设置">
                     <el-checkbox-group v-model="loginSecurity.captchaSettings">
-                      <el-checkbox label="登录失败后显示验证码">登录失败后显示验证码</el-checkbox>
-                      <el-checkbox label="始终显示验证码">始终显示验证码</el-checkbox>
-                      <el-checkbox label="高风险IP强制验证码">高风险IP强制验证码</el-checkbox>
+                      <el-checkbox value="登录失败后显示验证码">登录失败后显示验证码</el-checkbox>
+                      <el-checkbox value="始终显示验证码">始终显示验证码</el-checkbox>
+                      <el-checkbox value="高风险IP强制验证码">高风险IP强制验证码</el-checkbox>
                     </el-checkbox-group>
                   </el-form-item>
                   
@@ -69,9 +69,9 @@
                 <el-form :model="contentSecurity" :rules="contentSecurityRules" ref="contentSecurityForm">
                   <el-form-item label="视频审核策略">
                     <el-radio-group v-model="contentSecurity.reviewStrategy">
-                      <el-radio label="auto">自动审核（AI识别）</el-radio>
-                      <el-radio label="manual">人工审核</el-radio>
-                      <el-radio label="hybrid">混合审核（AI+人工）</el-radio>
+                      <el-radio value="auto">自动审核（AI识别）</el-radio>
+                      <el-radio value="manual">人工审核</el-radio>
+                      <el-radio value="hybrid">混合审核（AI+人工）</el-radio>
                     </el-radio-group>
                   </el-form-item>
                   
@@ -135,9 +135,9 @@
                 <el-form :model="ipSettings" ref="ipSettingsForm">
                   <el-form-item label="IP限制模式">
                     <el-radio-group v-model="ipSettings.restrictionMode">
-                      <el-radio label="none">无限制</el-radio>
-                      <el-radio label="whitelist">仅允许白名单</el-radio>
-                      <el-radio label="blacklist">黑名单排除</el-radio>
+                      <el-radio value="none">无限制</el-radio>
+                      <el-radio value="whitelist">仅允许白名单</el-radio>
+                      <el-radio value="blacklist">黑名单排除</el-radio>
                     </el-radio-group>
                   </el-form-item>
                   
@@ -258,9 +258,9 @@
                       
                       <el-form-item label="备份频率" v-if="backupSettings.autoBackup">
                         <el-radio-group v-model="backupSettings.frequency">
-                          <el-radio label="daily">每日</el-radio>
-                          <el-radio label="weekly">每周</el-radio>
-                          <el-radio label="monthly">每月</el-radio>
+                          <el-radio value="daily">每日</el-radio>
+                          <el-radio value="weekly">每周</el-radio>
+                          <el-radio value="monthly">每月</el-radio>
                         </el-radio-group>
                       </el-form-item>
                       

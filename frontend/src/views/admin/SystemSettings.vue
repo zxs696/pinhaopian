@@ -15,8 +15,7 @@
           <el-card>
             <template #header>
               <div class="card-header">
-                <span>系统设置</span>
-                <el-tag type="info">配置系统全局参数和功能开关</el-tag>
+                <span class="settings-info">系统配置信息</span>
               </div>
             </template>
 
@@ -79,11 +78,11 @@
 
                   <el-form-item label="视频清晰度设置" prop="videoQualities">
                     <el-checkbox-group v-model="settings.upload.videoQualities">
-                      <el-checkbox label="360p">360p (流畅)</el-checkbox>
-                      <el-checkbox label="480p">480p (标清)</el-checkbox>
-                      <el-checkbox label="720p">720p (高清)</el-checkbox>
-                      <el-checkbox label="1080p">1080p (超清)</el-checkbox>
-                      <el-checkbox label="4K">4K (蓝光)</el-checkbox>
+                      <el-checkbox value="360p">360p (流畅)</el-checkbox>
+                      <el-checkbox value="480p">480p (标清)</el-checkbox>
+                      <el-checkbox value="720p">720p (高清)</el-checkbox>
+                      <el-checkbox value="1080p">1080p (超清)</el-checkbox>
+                      <el-checkbox value="4K">4K (蓝光)</el-checkbox>
                     </el-checkbox-group>
                     <div class="form-hint">选择系统支持的视频清晰度，至少选择一项</div>
                   </el-form-item>
@@ -104,9 +103,9 @@
 
                   <el-form-item label="转码优先级" prop="transcodePriority">
                     <el-radio-group v-model="settings.upload.transcodePriority">
-                      <el-radio label="quality">画质优先</el-radio>
-                      <el-radio label="speed">速度优先</el-radio>
-                      <el-radio label="balance">平衡</el-radio>
+                      <el-radio value="quality">画质优先</el-radio>
+                      <el-radio value="speed">速度优先</el-radio>
+                      <el-radio value="balance">平衡</el-radio>
                     </el-radio-group>
                   </el-form-item>
 

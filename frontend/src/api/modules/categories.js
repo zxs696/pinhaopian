@@ -1,126 +1,87 @@
-import { apiService } from '../apiService'
+import { api } from '../api'
 
 /**
  * 分类相关API
  */
-const categoriesAPI = {
+export const categoriesAPI = {
   /**
    * 获取所有分类
-   * @returns {Promise<Array>} 分类列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise} 分类列表
    */
-  async getAllCategories() {
-    try {
-      const response = await apiService.get('/categories')
-      return response || []
-    } catch (error) {
-      console.error('获取分类列表失败:', error)
-      throw error
-    }
+  getAllCategories: async (params = {}) => {
+    const response = await api.get('/categories', params)
+    return response
   },
 
   /**
-   * 获取单个分类详情
-   * @param {string} id - 分类ID
-   * @returns {Promise<Object>} 分类详情
+   * 根据ID获取分类
+   * @param {number} id - 分类ID
+   * @returns {Promise} 分类详情
    */
-  async getCategoryById(id) {
-    try {
-      const response = await apiService.get(`/categories/${id}`)
-      return response
-    } catch (error) {
-      console.error(`获取分类${id}详情失败:`, error)
-      throw error
-    }
+  getCategoryById: async (id) => {
+    const response = await api.get(`/categories/${id}`)
+    return response
   },
 
   /**
-   * 创建新分类（管理员）
+   * 创建新分类
    * @param {Object} categoryData - 分类数据
-   * @returns {Promise<Object>} 创建的分类
+   * @returns {Promise} 创建结果
    */
-  async createCategory(categoryData) {
-    try {
-      const response = await apiService.post('/categories', categoryData)
-      return response
-    } catch (error) {
-      console.error('创建分类失败:', error)
-      throw error
-    }
+  createCategory: async (categoryData) => {
+    const response = await api.post('/categories', categoryData)
+    return response
   },
 
   /**
-   * 更新分类（管理员）
-   * @param {string} id - 分类ID
+   * 更新分类
+   * @param {number} id - 分类ID
    * @param {Object} categoryData - 更新的分类数据
-   * @returns {Promise<Object>} 更新后的分类
+   * @returns {Promise} 更新结果
    */
-  async updateCategory(id, categoryData) {
-    try {
-      const response = await apiService.put(`/categories/${id}`, categoryData)
-      return response
-    } catch (error) {
-      console.error(`更新分类${id}失败:`, error)
-      throw error
-    }
+  updateCategory: async (id, categoryData) => {
+    const response = await api.put(`/categories/${id}`, categoryData)
+    return response
   },
 
   /**
-   * 删除分类（管理员）
-   * @param {string} id - 分类ID
-   * @returns {Promise<void>}
+   * 删除分类
+   * @param {number} id - 分类ID
+   * @returns {Promise} 删除结果
    */
-  async deleteCategory(id) {
-    try {
-      await apiService.delete(`/categories/${id}`)
-    } catch (error) {
-      console.error(`删除分类${id}失败:`, error)
-      throw error
-    }
+  deleteCategory: async (id) => {
+    await api.delete(`/categories/${id}`)
   },
 
   /**
-   * 获取分类下的视频列表
-   * @param {string} categoryId - 分类ID
-   * @param {Object} params - 查询参数（分页、排序等）
-   * @returns {Promise<Object>} 视频列表和分页信息
+   * 获取分类下的视频
+   * @param {number} categoryId - 分类ID
+   * @param {Object} params - 查询参数
+   * @returns {Promise} 视频列表
    */
-  async getCategoryVideos(categoryId, params = {}) {
-    try {
-      const response = await apiService.get(`/categories/${categoryId}/videos`, params)
-      return response
-    } catch (error) {
-      console.error(`获取分类${categoryId}下的视频失败:`, error)
-      throw error
-    }
+  getCategoryVideos: async (categoryId, params = {}) => {
+    const response = await api.get(`/categories/${categoryId}/videos`, params)
+    return response
   },
 
   /**
    * 获取热门分类
-   * @param {number} limit - 返回数量限制
-   * @returns {Promise<Array>} 热门分类列表
+   * @param {number} limit - 限制数量
+   * @returns {Promise} 热门分类列表
    */
-  async getHotCategories(limit = 5) {
-    try {
-      const response = await apiService.get('/categories/hot', { limit })
-      return response || []
-    } catch (error) {
-      console.error('获取热门分类失败:', error)
-      throw error
-    }
+  getHotCategories: async (limit = 10) => {
+    const response = await api.get('/categories/hot', { limit })
+    return response
   },
 
   /**
    * 获取分类统计信息
-   * @returns {Promise<Array>} 分类统计数据
+   * @returns {Promise} 分类统计
    */
-  async getCategoryStats() {
-    try {
-      const response = await apiService.get('/categories/stats')
-      return response || []
-    } catch (error) {
-      console.error('获取分类统计失败:', error)
-      throw error
-    }
+  getCategoryStats: async () => {
+    const response = await api.get('/categories/stats')
+    return response
   }
 }
 

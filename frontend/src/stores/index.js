@@ -5,6 +5,8 @@ import { useUsersStore } from './modules/users'
 import { useSettingsStore } from './modules/settings'
 import { useCategoriesStore } from './modules/categories'
 import { useThemeStore } from './theme'
+import { useTabsStore } from './modules/tabs'
+import { useLayoutStore } from './modules/layout'
 
 // 创建pinia实例
 const pinia = createPinia()
@@ -13,17 +15,25 @@ const pinia = createPinia()
  * 初始化所有Store的方法
  * 此函数将在应用启动时调用，用于初始化必要的状态
  */
-export async function initializeStores() {
+export async function initializeStores(app, router) {
   try {
     const authStore = useAuthStore()
     const settingsStore = useSettingsStore()
     const categoriesStore = useCategoriesStore()
     const themeStore = useThemeStore()
+    const tabsStore = useTabsStore()
+    const layoutStore = useLayoutStore()
     
     // 按顺序初始化：先UI，再设置，再认证
-    themeStore.initializeTheme()
+    themeStore.initTheme()
     settingsStore.initializeSettings()
+    tabsStore.initializeTabs()
     await authStore.initializeAuth()
+    
+    // 初始化布局store（需要当前路由信息）
+    if (router && router.currentRoute) {
+      await layoutStore.setupLayout(router.currentRoute.value)
+    }
     
     // 尝试获取分类数据
     // 实际业务中，视频分类通常是公开数据，不需要认证
@@ -50,7 +60,9 @@ export {
   useVideosStore,
   useUsersStore,
   useCategoriesStore,
-  useThemeStore
+  useThemeStore,
+  useTabsStore,
+  useLayoutStore
 }
 
 // 导出pinia实例

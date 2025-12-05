@@ -1,24 +1,19 @@
-// API模块索引文件
-// 导出所有API模块，方便统一导入使用
+/**
+ * API统一导出
+ * 提供所有API模块的统一入口
+ */
 
-// 导入各个业务模块的API
-import authAPI from './modules/auth'
-import videosAPI from './modules/videos'
-import usersAPI from './modules/users'
-import categoriesAPI from './modules/categories'
+// 导入基础API服务
+export { api } from './api'
 
-// 导出所有API模块
-export {
-  authAPI,
-  videosAPI,
-  usersAPI,
-  categoriesAPI
-}
+// 导入各模块API
+export { default as authAPI } from './modules/auth'
+export { default as categoriesAPI } from './modules/categories'
+export { default as videosAPI } from './modules/videos'
+export { default as usersAPI } from './modules/users'
+export * as rolesAPI from './modules/roles'
+export * as permissionsAPI from './modules/permissions'
+export * as weatherAPI from './modules/weather'
 
-// 默认导出所有API模块，方便解构导入
-export default {
-  authAPI,
-  videosAPI,
-  usersAPI,
-  categoriesAPI
-}
+// 模拟数据
+export { mockData } from './api'

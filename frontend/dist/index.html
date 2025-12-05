@@ -2,22 +2,39 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-      <link rel="icon" type="image/png" href="/logo1.png" />
+    <link rel="icon" type="image/png" href="/logo1.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>拼好片</title>
-    <script type="module" crossorigin src="/js/main-DY_nV7wK.js"></script>
-    <link rel="modulepreload" crossorigin href="/js/vendor-D2BPhuO1.js">
-    <link rel="modulepreload" crossorigin href="/js/element-plus-DenaSUk-.js">
-    <link rel="modulepreload" crossorigin href="/js/pinia-CDQ-rDvW.js">
-    <link rel="modulepreload" crossorigin href="/js/vue-router-CubYl66F.js">
-    <link rel="modulepreload" crossorigin href="/js/utils-COBhFeH8.js">
-    <link rel="modulepreload" crossorigin href="/js/components-uQqsrMEA.js">
-    <link rel="stylesheet" crossorigin href="/assets/vendor-BCw0uU-l.css">
-    <link rel="stylesheet" crossorigin href="/assets/element-plus-BqUmP3gs.css">
-    <link rel="stylesheet" crossorigin href="/assets/components-DLeaIM0-.css">
-    <link rel="stylesheet" crossorigin href="/assets/index-BoKVG7nX.css">
+    <!-- 关键CSS内联 -->
+    <style>
+      /* 防止布局偏移的关键CSS */
+      html {
+        width: 100%;
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+      }
+      body {
+        width: 100vw;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      #app {
+        width: 100vw;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-D982Rnhh.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/element-plus-Bn-h-B0G.js">
+    <link rel="modulepreload" crossorigin href="/assets/vue-vendor-Yj0B9Bmm.js">
+    <link rel="modulepreload" crossorigin href="/assets/admin-pages-CcftS0Iv.js">
+    <link rel="stylesheet" crossorigin href="/assets/admin-pages-DwK6i6ez.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-7df4mVXE.css">
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app"></div>
   </body>
 </html>

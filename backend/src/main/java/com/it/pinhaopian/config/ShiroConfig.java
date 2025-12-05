@@ -1,5 +1,7 @@
 package com.it.pinhaopian.config;
 
+import com.it.pinhaopian.utils.JwtUtils;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.authz.ModularRealmAuthorizer;
 import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
@@ -7,13 +9,18 @@ import org.apache.shiro.mgt.DefaultSubjectDAO;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.mgt.DefaultSessionManager;
+import org.apache.shiro.spring.LifecycleBeanPostProcessor;
+import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.it.pinhaopian.utils.JwtUtils;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.servlet.Filter;
 import java.util.HashMap;
@@ -26,6 +33,40 @@ import java.util.Map;
 @Configuration
 public class ShiroConfig {
 
+    /**
+     * 创建自定义Realm
+     */
+    @Bean
+    public RbacRealm rbacRealm() {
+        RbacRealm realm = new RbacRealm();
+        // 设置密码匹配器
+        realm.setCredentialsMatcher(hashedCredentialsMatcher());
+        return realm;
+    }
+    
+    /**
+     * 密码匹配器
+     */
+    @Bean
+    public HashedCredentialsMatcher hashedCredentialsMatcher() {
+        HashedCredentialsMatcher matcher = new HashedCredentialsMatcher();
+        // 设置加密算法
+        matcher.setHashAlgorithmName("MD5");
+        // 设置迭代次数
+        matcher.setHashIterations(1024);
+        // 设置是否存储为16进制
+        matcher.setStoredCredentialsHexEncoded(true);
+        return matcher;
+    }
+    
+    /**
+     * 密码编码器
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
     /**
      * 配置认证器
      */
@@ -59,9 +100,11 @@ public class ShiroConfig {
      * 配置安全管理器
      */
     @Bean
-    public SecurityManager securityManager(Realm jwtRealm, ModularRealmAuthenticator authenticator, ModularRealmAuthorizer authorizer, DefaultSessionManager sessionManager) {
+    public SecurityManager securityManager(Realm jwtRealm, RbacRealm rbacRealm, ModularRealmAuthenticator authenticator, ModularRealmAuthorizer authorizer, DefaultSessionManager sessionManager) {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-        securityManager.setRealm(jwtRealm);
+        
+        // 设置多个Realm
+        securityManager.setRealms(java.util.Arrays.asList(jwtRealm, rbacRealm));
         securityManager.setAuthenticator(authenticator);
         securityManager.setAuthorizer(authorizer);
         securityManager.setSessionManager(sessionManager);
@@ -101,6 +144,12 @@ public class ShiroConfig {
         chainDefinition.addPathDefinition("/videos/upload", "jwt");
         chainDefinition.addPathDefinition("/comments/**", "jwt");
         
+        // 管理员接口
+        chainDefinition.addPathDefinition("/admin/**", "jwt,roles[ADMIN]");
+        
+        // 审核员接口
+        chainDefinition.addPathDefinition("/review/**", "jwt,roles[ADMIN,REVIEWER]");
+        
         // 其他所有路径都需要认证
         chainDefinition.addPathDefinition("/**", "jwt");
         
@@ -136,5 +185,34 @@ public class ShiroConfig {
         filterFactoryBean.setFilterChainDefinitionMap(shiroFilterChainDefinition.getFilterChainMap());
         
         return filterFactoryBean;
+    }
+    
+    /**
+     * Shiro生命周期处理器
+     */
+    @Bean
+    public LifecycleBeanPostProcessor lifecycleBeanPostProcessor() {
+        return new LifecycleBeanPostProcessor();
+    }
+    
+    /**
+     * 开启Shiro注解支持
+     */
+    @Bean
+    @DependsOn("lifecycleBeanPostProcessor")
+    public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator() {
+        DefaultAdvisorAutoProxyCreator creator = new DefaultAdvisorAutoProxyCreator();
+        creator.setProxyTargetClass(true);
+        return creator;
+    }
+    
+    /**
+     * 开启Shiro注解支持
+     */
+    @Bean
+    public AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor(SecurityManager securityManager) {
+        AuthorizationAttributeSourceAdvisor advisor = new AuthorizationAttributeSourceAdvisor();
+        advisor.setSecurityManager(securityManager);
+        return advisor;
     }
 }

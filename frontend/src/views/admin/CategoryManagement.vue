@@ -2,86 +2,94 @@
   <div class="category-management-container">
     <!-- 删除重复的面包屑导航，由AdminLayout统一提供 -->
     <div class="header-actions">
-      <el-button type="primary" @click="handleRefresh">
+      <button class="refresh-btn" @click="handleRefresh">
         <el-icon>
           <Refresh />
-                </el-icon>
-                刷新
-              </el-button>
-            </div>
-          <el-card>
-            <template #header>
-              <div class="card-header">
-                <span>分类管理</span>
-                <el-button type="primary" @click="showAddDialog">
-                  <el-icon>
-                    <Plus />
-                  </el-icon>
-                  添加分类
-                </el-button>
+        </el-icon>
+        刷新
+      </button>
+    </div>
+    
+    <div class="content-card">
+      <div class="card-header">
+        <button class="add-btn" @click="showAddDialog">
+          <el-icon>
+            <Plus />
+          </el-icon>
+          添加分类
+        </button>
+      </div>
+
+      <div class="filter-section">
+        <div class="search-container">
+          <el-input v-model="searchKeyword" placeholder="搜索分类名称" class="search-input" prefix-icon="Search"
+            @keyup.enter="handleSearch" />
+        </div>
+        <button class="search-btn" @click="handleSearch">搜索</button>
+        <button class="reset-btn" @click="resetSearch">重置</button>
+      </div>
+
+      <div class="table-container">
+        <el-table :data="filteredCategories" class="custom-table" @selection-change="handleSelectionChange"
+          v-loading="loading">
+          <el-table-column type="selection" width="55" />
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="name" label="分类名称" min-width="150">
+            <template #default="scope">
+              <div class="category-item">
+                <div class="category-icon-wrapper">
+                  <img :src="scope.row.icon" class="category-icon" />
+                </div>
+                <span class="category-name">{{ scope.row.name }}</span>
               </div>
             </template>
-
-            <div class="filter-section">
-              <el-input v-model="searchKeyword" placeholder="搜索分类名称" class="search-input" prefix-icon="Search"
-                @keyup.enter="handleSearch" />
-              <el-button type="primary" @click="handleSearch">搜索</el-button>
-              <el-button @click="resetSearch">重置</el-button>
-            </div>
-
-            <el-table :data="filteredCategories" style="width: 100%" @selection-change="handleSelectionChange"
-              v-loading="loading">
-              <el-table-column type="selection" width="55" />
-              <el-table-column prop="id" label="ID" width="80" />
-              <el-table-column prop="name" label="分类名称" min-width="150">
-                <template #default="scope">
-                  <div class="category-item">
-                    <el-avatar :size="36" :src="scope.row.icon" class="category-icon" />
-                    <span>{{ scope.row.name }}</span>
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column prop="description" label="分类描述" min-width="200" />
-              <el-table-column prop="videoCount" label="视频数量" width="120">
-                <template #default="scope">
-                  <el-tag size="small">{{ scope.row.videoCount }}</el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="status" label="状态" width="100">
-                <template #default="scope">
-                  <el-switch v-model="scope.row.status" active-value="active" inactive-value="inactive"
-                    @change="handleStatusChange(scope.row)" />
-                </template>
-              </el-table-column>
-              <el-table-column prop="sortOrder" label="排序" width="100">
-                <template #default="scope">
-                  <el-input-number v-model="scope.row.sortOrder" :min="1" :max="99"
-                    @change="handleSortChange(scope.row)" size="small" />
-                </template>
-              </el-table-column>
-              <el-table-column prop="createTime" label="创建时间" width="180">
-                <template #default="scope">
-                  {{ formatDate(scope.row.createTime) }}
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="180" fixed="right">
-                <template #default="scope">
-                  <el-button type="primary" size="small" @click="editCategory(scope.row)">编辑</el-button>
-                  <el-button type="danger" size="small" @click="deleteCategory(scope.row)"
-                    :disabled="scope.row.videoCount > 0">删除</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-
-            <div class="table-footer" v-if="selectedCategories.length > 0">
-              <div class="batch-actions">
-                <span>已选择 {{ selectedCategories.length }} 个分类</span>
-                <el-button type="success" @click="batchActivate">批量启用</el-button>
-                <el-button type="warning" @click="batchDeactivate">批量禁用</el-button>
-                <el-button type="danger" @click="batchDelete">批量删除</el-button>
+          </el-table-column>
+          <el-table-column prop="description" label="分类描述" min-width="200" />
+          <el-table-column prop="videoCount" label="视频数量" width="120">
+            <template #default="scope">
+              <div class="video-count-tag">{{ scope.row.videoCount }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="scope">
+              <div class="status-switch">
+                <el-switch v-model="scope.row.status" active-value="active" inactive-value="inactive"
+                  @change="handleStatusChange(scope.row)" />
               </div>
-            </div>
-          </el-card>
+            </template>
+          </el-table-column>
+          <el-table-column prop="sortOrder" label="排序" width="100">
+            <template #default="scope">
+              <div class="sort-input">
+                <el-input-number v-model="scope.row.sortOrder" :min="1" :max="99"
+                  @change="handleSortChange(scope.row)" size="small" />
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" width="180">
+            <template #default="scope">
+              <div class="time-display">{{ formatDate(scope.row.createTime) }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="180" fixed="right">
+            <template #default="scope">
+              <button class="edit-btn" @click="editCategory(scope.row)">编辑</button>
+              <button class="delete-btn" @click="deleteCategory(scope.row)"
+                :disabled="scope.row.videoCount > 0">删除</button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div class="table-footer" v-if="selectedCategories.length > 0">
+        <div class="batch-actions">
+          <span class="selected-count">已选择 {{ selectedCategories.length }} 个分类</span>
+          <button class="batch-btn activate" @click="batchActivate">批量启用</button>
+          <button class="batch-btn deactivate" @click="batchDeactivate">批量禁用</button>
+          <button class="batch-btn delete" @click="batchDelete">批量删除</button>
+        </div>
+      </div>
+    </div>
 
     <!-- 添加分类对话框 -->
     <el-dialog v-model="addVisible" title="添加分类" width="500px" :before-close="handleCloseAdd">
@@ -476,10 +484,14 @@ function formatDate(dateString) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+// 导入主题变量
+@use "@/assets/styles/theme" as theme;
+
 .category-management-container {
   padding: 20px;
   height: 100%;
+  background-color: var(--color-background);
 }
 
 .breadcrumb {
@@ -490,10 +502,22 @@ function formatDate(dateString) {
   margin-bottom: 20px;
 }
 
+.content-card {
+  background-color: var(--color-background);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: var(--transition);
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 20px;
 }
 
 .filter-section {
@@ -517,6 +541,40 @@ function formatDate(dateString) {
   object-fit: cover;
 }
 
+.category-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-count-tag {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  padding: 4px 8px;
+  border-radius: var(--border-radius);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-switch {
+  display: flex;
+  align-items: center;
+}
+
+.sort-input {
+  display: flex;
+  align-items: center;
+}
+
+.time-display {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
 .table-footer {
   margin-top: 20px;
 }
@@ -526,12 +584,69 @@ function formatDate(dateString) {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  
+  .selected-count {
+    color: var(--color-text-secondary);
+    font-size: 14px;
+  }
 }
 
 .icon-preview {
   margin-top: 10px;
   display: flex;
   justify-content: center;
+}
+
+// 按钮样式
+.refresh-btn, .add-btn, .search-btn, .reset-btn, .edit-btn, .delete-btn, .batch-btn {
+  padding: 8px 16px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+}
+
+.add-btn {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  
+  &:hover {
+    background-color: var(--color-primary-light);
+    border-color: var(--color-primary-light);
+  }
+}
+
+.delete-btn, .batch-btn.delete {
+  &:hover {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
+}
+
+.batch-btn.activate {
+  &:hover {
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+}
+
+.batch-btn.deactivate {
+  &:hover {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+  }
 }
 
 @media (max-width: 768px) {

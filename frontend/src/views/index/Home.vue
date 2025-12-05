@@ -117,9 +117,13 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { useCategoriesStore } from '@/stores/modules/categories'
 
 // 获取路由实例
 const router = useRouter()
+
+// 获取分类store
+const categoriesStore = useCategoriesStore()
 
 // 轮播图数据
 const carouselSlides = ref([
@@ -246,8 +250,19 @@ const closeDropdown = (event) => {
 }
 
 // 监听点击事件
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('click', closeDropdown)
+  
+  // 加载分类数据
+  try {
+    await categoriesStore.fetchAllCategories()
+    // 更新分类数据
+    if (categoriesStore.categories && categoriesStore.categories.length > 0) {
+      categories.value = categoriesStore.categories
+    }
+  } catch (error) {
+    console.error('加载分类数据失败:', error)
+  }
 })
 
 onUnmounted(() => {
@@ -262,8 +277,6 @@ onUnmounted(() => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   position: relative;
 }
-
-
 
 /* 主要内容区域 */
 .main-content {
@@ -313,86 +326,6 @@ onUnmounted(() => {
 
 .carousel-card :deep(.el-carousel__item:hover img) {
   transform: scale(1.02);
-}
-
-/* 轮播图视频信息覆盖层 */
-.carousel-video-info {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 20px 20px 60px 20px; /* 增加底部内边距，为指示条和按钮留出空间 */
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  color: white;
-  z-index: 10;
-}
-
-.carousel-video-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.carousel-video-desc {
-  font-size: 14px;
-  margin: 0;
-  opacity: 0.9;
-  line-height: 1.4;
-}
-
-/* 自定义轮播图指示条 */
-.carousel-indicators {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  display: flex;
-  gap: 8px;
-  z-index: 20;
-}
-
-.indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.indicator.active {
-  background-color: white;
-  width: 24px;
-  border-radius: 4px;
-}
-
-/* 自定义轮播图切换按钮 */
-.carousel-nav-buttons {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  gap: 8px;
-  z-index: 20;
-}
-
-.nav-button {
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  background-color: rgba(0, 0, 0, 0.6);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-}
-
-.nav-button:hover {
-  background-color: rgba(0, 0, 0, 0.8);
-  transform: scale(1.1);
 }
 
 /* 轮播图视频信息覆盖层 */
@@ -574,9 +507,9 @@ onUnmounted(() => {
 /* 分区导航 */
 .category-section {
   border-radius: 16px;
-  padding: 30px;
-  margin-top: 30px;
-  margin-bottom: 30px;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   box-shadow: 0 8px 32px var(--shadow-color);
   position: relative;
   overflow: hidden;
@@ -893,3 +826,5 @@ onUnmounted(() => {
   }
 }
 </style>
+
+

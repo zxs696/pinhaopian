@@ -77,12 +77,13 @@ const handleClick = () => {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  background-color: var(--avatar-bg, #d0d0d0); /* 使用定义的头像背景色变量 */
+  background-color: var(--color-secondary, #23ade5); /* 使用定义的次要颜色作为头像背景色 */
   color: var(--color-text-primary, #333);
+  text-align: center;
   font-weight: 500;
   position: relative;
   overflow: hidden;
-  border: 2px solid var(--color-primary, #fb7299); /* 使用主题主色（粉色）作为边框 */
+  border: none; /* 移除边框 */
   /* 防止布局偏移的关键属性 */
   flex-shrink: 0;
   box-sizing: border-box;
@@ -91,11 +92,10 @@ const handleClick = () => {
 }
 
 .circle-avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(251, 114, 153, 0.3); /* 添加阴影而不是改变尺寸 */
-  background-color: var(--avatar-bg-hover, #c0c0c0); /* 使用定义的头像悬停背景色变量 */
-  border-color: var(--color-primary-light, #ff8fab); /* 使用浅一点的粉色作为悬停边框色 */
-}
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* 使用中性阴影 */
+    background-color: var(--color-secondary, #1a9bc7); /* 使用深一点的次要颜色作为悬停背景色 */
+  }
 
 .avatar-text {
   font-size: calc(var(--avatar-size) * 0.4); /* 调整字体大小以更好显示首字符 */
@@ -103,8 +103,8 @@ const handleClick = () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--color-secondary, #23ade5); /* 使用定义的次要颜色作为头像背景色 */
   color: var(--color-text-primary, #333);
-  text-align: center;
   line-height: 1;
   width: 100%;
   height: 100%;

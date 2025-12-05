@@ -140,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useAuthStore } from '../../stores/modules/auth.js'
 import { useRouter } from 'vue-router'
 import { ElInput, ElButton, ElCheckbox } from 'element-plus'
@@ -225,8 +225,10 @@ const handleLogin = async () => {
     // 检查是否有需要认证的路由被拦截
     const to = router.currentRoute.value
     if (to.meta.requiresAuth) {
-      // 刷新当前路由
-      router.replace(to.path)
+      // 使用nextTick确保DOM更新完成后再进行路由跳转
+      await nextTick()
+      // 使用push代替replace，避免可能的布局闪烁问题
+      router.push(to.path)
     }
     
     return user

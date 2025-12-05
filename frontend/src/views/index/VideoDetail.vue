@@ -13,9 +13,21 @@
             <div class="video-player-container">
               <!-- 宽高比容器确保播放器有固定尺寸 -->
               <div class="aspect-ratio-container">
+                <!-- 视频播放器组件 -->
+                <VideoPlayer
+                  v-if="videoData && videoData.videoUrl"
+                  :video-url="videoData.videoUrl"
+                  :poster="videoData.coverUrl"
+                  :autoplay="false"
+                  :show-controls="true"
+                  @loadedmetadata="onVideoLoaded"
+                  @error="onVideoError"
+                  class="video-player-component"
+                />
+                
                 <!-- 视频封面图预加载 -->
                 <img 
-                  v-if="videoData && videoData.coverUrl"
+                  v-else-if="videoData && videoData.coverUrl"
                   :src="videoData.coverUrl" 
                   :alt="videoData.title || '视频封面'"
                   class="video-cover" 
@@ -283,8 +295,10 @@
 // 视频详情页逻辑
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { showError, showSuccess, showWarning, showInfo } from '@/utils/message'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import VideoPlayer from '@/components/video/VideoPlayer.vue'
+import { videosAPI } from '@/api/modules/videos.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -373,10 +387,41 @@ onMounted(() => {
 async function loadVideoData() {
   loading.value = true
   try {
-    // 模拟API请求
-    await new Promise(resolve => setTimeout(resolve, 800))
+    // 使用API获取视频详情
+    const response = await videosAPI.getVideoById(videoId.value)
     
-    // 模拟数据 - 实际项目中替换为API调用
+    if (response && response.data) {
+      videoData.value = response.data
+      
+      // 如果API返回的数据中没有videoUrl，使用默认示例视频
+      if (!videoData.value.videoUrl) {
+        videoData.value.videoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+      }
+    } else {
+      // 如果API没有返回数据，使用模拟数据作为后备
+      videoData.value = {
+        id: videoId.value,
+        title: '哔哩哔哩风格的视频详情页设计与实现教程',
+        views: 123456,
+        danmakuCount: 1234,
+        likes: 8923,
+        coins: 3456,
+        favorites: 2341,
+        commentsCount: 567,
+        author: 'UP主名称',
+        avatarUrl: '/logo.png',
+        fansCount: 12345,
+        publishDate: '2024-01-15',
+        description: '这是一个哔哩哔哩风格的视频详情页设计与实现教程。本视频详细讲解了如何使用Vue3和Element Plus构建一个完整的视频详情页，包括视频播放器、UP主信息展示、互动功能、评论区和推荐视频等模块。通过本教程，你将学习到现代化前端开发的最佳实践，以及如何构建一个用户体验良好的视频平台。',
+        coverUrl: '/logo.png', // 实际应使用真实的封面图URL
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' // 示例视频URL
+      }
+    }
+  } catch (error) {
+    console.error('加载视频详情失败:', error)
+    showError('加载视频详情失败')
+    
+    // 发生错误时使用模拟数据
     videoData.value = {
       id: videoId.value,
       title: '哔哩哔哩风格的视频详情页设计与实现教程',
@@ -391,14 +436,23 @@ async function loadVideoData() {
       fansCount: 12345,
       publishDate: '2024-01-15',
       description: '这是一个哔哩哔哩风格的视频详情页设计与实现教程。本视频详细讲解了如何使用Vue3和Element Plus构建一个完整的视频详情页，包括视频播放器、UP主信息展示、互动功能、评论区和推荐视频等模块。通过本教程，你将学习到现代化前端开发的最佳实践，以及如何构建一个用户体验良好的视频平台。',
-      coverUrl: '/logo.png' // 实际应使用真实的封面图URL
+      coverUrl: '/logo.png', // 实际应使用真实的封面图URL
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' // 示例视频URL
     }
-  } catch (error) {
-    console.error('加载视频详情失败:', error)
-    ElMessage.error('加载视频详情失败')
   } finally {
     loading.value = false
   }
+}
+
+// 视频加载完成回调
+const onVideoLoaded = (event) => {
+  console.log('视频加载完成', event)
+}
+
+// 视频加载错误回调
+const onVideoError = (event) => {
+  console.error('视频加载失败', event)
+  showError('视频加载失败，请稍后重试')
 }
 
 // 导航到视频详情页
@@ -443,25 +497,25 @@ const formatDuration = (seconds) => {
 const toggleLike = () => {
   isLiked.value = !isLiked.value
   videoData.value.likes += isLiked.value ? 1 : -1
-  ElMessage.success(isLiked.value ? '点赞成功' : '取消点赞')
+  showSuccess(isLiked.value ? '点赞成功' : '取消点赞')
 }
 
 // 切换收藏状态
 const toggleFavorite = () => {
   isFavorite.value = !isFavorite.value
   videoData.value.favorites += isFavorite.value ? 1 : -1
-  ElMessage.success(isFavorite.value ? '收藏成功' : '取消收藏')
+  showSuccess(isFavorite.value ? '收藏成功' : '取消收藏')
 }
 
 // 投币
 const submitCoin = () => {
   if (coinCount.value === 0) {
-    ElMessage.warning('请选择投币数量')
+    showWarning('请选择投币数量')
     return
   }
   videoData.value.coins += coinCount.value
   showCoinDialog.value = false
-  ElMessage.success(`成功投币 ${coinCount.value} 个`)
+  showSuccess(`成功投币 ${coinCount.value} 个`)
 }
 
 // 切换描述展开状态
@@ -471,29 +525,35 @@ const toggleDescription = () => {
 
 // 分享视频
 const shareVideo = () => {
-  ElMessage.info('分享功能待实现')
+  showInfo('分享功能待实现')
 }
 
 // 提交评论
 const submitComment = () => {
   if (!newComment.value.trim()) {
-    ElMessage.warning('请输入评论内容')
+    showWarning('请输入评论内容')
     return
   }
   
-  const newCommentObj = {
-    id: Date.now().toString(),
-    author: '当前用户',
-    avatarUrl: '/logo.png',
-    content: newComment.value.trim(),
-    likes: 0,
-    time: '刚刚'
+  // 创建新评论
+  const comment = {
+    id: Date.now(),
+    user: {
+      id: 1,
+      name: '当前用户',
+      avatar: 'https://picsum.photos/seed/user1/40/40.jpg'
+    },
+    content: newComment.value,
+    time: '刚刚',
+    likes: 0
   }
   
-  comments.value.unshift(newCommentObj)
+  // 添加到评论列表
+  comments.value.unshift(comment)
   videoData.value.commentsCount += 1
   newComment.value = ''
-  ElMessage.success('评论发布成功')
+  
+  showSuccess('评论发布成功')
 }
 </script>
 

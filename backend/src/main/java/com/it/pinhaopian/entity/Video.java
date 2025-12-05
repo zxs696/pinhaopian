@@ -34,7 +34,5 @@ public class Video {
 
     private Date updatedAt;
 
-    public void setId(Long videoId) {
-
-    }
+    // 移除空的setId方法，因为已经有videoId字段
 }

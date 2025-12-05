@@ -85,7 +85,7 @@ export const useThemeStore = defineStore('theme', {
     // 获取亮色主题变量 - 与SCSS系统变量保持一致的值
     getLightThemeVariables() {
       return {
-        'color-primary': '#fb7299', // B站粉色主色
+        'color-primary': '#fb7299', // 粉色主色
         'color-secondary': '#23ade5', // 辅助色（蓝色）
         'color-background': '#f5f5f5', // 背景色（同时用于卡片背景）
         'color-text-primary': '#18191c', // 主要文字色
@@ -99,7 +99,7 @@ export const useThemeStore = defineStore('theme', {
     // 获取暗色主题变量 - 与SCSS系统变量保持一致的值
     getDarkThemeVariables() {
       return {
-        'color-primary': '#fb7299', // B站粉色主色
+        'color-primary': '#fb7299', // 粉色主色
         'color-secondary': '#23ade5', // 辅助色（蓝色）
         'color-background': '#121212', // 背景色（同时用于卡片背景）
         'color-text-primary': '#f5f5f5', // 主要文字色

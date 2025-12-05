@@ -2,15 +2,17 @@ package com.it.pinhaopian.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
+
+
 
 @Data
 @TableName("users")
@@ -23,6 +25,7 @@ public class User {
     private String email;
 
     @JsonIgnore
+    @Setter
     private String passwordHash;
 
     private String nickname;
@@ -30,15 +33,12 @@ public class User {
     private String avatarUrl;
 
     private String phone;
-
-    private Integer gender;
-
+    
+    private Integer gender = 0;
+    
     private Date birthday;
 
     private Integer status;
-    
-    // 用户类型：0-管理员，1-普通用户，2-游客等
-    private Integer userType = 0;
 
     private Date createdAt;
 
@@ -49,9 +49,8 @@ public class User {
     @TableField(exist = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
+    
+    // 用户角色列表，不持久化到数据库
+    @TableField(exist = false)
+    private List<Role> roles;
 }

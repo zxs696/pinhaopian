@@ -54,6 +54,14 @@ public class ApiResponse<T> implements Serializable {
     }
     
     /**
+     * 成功响应（无数据）
+     * @return ApiResponse
+     */
+    public static <T> ApiResponse<T> success() {
+        return success(null);
+    }
+    
+    /**
      * 成功响应
      * @param data 响应数据
      * @return ApiResponse
@@ -95,6 +103,15 @@ public class ApiResponse<T> implements Serializable {
         ApiResponse<T> response = success(data);
         response.setMessage(message);
         return response;
+    }
+    
+    /**
+     * 自定义错误消息的错误响应
+     * @param message 错误消息
+     * @return ApiResponse
+     */
+    public static <T> ApiResponse<T> error(String message) {
+        return error(ResultCode.BAD_REQUEST.getCode(), message);
     }
     
     /**

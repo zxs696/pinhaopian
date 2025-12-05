@@ -1,6 +1,9 @@
 package com.it.pinhaopian.config;
 
+import com.it.pinhaopian.entity.Permission;
+import com.it.pinhaopian.entity.Role;
 import com.it.pinhaopian.entity.User;
+import com.it.pinhaopian.service.PermissionService;
 import com.it.pinhaopian.service.UserService;
 import com.it.pinhaopian.utils.JwtUtils;
 import org.apache.shiro.authc.*;
@@ -11,6 +14,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -21,9 +25,11 @@ import java.util.Set;
 public class JwtRealm extends AuthorizingRealm {
 
     private final UserService userService;
+    private final PermissionService permissionService;
 
-    public JwtRealm(UserService userService) {
+    public JwtRealm(UserService userService, PermissionService permissionService) {
         this.userService = userService;
+        this.permissionService = permissionService;
     }
 
     /**
@@ -39,21 +45,43 @@ public class JwtRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-        // 直接使用principals.getPrimaryPrincipal()，不单独声明变量
+        // 获取用户名
+        String username = (String) principals.getPrimaryPrincipal();
+        
         SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
         
-        // 获取用户角色和权限（这里简化处理，实际项目中可能需要从数据库获取）
-        Set<String> roles = new HashSet<>();
-        Set<String> permissions = new HashSet<>();
-        
-        // 假设所有用户都有user角色
-        roles.add("user");
-        
-        // 设置权限（根据实际业务需求设置）
-        permissions.add("user:view");
-        
-        authorizationInfo.setRoles(roles);
-        authorizationInfo.setStringPermissions(permissions);
+        // 从数据库获取用户信息
+        User user = userService.findByUsername(username);
+        if (user != null) {
+            // 获取用户角色
+            Set<String> roles = new HashSet<>();
+            List<Role> userRoles = userService.getUserRoles(user.getUserId());
+            userRoles.forEach(role -> {
+                roles.add(role.getRoleCode());
+                // 如果是管理员角色，也添加ADMIN角色以兼容@RequiresRole("ADMIN")注解
+                if ("ADMIN".equals(role.getRoleCode()) || "SUPER_ADMIN".equals(role.getRoleCode())) {
+                    roles.add("ADMIN");
+                }
+            });
+            
+            // 从数据库获取用户权限
+            Set<String> permissions = new HashSet<>();
+            List<Permission> userPermissions = permissionService.findPermissionsByUserId(user.getUserId());
+            userPermissions.forEach(permission -> {
+                permissions.add(permission.getPermissionCode());
+            });
+            
+            // 对于管理员角色，确保拥有所有API权限
+            if (roles.contains("ADMIN") || roles.contains("SUPER_ADMIN")) {
+                // 直接添加关键API权限，确保权限验证通过
+                permissions.add("API:PERMISSION:LIST");
+                permissions.add("API:ROLE:LIST");
+                // 可以根据需要添加其他必要的权限
+            }
+            
+            authorizationInfo.setRoles(roles);
+            authorizationInfo.setStringPermissions(permissions);
+        }
         
         return authorizationInfo;
     }

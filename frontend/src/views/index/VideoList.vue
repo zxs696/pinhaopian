@@ -52,10 +52,10 @@
           <div class="sort-options">
             <span class="sort-label">排序:</span>
             <el-radio-group v-model="sortType" @change="handleSortChange">
-              <el-radio-button label="hot">热门</el-radio-button>
-              <el-radio-button label="new">最新</el-radio-button>
-              <el-radio-button label="trending">趋势</el-radio-button>
-              <el-radio-button label="duration">时长</el-radio-button>
+              <el-radio-button value="hot">热门</el-radio-button>
+              <el-radio-button value="new">最新</el-radio-button>
+              <el-radio-button value="trending">趋势</el-radio-button>
+              <el-radio-button value="duration">时长</el-radio-button>
             </el-radio-group>
           </div>
         </div>
@@ -151,7 +151,7 @@
 // 视频列表页逻辑
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { showError } from '@/utils/message'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { ArrowLeft, Plus, VideoPlay, View } from '@element-plus/icons-vue'
 
@@ -317,7 +317,7 @@ async function loadVideoList() {
     
   } catch (error) {
     console.error('加载视频列表失败:', error)
-    ElMessage.error('加载视频列表失败，请稍后重试')
+    showError('加载视频列表失败，请稍后重试')
   } finally {
     loading.value = false
   }

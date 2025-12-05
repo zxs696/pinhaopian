@@ -20,7 +20,5 @@ public class Category {
     private Integer status;
     private Date createdAt;
 
-    public void setId(Long categoryId) {
-
-    }
+    // 移除空的setId方法，因为已经有categoryId字段
 }

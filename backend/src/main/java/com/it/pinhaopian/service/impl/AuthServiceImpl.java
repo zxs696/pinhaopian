@@ -1,18 +1,21 @@
 package com.it.pinhaopian.service.impl;
 
 import com.it.pinhaopian.entity.User;
+import com.it.pinhaopian.entity.Role;
 import com.it.pinhaopian.mapper.UserMapper;
 import com.it.pinhaopian.service.AuthService;
 import com.it.pinhaopian.service.UserService;
 import com.it.pinhaopian.utils.JwtUtils;
 import com.it.pinhaopian.utils.PasswordUtils;
 import com.it.pinhaopian.utils.RedisUtils;
+import com.it.pinhaopian.websocket.SessionWebSocketManager;
 import com.it.pinhaopian.common.ResultCode;
 import com.it.pinhaopian.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 import java.util.Date;
 
@@ -56,6 +59,44 @@ public class AuthServiceImpl implements AuthService {
                 
                 if (passwordMatch && statusActive) {
                     logger.info("Login successful for user: {}", user.getUsername());
+                    
+                    // 实现登录互斥：检查用户是否已有有效token，如果有，则使旧token失效
+                    try {
+                        String userTokenKey = "user_tokens:" + user.getUserId();
+                        java.util.Set<String> existingTokens = redisUtils.members(userTokenKey);
+                        
+                        if (existingTokens != null && !existingTokens.isEmpty()) {
+                            logger.info("Found {} existing tokens for user: {}, invalidating them", 
+                                       existingTokens.size(), user.getUsername());
+                            
+                            // 将所有旧token加入黑名单
+                            for (String oldToken : existingTokens) {
+                                redisUtils.set("blacklist:" + oldToken, "1", 24, TimeUnit.HOURS);
+                                logger.debug("Added old token to blacklist for user: {}", user.getUsername());
+                            }
+                            
+                            // 发送WebSocket通知，告知旧会话已失效
+                            try {
+                                String message = "您的账号在其他设备登录，当前会话已失效";
+                                SessionWebSocketManager.sendSessionInvalidNotification(String.valueOf(user.getUserId()), message);
+                                logger.info("已向用户{}发送下线通知", user.getUsername());
+                            } catch (Exception e) {
+                                // WebSocket通知失败不影响登录流程
+                                logger.warn("发送WebSocket下线通知失败: {}", e.getMessage());
+                            }
+                            
+                            // 清空用户的token集合
+                            redisUtils.delete(userTokenKey);
+                        }
+                    } catch (Exception e) {
+                        // Redis不可用时记录日志但不影响登录流程
+                        logger.warn("Failed to check/invalidate existing tokens for user {}: {}", 
+                                  user.getUsername(), e.getMessage());
+                    }
+                    
+                    // 获取用户角色信息
+                    List<Role> roles = userService.getUserRoles(user.getUserId());
+                    user.setRoles(roles);
                     
                     // 可选：将用户信息存入Redis，方便后续快速获取
                     try {
@@ -145,7 +186,6 @@ public class AuthServiceImpl implements AuthService {
             user.setCreatedAt(new Date());
             user.setUpdatedAt(new Date());
             user.setStatus(1); // 默认启用
-            user.setUserType(1); // 默认普通用户
             
             // 插入用户
             int result = userMapper.insert(user);
@@ -183,6 +223,14 @@ public class AuthServiceImpl implements AuthService {
                         // 将token加入黑名单（设置过期时间为token剩余有效期）
                         redisUtils.set("blacklist:" + token, "1", 24, TimeUnit.HOURS);
                         logger.info("Token added to blacklist for user: {}", username);
+                        
+                        // 从用户的token集合中移除当前token
+                        User user = userService.findByUsername(username);
+                        if (user != null) {
+                            String userTokenKey = "user_tokens:" + user.getUserId();
+                            redisUtils.removeSet(userTokenKey, token);
+                            logger.info("Token removed from user's token set: {}", username);
+                        }
                     } catch (Exception e) {
                         // Redis不可用时记录日志但不影响登出流程
                         logger.warn("Failed to add token to blacklist in Redis: {}", e.getMessage());
@@ -256,8 +304,35 @@ public class AuthServiceImpl implements AuthService {
             }
             
             logger.debug("Generating token for user: {}", username);
-            String token = jwtUtils.generateToken(username);
-            logger.info("Token generated successfully for user: {}", username);
+            
+            // 获取用户ID
+            User user = userService.findByUsername(username);
+            if (user == null) {
+                logger.warn("User not found for username: {}", username);
+                return null;
+            }
+            
+            // 使用带用户ID的token生成方法
+            String token = jwtUtils.generateToken(username, user.getUserId());
+             
+            if (token != null) {
+                // 将token与用户关联存储在Redis中
+                try {
+                    String userTokenKey = "user_tokens:" + user.getUserId();
+                    redisUtils.addSet(userTokenKey, token);
+                    
+                    // 设置token集合的过期时间为24小时
+                    redisUtils.expire(userTokenKey, 24, TimeUnit.HOURS);
+                    
+                    logger.info("Token associated with user {} in Redis", username);
+                } catch (Exception e) {
+                    // Redis不可用时记录日志但不影响token生成
+                    logger.warn("Failed to associate token with user in Redis: {}", e.getMessage());
+                }
+                
+                logger.info("Token generated successfully for user: {}", username);
+            }
+            
             return token;
         } catch (Exception e) {
             logger.error("Error generating token: {}", e.getMessage(), e);
@@ -320,6 +395,10 @@ public class AuthServiceImpl implements AuthService {
                 logger.debug("User found from token: {}", username);
                 // 清除密码信息
                 user.setPasswordHash(null);
+                
+                // 获取用户角色信息
+                List<Role> roles = userService.getUserRoles(user.getUserId());
+                user.setRoles(roles);
             } else {
                 logger.warn("User not found from token: {}", username);
             }

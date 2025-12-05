@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar">
+  <nav class="navbar" :class="{ 'navbar-transparent': isTransparent }">
     <div class="container">
       <!-- 左侧区域：Logo + 主导航 -->
       <div class="left-section">
@@ -33,25 +33,25 @@
       
       <!-- 中间区域：搜索框 -->
       <div class="search-box">
-        <el-input 
-          v-model="keyword" 
-          placeholder="搜索视频、用户..." 
-          class="search-input"
-          @keyup.enter="handleSearch"
-          @focus="isSearchFocused = true"
-          @blur="isSearchFocused = false"
-        >
-          <template #prefix>
+        <div class="custom-search-input">
+          <div class="search-input-container">
             <el-icon class="search-icon">
               <Search />
             </el-icon>
-          </template>
-          <template #suffix>
+            <input 
+              v-model="keyword" 
+              type="text" 
+              placeholder="搜索视频、用户..." 
+              class="search-input-field"
+              @keyup.enter="handleSearch"
+              @focus="isSearchFocused = true"
+              @blur="isSearchFocused = false"
+            />
             <el-icon v-if="keyword" class="clear-icon" @click="clearSearch">
               <CircleClose />
             </el-icon>
-          </template>
-        </el-input>
+          </div>
+        </div>
         
         <!-- 搜索建议框 -->
         <div v-if="isSearchFocused && keyword" class="search-suggestions">
@@ -95,12 +95,31 @@
             
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                <el-dropdown-item command="history">历史记录</el-dropdown-item>
-                <el-dropdown-item command="favorites">我的收藏</el-dropdown-item>
-                <el-dropdown-item command="settings">设置</el-dropdown-item>
-                <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
+          <el-dropdown-item command="profile">
+            <el-icon><User /></el-icon>
+            个人中心
+          </el-dropdown-item>
+          <el-dropdown-item command="history">
+            <el-icon><Clock /></el-icon>
+            历史记录
+          </el-dropdown-item>
+          <el-dropdown-item command="favorites">
+            <el-icon><Star /></el-icon>
+            我的收藏
+          </el-dropdown-item>
+          <el-dropdown-item command="settings">
+            <el-icon><Setting /></el-icon>
+            设置
+          </el-dropdown-item>
+          <el-dropdown-item v-if="authStore.isAdminOrReviewer" command="admin" divided>
+            <el-icon><Tools /></el-icon>
+            后台管理
+          </el-dropdown-item>
+          <el-dropdown-item command="logout" divided>
+            <el-icon><SwitchButton /></el-icon>
+            退出登录
+          </el-dropdown-item>
+        </el-dropdown-menu>
             </template>
           </el-dropdown>
         </div>
@@ -171,8 +190,10 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/modules/auth'
-import { Search, Moon, Sunny, ArrowDown, Bell, Plus, Menu, CircleClose } from '@element-plus/icons-vue'
-import CircleAvatar from '@/components/layout/CircleAvatar.vue'
+import { Search, Moon, Sunny, ArrowDown, Bell, Plus, Menu, CircleClose, Tools, User, Clock, Star, Setting, SwitchButton } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
+import { showSuccess, showInfo } from '@/utils/message'
+import CircleAvatar from '@/components/layout/index/CircleAvatar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -184,9 +205,13 @@ const keyword = ref('')
 const isSearchFocused = ref(false)
 const showMobileMenu = ref(false)
 const searchSuggestions = ref([])
+const isTransparent = ref(route.path === '/') // 导航栏透明状态，仅首页透明
 
 // 计算当前路径
 const currentPath = computed(() => route.path)
+
+// 判断是否为首页
+const isHomePage = computed(() => route.path === '/')
 
 // 主导航菜单项
 const navItems = [
@@ -233,6 +258,16 @@ const getSearchSuggestions = () => {
   ]
 }
 
+// 监听路由变化，更新透明状态
+watch(
+  () => route.path,
+  () => {
+    // 路由变化时，根据是否为首页设置透明状态
+    isTransparent.value = route.path === '/'
+  },
+  { immediate: true }
+)
+
 // 监听搜索框输入
 watch(keyword, () => {
   getSearchSuggestions()
@@ -266,9 +301,39 @@ const handleUserCommand = (command) => {
     case 'settings':
       router.push('/settings')
       break
+    case 'admin':
+      router.push('/admin')
+      break
     case 'logout':
-      authStore.logout()
-      router.push('/')
+      // 添加登出确认对话框
+      ElMessageBox.confirm(
+        '您确定要退出登录吗？',
+        '登出确认',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          confirmButtonClass: 'el-button--danger',
+          beforeClose: (action, instance, done) => {
+            if (action === 'confirm') {
+              instance.confirmButtonLoading = true
+              instance.confirmButtonText = '退出中...'
+              
+              // 模拟异步登出操作
+              setTimeout(() => {
+                authStore.logout()
+                router.push('/')
+                done()
+              }, 800)
+            } else {
+              done()
+            }
+          }
+        }
+      ).catch(() => {
+        // 用户取消登出操作
+        showInfo('已取消登出操作')
+      })
       break
     default:
       break
@@ -308,19 +373,38 @@ const handleClickOutside = (event) => {
 onMounted(() => {
   // 监听全局点击事件
   document.addEventListener('click', handleClickOutside)
+  
+  // 监听滚动事件
+  window.addEventListener('scroll', handleScroll)
+  
+  // 初始检查滚动位置
+  handleScroll()
 })
 
 onUnmounted(() => {
   // 移除事件监听器
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('scroll', handleScroll)
 })
+
+// 处理滚动事件
+const handleScroll = () => {
+  // 只在首页时，当滚动超过DynamicBanner高度时，导航栏不再透明
+  if (isHomePage.value) {
+    const scrollThreshold = 100 // DynamicBanner的高度
+    isTransparent.value = window.scrollY < scrollThreshold
+  } else {
+    // 非首页导航栏始终不透明
+    isTransparent.value = false
+  }
+}
 </script>
 
 <style scoped lang="scss">
 .navbar {
   background-color: var(--color-background);
   border-bottom: 1px solid var(--color-border);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: all 0.3s ease;
   height: 70px; /* 增加导航栏纵向宽度 */
   position: fixed; /* 固定定位，实现滚动冻结效果 */
   top: 0; /* 固定在顶部 */
@@ -329,6 +413,8 @@ onUnmounted(() => {
   z-index: 1000; /* 确保导航栏在其他元素之上 */
   width: 100%; /* 确保宽度占满整个屏幕 */
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1); /* 添加阴影，增强视觉层次感 */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   /* 防止布局偏移的关键属性 */
     /* 移除 contain 属性，避免影响固定定位 */
     /* 移除 will-change 属性，避免影响固定定位效果 */
@@ -342,6 +428,110 @@ onUnmounted(() => {
     padding-left: calc(16px + 15px);
     padding-right: calc(16px + 15px);
   }
+}
+
+/* 透明导航栏样式 */
+.navbar.navbar-transparent {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border-bottom: none !important;
+}
+
+/* 透明导航栏下的文字和图标颜色 */
+.navbar.navbar-transparent .logo,
+.navbar.navbar-transparent .nav-link,
+.navbar.navbar-transparent .theme-toggle,
+.navbar.navbar-transparent .menu-toggle,
+.navbar.navbar-transparent .user-info,
+.navbar.navbar-transparent .notification-bell {
+  color: var(--color-text) !important; /* 使用主题变量，跟随主题变化 */
+}
+
+/* 透明导航栏下的搜索框样式 */
+.navbar.navbar-transparent .search-box {
+  background-color: transparent !important; /* 透明背景 */
+  border: none !important; /* 移除边框 */
+  box-shadow: none !important; /* 移除阴影 */
+}
+
+/* 透明导航栏下的自定义搜索框样式 - 与非透明状态保持一致 */
+.navbar.navbar-transparent .custom-search-input .search-input-container {
+  /* 使用主题变量，与非透明状态保持一致 */
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.navbar.navbar-transparent .custom-search-input .search-input-field {
+  color: var(--color-text-primary);
+}
+
+.navbar.navbar-transparent .custom-search-input .search-input-field::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.navbar.navbar-transparent .custom-search-input .search-icon {
+  color: var(--color-text-secondary);
+}
+
+.navbar.navbar-transparent .custom-search-input .clear-icon {
+  color: var(--color-text-secondary);
+}
+
+.navbar.navbar-transparent .search-btn {
+  color: var(--color-text-primary);
+}
+
+/* 暗色主题下的透明导航栏 */
+.dark .navbar.navbar-transparent {
+  background-color: transparent !important;
+  border-bottom: none !important;
+}
+
+/* 暗色主题下透明导航栏的文字和图标颜色 */
+.dark .navbar.navbar-transparent .logo,
+.dark .navbar.navbar-transparent .nav-link,
+.dark .navbar.navbar-transparent .theme-toggle,
+.dark .navbar.navbar-transparent .menu-toggle,
+.dark .navbar.navbar-transparent .user-info,
+.dark .navbar.navbar-transparent .notification-bell {
+  color: var(--color-text) !important; /* 使用主题变量，跟随主题变化 */
+}
+
+/* 暗色主题下透明导航栏的搜索框样式 - 与非透明状态保持一致 */
+.dark .navbar.navbar-transparent .search-box {
+  background-color: transparent !important; /* 透明背景 */
+  border: none !important; /* 移除边框 */
+  box-shadow: none !important; /* 移除阴影 */
+}
+
+/* 暗色主题下透明导航栏的自定义搜索框样式 - 与非透明状态保持一致 */
+.dark .navbar.navbar-transparent .custom-search-input .search-input-container {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.dark .navbar.navbar-transparent .custom-search-input .search-input-field {
+  color: var(--color-text-primary);
+}
+
+.dark .navbar.navbar-transparent .custom-search-input .search-input-field::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.dark .navbar.navbar-transparent .custom-search-input .search-icon {
+  color: var(--color-text-secondary);
+}
+
+.dark .navbar.navbar-transparent .custom-search-input .clear-icon {
+  color: var(--color-text-secondary);
+}
+
+.dark .navbar.navbar-transparent .search-btn {
+  color: var(--color-text-primary);
 }
 
 .container {
@@ -369,10 +559,14 @@ onUnmounted(() => {
 .logo {
   display: inline-block;
   transition: transform 0.2s ease;
+  width: 110px; /* 增大容器宽度 */
+  height: 110px; /* 增大容器高度 */
+  overflow: visible; /* 允许内容溢出 */
   
   .logo-image {
-    height: 40px;
-    width: auto;
+    width: 100%; /* 图片宽度填满容器 */
+    height: 100%; /* 图片高度填满容器 */
+    object-fit: contain; /* 保持图片比例 */
   }
   
   &:hover {
@@ -384,12 +578,12 @@ onUnmounted(() => {
 .left-section {
   display: flex;
   align-items: center;
-  // 设置固定宽度，防止布局偏移
-  width: 300px;
+  // 增加固定宽度，为更大的logo提供空间
+  width: 350px;
   flex-shrink: 0;
   /* 防止布局偏移的关键属性 */
-  min-width: 300px;
-  max-width: 300px;
+  min-width: 350px;
+  max-width: 350px;
   box-sizing: border-box;
   /* 移除 contain 属性，避免影响固定定位 */
   
@@ -397,12 +591,12 @@ onUnmounted(() => {
     margin-left: 24px;
     // 为导航菜单设置固定高度，防止布局偏移
     height: 70px; // 与导航栏高度一致
-    // 设置固定宽度，防止布局偏移
-    width: 200px;
+    // 减少导航菜单宽度，为logo留出更多空间
+    width: 150px;
     flex-shrink: 0;
     /* 防止布局偏移的关键属性 */
-    min-width: 200px;
-    max-width: 200px;
+    min-width: 150px;
+    max-width: 150px;
     box-sizing: border-box;
   }
 }
@@ -508,8 +702,8 @@ onUnmounted(() => {
     position: relative;
     // 设置最小宽度，防止布局偏移
     min-width: 200px;
-    // 防止内容溢出
-    overflow: hidden;
+    // 修改overflow属性，防止搜索建议框被裁剪
+    overflow: visible;
     /* 防止布局偏移的关键属性 */
     width: 100%;
     box-sizing: border-box;
@@ -607,34 +801,62 @@ onUnmounted(() => {
       }
     }
 
-  // 搜索框样式
-  .search-input {
-    --el-input-bg-color: #f4f4f5;
-    --el-input-text-color-placeholder: #909399;
-    --el-input-hover-border-color: var(--color-primary);
-    --el-input-focus-border-color: var(--color-primary);
-    height: 36px;
-    border-radius: 18px;
-    // 确保输入框有固定尺寸，防止布局偏移
+  // 自定义搜索框样式
+  .custom-search-input {
     width: 100%;
+    height: 36px;
     
-    // 修复Element Plus输入框包装器的样式
-    :deep(.el-input__wrapper) {
-      height: 36px;
+    .search-input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
       width: 100%;
+      height: 100%;
+      background-color: var(--color-background);
+      border: 1px solid var(--color-border);
       border-radius: 18px;
-      box-sizing: border-box;
-    }
-    
-    .search-icon {
-      color: #909399;
-    }
-    
-    .clear-icon {
-      transition: color 0.2s ease;
+      transition: all 0.2s ease;
       
       &:hover {
-        color: var(--color-primary);
+        border-color: var(--color-primary);
+      }
+      
+      &:focus-within {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(251, 114, 153, 0.2);
+      }
+      
+      .search-icon {
+        margin-left: 12px;
+        color: var(--color-text-secondary);
+        font-size: 16px;
+      }
+      
+      .search-input-field {
+        flex: 1;
+        height: 100%;
+        border: none;
+        outline: none;
+        background: transparent;
+        padding: 0 12px;
+        font-size: 14px;
+        color: var(--color-text-primary);
+        
+        &::placeholder {
+          color: var(--color-text-secondary);
+        }
+      }
+      
+      .clear-icon {
+        margin-right: 12px;
+        color: var(--color-text-secondary);
+        font-size: 16px;
+        cursor: pointer;
+        transition: color 0.2s ease;
+        
+        &:hover {
+          color: var(--color-primary);
+        }
       }
     }
   }
@@ -723,7 +945,7 @@ onUnmounted(() => {
       border-radius: 18px;
       background-color: var(--color-primary);
       border: 1px solid var(--color-primary);
-      color: white;
+      color: var(--color-text-primary);
       transition: all 0.2s ease;
       
       &:hover {
@@ -776,7 +998,7 @@ onUnmounted(() => {
     }
     
     .user-avatar {
-      border: 1px solid var(--color-primary);
+      border: none; /* 移除边框 */
       transition: all 0.2s ease;
       
       &:hover {
@@ -874,17 +1096,18 @@ onUnmounted(() => {
 }
 
 .user-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: var(--avatar-bg, #d0d0d0); /* 使用定义的头像背景色变量 */
-  color: var(--color-text-primary, #333); /* 使用定义的主要文字颜色变量 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: var(--color-secondary, #23ade5); /* 使用定义的次要颜色作为头像背景色 */
+    color: var(--color-text-primary, #333); /* 使用定义的主要文字颜色变量 */
+    border: none; /* 移除边框 */
   
   &:hover {
-    background-color: var(--avatar-bg-hover, #c0c0c0); /* 使用定义的头像悬停背景色变量 */
+    background-color: var(--color-secondary, #1a9bc7); /* 使用深一点的次要颜色作为悬停背景色 */
     transform: scale(1.05);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
   }
@@ -892,8 +1115,9 @@ onUnmounted(() => {
 
 // 确保Element Plus的头像组件中的文字居中
 .el-avatar {
-  background-color: var(--avatar-bg, #d0d0d0); /* 使用定义的头像背景色变量 */
+  background-color: var(--color-secondary, #23ade5); /* 使用定义的次要颜色作为头像背景色 */
   color: var(--color-text-primary, #333); /* 使用定义的主要文字颜色变量 */
+  border: none; /* 移除边框 */
 }
 
 .el-avatar > img {

@@ -60,7 +60,49 @@ public abstract class BaseServiceImpl<T, ID extends Serializable> implements Bas
 
     @Override
     public T save(T entity) {
-        getMapper().insert(entity);
+        // 检查实体是否有getId或getUserId方法来判断是新增还是更新
+        try {
+            Object id;
+            try {
+                id = entity.getClass().getMethod("getId").invoke(entity);
+            } catch (NoSuchMethodException e) {
+                id = entity.getClass().getMethod("getUserId").invoke(entity);
+            }
+            
+            // 如果ID为null，表示新增
+            if (id == null) {
+                // 尝试设置创建时间和更新时间
+                try {
+                    entity.getClass().getMethod("setCreatedAt", java.util.Date.class)
+                          .invoke(entity, new java.util.Date());
+                    entity.getClass().getMethod("setUpdatedAt", java.util.Date.class)
+                          .invoke(entity, new java.util.Date());
+                } catch (Exception ignored) {
+                    // 如果没有这些方法，忽略
+                }
+                getMapper().insert(entity);
+            } else {
+                // 更新操作，设置更新时间
+                try {
+                    entity.getClass().getMethod("setUpdatedAt", java.util.Date.class)
+                          .invoke(entity, new java.util.Date());
+                } catch (Exception ignored) {
+                    // 如果没有这个方法，忽略
+                }
+                getMapper().updateById(entity);
+            }
+        } catch (Exception e) {
+            // 如果无法获取ID，默认执行插入操作
+            try {
+                entity.getClass().getMethod("setCreatedAt", java.util.Date.class)
+                      .invoke(entity, new java.util.Date());
+                entity.getClass().getMethod("setUpdatedAt", java.util.Date.class)
+                      .invoke(entity, new java.util.Date());
+            } catch (Exception ignored) {
+                // 如果没有这些方法，忽略
+            }
+            getMapper().insert(entity);
+        }
         return entity;
     }
 
@@ -78,6 +120,13 @@ public abstract class BaseServiceImpl<T, ID extends Serializable> implements Bas
 
     @Override
     public T update(T entity) {
+        // 设置更新时间
+        try {
+            entity.getClass().getMethod("setUpdatedAt", java.util.Date.class)
+                  .invoke(entity, new java.util.Date());
+        } catch (Exception ignored) {
+            // 如果没有这个方法，忽略
+        }
         getMapper().updateById(entity);
         return entity;
     }
@@ -101,9 +150,16 @@ public abstract class BaseServiceImpl<T, ID extends Serializable> implements Bas
     @Override
     @SuppressWarnings({"unchecked", "java:S3011"})
     public void delete(T entity) {
-        // 假设实体有getId方法获取主键
+        // 假设实体有getId或getUserId方法获取主键
         try {
-            ID id = (ID) entity.getClass().getMethod("getId").invoke(entity);
+            ID id;
+            try {
+                // 先尝试getId方法
+                id = (ID) entity.getClass().getMethod("getId").invoke(entity);
+            } catch (NoSuchMethodException e) {
+                // 如果没有getId方法，尝试getUserId方法
+                id = (ID) entity.getClass().getMethod("getUserId").invoke(entity);
+            }
             getMapper().deleteById(id);
         } catch (Exception e) {
             throw new RuntimeException("删除失败", e);

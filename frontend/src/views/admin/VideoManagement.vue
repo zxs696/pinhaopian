@@ -14,8 +14,7 @@
           <el-card>
             <template #header>
               <div class="card-header">
-                <span>视频管理</span>
-                <span class="video-count">（共 {{ videos.length }} 个视频）</span>
+                <span class="video-count">共 {{ videos.length }} 个视频</span>
               </div>
             </template>
             

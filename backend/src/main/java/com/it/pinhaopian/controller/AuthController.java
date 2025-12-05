@@ -145,4 +145,30 @@ public class AuthController {
             return ApiResponse.error(ResultCode.INTERNAL_SERVER_ERROR.getCode(), "获取用户信息失败: " + e.getMessage());
         }
     }
+    
+    /**
+     * 检查会话状态
+     */
+    @GetMapping("/checkSession")
+    public ApiResponse<Void> checkSession(@RequestHeader(value = "Authorization") String token) {
+        try {
+            // 从请求头获取token
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ApiResponse.error(ResultCode.UNAUTHORIZED.getCode(), "无效的认证信息");
+            }
+            
+            String tokenValue = token.replace("Bearer ", "");
+            
+            // 验证token是否有效
+            boolean isValid = authService.validateToken(tokenValue);
+            
+            if (!isValid) {
+                return ApiResponse.error(ResultCode.UNAUTHORIZED.getCode(), "会话已失效，请重新登录");
+            }
+            
+            return ApiResponse.success(null, "会话有效");
+        } catch (Exception e) {
+            return ApiResponse.error(ResultCode.UNAUTHORIZED.getCode(), "会话检查失败: " + e.getMessage());
+        }
+    }
 }

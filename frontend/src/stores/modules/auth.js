@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { authAPI } from '../../api'
 import { showSuccess, showError } from '../../utils/message.js'
+import sessionService from '../../services/session'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -8,12 +9,27 @@ export const useAuthStore = defineStore('auth', {
     token: null,
     loading: false,
     errorMessage: '',
-    isLoginModalVisible: false
+    isLoginModalVisible: false,
+    isInitialized: false, // 添加初始化状态标记
+    sessionStatus: 'unknown', // 会话状态: unknown, valid, invalid
+    lastSessionCheck: null, // 最后一次会话检查时间
+    isSessionMonitoring: false // 是否正在监控会话状态
   }),
 
   getters: {
     isLoggedIn: (state) => !!state.user,
-    isAdmin: (state) => state.user && state.user.userType === 0
+    isAdmin: (state) => {
+      if (!state.user || !state.user.roles) return false;
+      return state.user.roles.some(role => role.sortOrder === 1);
+    },
+    isReviewer: (state) => {
+      if (!state.user || !state.user.roles) return false;
+      return state.user.roles.some(role => role.sortOrder === 2);
+    },
+    isAdminOrReviewer: (state) => {
+      if (!state.user || !state.user.roles) return false;
+      return state.user.roles.some(role => role.sortOrder === 1 || role.sortOrder === 2);
+    }
   },
 
   actions: {
@@ -28,14 +44,12 @@ export const useAuthStore = defineStore('auth', {
       try {
         // 清除可能存在的无效token
         if (localStorage.getItem('token') || sessionStorage.getItem('token')) {
-          console.log('清除可能存在的旧token')
           localStorage.removeItem('token')
           sessionStorage.removeItem('token')
         }
 
         // 使用正确的authAPI.login方法
         const response = await authAPI.login(userData)
-        console.log('登录API响应:', response)
         
         // 首先检查响应是否包含错误信息（code不为成功值或message表示错误）
         if (response.code && response.code !== 200 && response.code !== 20000) {
@@ -79,19 +93,15 @@ export const useAuthStore = defineStore('auth', {
         storage.setItem('token', this.token)
         storage.setItem('tokenExpiresAt', this.tokenExpiresAt)
         
-        console.log('登录成功，用户信息已保存:', this.user)
-        
         // 显示登录成功提示
         showSuccess(`登录成功-${user.username}-欢迎回来`)
+        
+        // 初始化会话监控
+        this.initializeSessionMonitoring()
         
         // 确保返回用户信息
         return this.user
       } catch (error) {
-        console.error('登录错误:', error)
-        
-        // 确保在错误情况下清除状态
-        this.clearAuthData()
-        
         // 处理不同格式的错误信息
         if (error.response?.data?.message) {
           this.errorMessage = error.response.data.message
@@ -112,40 +122,47 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async logout() {
-      try {
-        this.loading = true
-        this.errorMessage = ''
-        
-        // 调用真实的登出API
-        await authAPI.logout()
-        console.log('登出API调用成功')
-      } catch (error) {
-        console.error('登出错误:', error)
-        // 即使API调用失败，仍然继续清除本地状态
-        // 这确保了用户可以退出登录，即使网络有问题
-      } finally {
-        // 清除所有存储的认证数据
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        sessionStorage.removeItem('token')
-        sessionStorage.removeItem('user')
-        
-        // 重置状态
-        this.isLoginModalVisible = false
-        this.user = null
-        this.token = null
-        this.loading = false
-        
-        console.log('本地认证状态已清除')
-        
-        // 显示友好的退出登录提示
-        showSuccess('您已安全退出登录', {
-          customClass: 'logout-success-message',
-          duration: 2000
-        })
-      }
-    },
+      // 获取用户信息
+
+      async logout() {
+        try {
+          this.loading = true
+          this.errorMessage = ''
+          
+          // 调用真实的登出API
+          await authAPI.logout()
+        } catch (error) {
+          // 即使API调用失败，仍然继续清除本地状态
+          // 这确保了用户可以退出登录，即使网络有问题
+        } finally {
+          // 清除所有存储的认证数据
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          sessionStorage.removeItem('token')
+          sessionStorage.removeItem('user')
+          
+          // 清除tabs缓存
+          localStorage.removeItem('adminVisitedTabs')
+          localStorage.removeItem('visitedTabs')
+          
+          // 重置状态
+          this.isLoginModalVisible = false
+          this.user = null
+          this.token = null
+          this.loading = false
+          this.sessionStatus = 'unknown'
+          this.lastSessionCheck = null
+          
+          // 停止会话监控
+          this.stopSessionMonitoring()
+          
+          // 显示友好的退出登录提示
+          showSuccess('您已安全退出登录', {
+            customClass: 'logout-success-message',
+            duration: 2000
+          })
+        }
+      },
 
     async register({ username, password }) {
       this.loading = true
@@ -153,7 +170,6 @@ export const useAuthStore = defineStore('auth', {
         this.errorMessage = ''
         
         const response = await authAPI.register({ username, password })
-        console.log('注册API响应:', response)
         
         // 首先检查响应是否包含错误信息（code不为成功值或message表示错误）
         if (response.code && response.code !== 200 && response.code !== 20000) {
@@ -192,7 +208,6 @@ export const useAuthStore = defineStore('auth', {
         
         return response
       } catch (error) {
-        console.error('注册错误:', error)
         
         // 处理不同格式的错误信息
         if (error.response?.data?.message) {
@@ -208,32 +223,120 @@ export const useAuthStore = defineStore('auth', {
         
         throw error
       } finally {
-        this.loading = false
-      }
-    },
+          this.loading = false
+        }
+      },
 
-    initializeAuth() {
-      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user')
-      const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token')
+      initializeAuth() {
+        const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user')
+        const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token')
+        
+        if (storedUser && storedUser !== 'undefined' && storedToken && storedToken !== 'undefined') {
+          try {
+            this.user = JSON.parse(storedUser)
+            this.token = storedToken
+            this.isAuthenticated = true
+            
+            // 初始化会话监控
+            this.initializeSessionMonitoring()
+          } catch (error) {
+            this.clearAuthData()
+          }
+        }
+        
+        // 标记认证状态已初始化
+        this.isInitialized = true
+      },
+
+      clearAuthData() {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('user')
+        this.user = null
+        this.token = null
+        
+        // 停止会话监控
+        this.stopSessionMonitoring()
+      },
       
-      if (storedUser && storedUser !== 'undefined' && storedToken && storedToken !== 'undefined') {
-        try {
-          this.user = JSON.parse(storedUser)
-          this.token = storedToken
-        } catch (error) {
-          console.error('解析用户信息失败:', error)
+      // 初始化会话监控
+      initializeSessionMonitoring() {
+        if (!this.token || this.isSessionMonitoring) {
+          return
+        }
+        
+        // 设置会话服务事件监听器
+        sessionService.on('sessionInvalid', (data) => {
+          console.warn('会话失效:', data.message)
+          this.sessionStatus = 'invalid'
+          this.lastSessionCheck = new Date()
+          
+          // 显示会话失效提示
+          showError(data.message || '您的会话已失效，请重新登录')
+          
+          // 清除认证数据
           this.clearAuthData()
+          
+          // 显示登录模态框
+          this.setLoginModalVisible(true)
+        })
+        
+        sessionService.on('sessionValid', () => {
+          console.log('会话有效')
+          this.sessionStatus = 'valid'
+          this.lastSessionCheck = new Date()
+        })
+        
+        sessionService.on('sessionExpired', (data) => {
+          console.warn('会话过期:', data.message)
+          this.sessionStatus = 'invalid'
+          this.lastSessionCheck = new Date()
+          
+          // 显示会话过期提示
+          showError(data.message || '您的会话已过期，请重新登录')
+          
+          // 清除认证数据
+          this.clearAuthData()
+          
+          // 显示登录模态框
+          this.setLoginModalVisible(true)
+        })
+        
+        sessionService.on('websocketConnected', () => {
+          console.log('WebSocket连接已建立')
+        })
+        
+        sessionService.on('websocketDisconnected', () => {
+          console.log('WebSocket连接已断开')
+        })
+        
+        // 初始化会话服务
+        sessionService.initialize(this.token)
+        this.isSessionMonitoring = true
+        this.sessionStatus = 'valid'
+        this.lastSessionCheck = new Date()
+      },
+      
+      // 停止会话监控
+      stopSessionMonitoring() {
+        if (!this.isSessionMonitoring) {
+          return
+        }
+        
+        sessionService.cleanup()
+        this.isSessionMonitoring = false
+        this.sessionStatus = 'unknown'
+      },
+      
+      // 获取会话状态
+      getSessionStatus() {
+        return {
+          status: this.sessionStatus,
+          lastCheck: this.lastSessionCheck,
+          isMonitoring: this.isSessionMonitoring,
+          serviceStatus: this.isSessionMonitoring ? sessionService.getStatus() : null
         }
       }
-    },
-
-    clearAuthData() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      sessionStorage.removeItem('token')
-      sessionStorage.removeItem('user')
-      this.user = null
-      this.token = null
     }
-  }
-})
+  })

@@ -165,9 +165,12 @@
 <script setup>
 // 视频上传页面逻辑 - 哔哩哔哩风格
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { UploadFilled, Upload, Delete, Loading } from '@element-plus/icons-vue'
 import { showError, showWarning, showInfo, showSuccess } from '../../utils/message.js'
+import { videosAPI } from '../../api/modules/videos.js'
 
+const router = useRouter()
 // 上传状态
 const uploading = ref(false)
 const videoFile = ref(null)
@@ -219,7 +222,7 @@ function handleExceed(files, fileList) {
 }
 
 // 提交上传
-function submitUpload() {
+async function submitUpload() {
   // 表单验证
   if (!videoForm.value.title) {
     showError('请输入视频标题')
@@ -238,15 +241,36 @@ function submitUpload() {
   
   uploading.value = true
   
-  // 模拟上传过程
-  setTimeout(() => {
-    uploading.value = false
+  try {
+    // 准备上传数据
+    const formData = new FormData()
+    formData.append('video', videoFile.value)
+    formData.append('title', videoForm.value.title)
+    formData.append('description', videoForm.value.description || '')
+    formData.append('category', videoForm.value.category)
+    formData.append('tags', JSON.stringify(videoForm.value.tags))
     
-    showSuccess('您的视频已成功上传，正在审核中')
+    // 调用API上传视频
+    const response = await videosAPI.createVideo(formData)
+    
+    showSuccess('视频上传成功！')
     
     // 重置表单
     resetForm()
-  }, 2000)
+    
+    // 跳转到视频详情页
+    if (response && response.data && response.data.id) {
+      router.push(`/video/${response.data.id}`)
+    } else {
+      // 如果没有返回ID，跳转到首页
+      router.push('/')
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    showError(error.message || '视频上传失败，请重试')
+  } finally {
+    uploading.value = false
+  }
 }
 
 // 取消上传
