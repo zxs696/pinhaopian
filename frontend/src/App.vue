@@ -23,6 +23,9 @@
     
     <!-- 全局登录模态框 -->
     <AuthModal :show-modal="showLoginModal" @close="closeLoginModal" />
+    
+    <!-- 全局被顶号对话框 -->
+    <SessionInvalidDialog ref="sessionInvalidDialogRef" />
   </div>
 </template>
 
@@ -34,6 +37,7 @@ import { useThemeStore } from './stores/theme'
 import { useLayoutStore } from './stores/modules/layout'
 import AuthModal from './views/auth/AuthModal.vue'
 import LoadingSpinner from './components/common/LoadingSpinner.vue'
+import SessionInvalidDialog from './components/common/SessionInvalidDialog.vue'
 
 // 设置组件名称
 defineOptions({
@@ -48,6 +52,9 @@ const layoutStore = useLayoutStore()
 
 // 控制登录模态框显示的ref
 const showLoginModal = computed(() => authStore.isLoginModalVisible)
+
+// 被顶号对话框的ref
+const sessionInvalidDialogRef = ref(null)
 
 // 需要缓存的视图组件
 const cachedViews = ref([
@@ -114,6 +121,13 @@ onBeforeMount(async () => {
   themeStore.initTheme()
   // 设置初始布局
   await layoutStore.setupLayout(route)
+  
+  // 将显示被顶号对话框的方法添加到window对象，以便在服务中调用
+  window.showSessionInvalidDialog = () => {
+    if (sessionInvalidDialogRef.value) {
+      sessionInvalidDialogRef.value.showDialog()
+    }
+  }
 })
 
 // 组件销毁前清理所有监听器

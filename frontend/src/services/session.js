@@ -5,6 +5,7 @@
 
 import axios from 'axios'
 import webSocketService from './websocket'
+import { useAuthStore } from '@/stores/modules/auth'
 
 class SessionService {
   constructor() {
@@ -22,15 +23,19 @@ class SessionService {
   /**
    * 初始化会话管理
    * @param {string} token 用户token
+   * @param {boolean} isNewLogin 是否是新登录，默认为false
    */
-  initialize(token) {
+  initialize(token, isNewLogin = false) {
     if (!token) {
       console.error('会话管理初始化失败：缺少token')
       return false
     }
 
+    // 清理之前的会话
+    this.cleanup()
+
     // 初始化WebSocket连接
-    this.initWebSocket(token)
+    this.initWebSocket(token, isNewLogin)
 
     // 开始轮询检查
     this.startPolling(token)
@@ -64,7 +69,7 @@ class SessionService {
     webSocketService.on('sessionInvalid', (data) => {
       console.warn('收到会话失效通知:', data.message)
       this.emit('sessionInvalid', data)
-      this.handleSessionInvalid(data.message)
+      this.handleSessionInvalid(data)
     })
 
     // 连接WebSocket
@@ -146,20 +151,67 @@ class SessionService {
 
   /**
    * 处理会话失效
-   * @param {string} message 失效原因
+   * @param {string|object} messageOrData 失效原因或数据对象
    */
-  handleSessionInvalid(message) {
-    // 停止轮询
-    this.stopPolling()
+  handleSessionInvalid(messageOrData) {
+    // 兼容旧的字符串参数和新的对象参数
+    const data = typeof messageOrData === 'string' ? { message: messageOrData } : (messageOrData || {});
+    console.warn('会话失效，处理中...', data);
+    
+    // 防止重复处理
+    if (this.isHandlingSessionInvalid) {
+      console.log('会话失效处理已在进行中，跳过重复处理');
+      return;
+    }
+    
+    this.isHandlingSessionInvalid = true;
+    
+    try {
+      // 停止轮询检查
+      this.stopPolling();
+      
+      // 断开WebSocket连接
+      webSocketService.disconnect();
+      
+      // 清除认证数据
+      this.clearAuthData();
+      
+      // 清除用户认证状态
+      const authStore = useAuthStore();
+      authStore.logout();
+      
+      // 触发会话失效事件，保持兼容性同时增强功能
+      this.emit('sessionExpired', {
+        message: data.message || '您的账号在其他设备登录，当前会话已失效',
+        timestamp: Date.now()
+      });
+      
+      console.log('会话失效处理完成');
+    } catch (error) {
+      console.error('处理会话失效时出错:', error);
+    } finally {
+      // 重置处理标志，延迟重置以避免快速连续触发
+      setTimeout(() => {
+        this.isHandlingSessionInvalid = false;
+      }, 1000);
+    }
+  }
 
-    // 断开WebSocket连接
-    webSocketService.disconnect()
-
-    // 触发会话失效事件
-    this.emit('sessionExpired', { message })
-
-    // 这里可以添加其他处理逻辑，如跳转到登录页
-    console.warn('会话已失效:', message)
+  /**
+   * 清除认证数据
+   */
+  clearAuthData() {
+    // 清除本地存储
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('user')
+    
+    // 清除其他相关缓存
+    localStorage.removeItem('adminVisitedTabs')
+    localStorage.removeItem('visitedTabs')
+    
+    console.log('已清除本地认证信息')
   }
 
   /**

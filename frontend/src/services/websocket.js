@@ -1,3 +1,5 @@
+import { useAuthStore } from '@/stores/modules/auth'
+
 /**
  * WebSocket服务
  * 用于处理实时会话通知
@@ -17,20 +19,26 @@ class WebSocketService {
     this.connectionStatus = 'DISCONNECTED'
     this.url = null
     this.token = null
+    this.isNewLogin = false // 添加标记，区分是新登录还是被顶号
   }
 
   /**
    * 连接WebSocket
    * @param {string} token 用户token
    * @param {string} baseUrl WebSocket基础URL
+   * @param {boolean} isNewLogin 是否是新登录，默认为false
    */
-  connect(token, baseUrl = null) {
+  connect(token, baseUrl = null, isNewLogin = false) {
     if (!token) {
       console.error('WebSocket连接失败：缺少token')
       return false
     }
 
     this.token = token
+    this.isNewLogin = isNewLogin // 设置新登录标记
+    
+    // 重置重连计数器，允许每次调用connect时都能重连
+    this.reconnectAttempts = 0
     
     // 构建WebSocket URL - 直接连接到后端端口8080
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -46,7 +54,7 @@ class WebSocketService {
       this.socket = new WebSocket(this.url)
       this.setupEventListeners()
       this.connectionStatus = 'CONNECTING'
-      console.log('正在连接WebSocket...')
+      console.log('正在连接WebSocket...', isNewLogin ? '(新登录)' : '(重连)')
       return true
     } catch (error) {
       console.error('WebSocket连接错误:', error)
@@ -107,23 +115,93 @@ class WebSocketService {
   }
 
   /**
-   * 处理收到的消息
-   * @param {Object} data 消息数据
+   * 处理接收到的消息
+   * @param {Object} data - 接收到的消息数据
    */
   handleMessage(data) {
-    const { type, message } = data
+    try {
+      // 处理不同类型的消息
+      switch (data.type) {
+        case 'SESSION_INVALID':
+          // 如果是新登录，忽略SESSION_INVALID消息，因为这是正常的
+          if (this.isNewLogin) {
+            console.log('新登录设备，忽略会话失效消息')
+            // 重置新登录标记，以便后续能正常处理会话失效
+            setTimeout(() => {
+              this.isNewLogin = false
+            }, 5000) // 5秒后重置标记
+            return
+          }
+          
+          // 处理会话失效消息
+          this.handleSessionInvalid(data.message || '会话已失效，请重新登录');
+          break;
+        case 'pong':
+          // 心跳响应
+          this.lastPongTime = Date.now();
+          this.isWaitingForPong = false;
+          this.resetHeartbeatTimeout();
+          break;
+        default:
+          console.log('收到未知类型的消息:', data);
+      }
+    } catch (error) {
+      console.error('处理WebSocket消息时出错:', error);
+    }
+  }
 
-    switch (type) {
-      case 'SESSION_INVALID':
-        console.warn('会话失效:', message)
-        this.emit('sessionInvalid', { message })
-        break
-      case 'pong':
-        // 心跳响应
-        this.resetHeartbeatTimeout()
-        break
-      default:
-        console.log('未知消息类型:', type)
+  /**
+   * 处理会话失效
+   * @param {string} message - 会话失效消息
+   */
+  handleSessionInvalid(message) {
+    console.warn('会话失效:', message);
+    
+    // 清除用户认证状态
+    try {
+      const authStore = useAuthStore();
+      authStore.clearAuthData();
+      console.log('已清除用户认证状态');
+    } catch (error) {
+      console.error('清除用户认证状态失败:', error);
+    }
+    
+    // 触发会话失效事件
+    this.emit('sessionInvalid', { message });
+    
+    // 显示用户友好的提示
+    this.showSessionInvalidNotification(message);
+    
+    // 关闭WebSocket连接
+    this.disconnect();
+  }
+
+  /**
+   * 显示会话失效通知
+   * @param {string} message - 通知消息
+   */
+  showSessionInvalidNotification(message) {
+    // 避免重复显示通知
+    if (this.lastNotificationTime && (Date.now() - this.lastNotificationTime < 5000)) {
+      return;
+    }
+    
+    this.lastNotificationTime = Date.now();
+    
+    // 使用自定义的被顶号对话框
+    if (typeof window !== 'undefined' && window.showSessionInvalidDialog) {
+      window.showSessionInvalidDialog();
+    } else if (typeof window !== 'undefined' && window.$notify) {
+      // 降级到通知组件
+      window.$notify({
+        title: '登录状态变更',
+        message: message || '您的账号在其他设备登录，当前会话已失效',
+        type: 'warning',
+        duration: 5000
+      });
+    } else {
+      // 最后降级到alert
+      alert(message || '会话已失效，请重新登录');
     }
   }
 
@@ -188,14 +266,23 @@ class WebSocketService {
    * 安排重连
    */
   scheduleReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error(`已达到最大重连次数(${this.maxReconnectAttempts})，停止重连`)
+      this.emit('reconnectFailed')
+      return
+    }
+
     this.reconnectAttempts++
     console.log(`WebSocket重连尝试 ${this.reconnectAttempts}/${this.maxReconnectAttempts}`)
+
+    // 使用指数退避算法计算延迟时间
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 30000)
     
     setTimeout(() => {
       if (this.token) {
         this.connect(this.token)
       }
-    }, this.reconnectInterval)
+    }, delay)
   }
 
   /**

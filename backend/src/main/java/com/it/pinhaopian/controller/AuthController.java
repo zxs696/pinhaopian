@@ -24,14 +24,28 @@ public class AuthController {
      * 用户登录
      */
     @PostMapping("/login")
-    public ApiResponse<Object> login(@RequestBody User user) {
+    public ApiResponse<Object> login(@RequestBody User user, HttpServletRequest request) {
         try {
             // 验证用户名和密码
             User loginUser = authService.login(user.getUsername(), user.getPassword());
             
             if (loginUser != null) {
+                // 获取请求头中的旧token（如果有）
+                String oldToken = null;
+                String authHeader = request.getHeader("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    oldToken = authHeader.substring(7); // 移除 "Bearer " 前缀
+                }
+                
                 // 生成JWT token
-                String token = authService.generateToken(loginUser.getUsername());
+                String token;
+                if (oldToken != null) {
+                    // 如果有旧token，使用带oldToken参数的generateToken方法
+                    token = authService.generateToken(loginUser.getUsername(), oldToken);
+                } else {
+                    // 如果没有旧token，使用普通的generateToken方法
+                    token = authService.generateToken(loginUser.getUsername());
+                }
                 
                 // 构造返回结果
                 Map<String, Object> result = new HashMap<>();
@@ -163,6 +177,10 @@ public class AuthController {
             boolean isValid = authService.validateToken(tokenValue);
             
             if (!isValid) {
+                // 检查token是否在黑名单中（被顶号的情况）
+                if (authService.isTokenBlacklisted(tokenValue)) {
+                    return ApiResponse.error(ResultCode.UNAUTHORIZED.getCode(), "您的账号已在其他设备登录，请重新登录");
+                }
                 return ApiResponse.error(ResultCode.UNAUTHORIZED.getCode(), "会话已失效，请重新登录");
             }
             

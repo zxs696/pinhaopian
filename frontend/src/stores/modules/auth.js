@@ -96,8 +96,13 @@ export const useAuthStore = defineStore('auth', {
         // 显示登录成功提示
         showSuccess(`登录成功-${user.username}-欢迎回来`)
         
-        // 初始化会话监控
-        this.initializeSessionMonitoring()
+        // 延迟初始化会话监控，避免与登录成功提示冲突
+        setTimeout(() => {
+          if (this.isAuthenticated && this.token) {
+            this.stopSessionMonitoring()
+            this.initializeSessionMonitoring()
+          }
+        }, 1000) // 延迟1秒初始化，确保登录成功提示显示完成
         
         // 确保返回用户信息
         return this.user
@@ -228,6 +233,16 @@ export const useAuthStore = defineStore('auth', {
       },
 
       initializeAuth() {
+        // 检查是否有强制登出标记
+        const forceLogout = localStorage.getItem('forceLogout') || sessionStorage.getItem('forceLogout')
+        if (forceLogout === 'true') {
+          console.log('检测到强制登出标记，清除认证数据')
+          this.clearAuthData()
+          localStorage.removeItem('forceLogout')
+          sessionStorage.removeItem('forceLogout')
+          return
+        }
+        
         const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user')
         const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token')
         
@@ -249,84 +264,171 @@ export const useAuthStore = defineStore('auth', {
       },
 
       clearAuthData() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        sessionStorage.removeItem('token')
-        sessionStorage.removeItem('user')
-        this.user = null
-        this.token = null
-        
-        // 停止会话监控
-        this.stopSessionMonitoring()
-      },
-      
-      // 初始化会话监控
-      initializeSessionMonitoring() {
-        if (!this.token || this.isSessionMonitoring) {
+        // 防止重复清除
+        if (!this.user && !this.token && !this.isSessionMonitoring) {
+          console.log('认证数据已清除，跳过重复清除')
           return
         }
         
-        // 设置会话服务事件监听器
+        try {
+          // 清除基本认证信息
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          sessionStorage.removeItem('token')
+          sessionStorage.removeItem('user')
+          
+          // 清除强制登出标记
+          localStorage.removeItem('forceLogout')
+          sessionStorage.removeItem('forceLogout')
+          
+          // 清除其他可能的用户相关缓存
+          localStorage.removeItem('adminVisitedTabs')
+          localStorage.removeItem('visitedTabs')
+          localStorage.removeItem('userPreferences')
+          localStorage.removeItem('searchHistory')
+          localStorage.removeItem('recentVideos')
+          localStorage.removeItem('watchHistory')
+          localStorage.removeItem('favoriteVideos')
+          localStorage.removeItem('uploadDrafts')
+          
+          // 清除sessionStorage中的临时数据
+          sessionStorage.removeItem('tempUploadData')
+          sessionStorage.removeItem('editDraftId')
+          sessionStorage.removeItem('lastActiveTime')
+          
+          // 重置状态
+          this.user = null
+          this.token = null
+          this.sessionStatus = 'unknown'
+          this.isAuthenticated = false
+          
+          // 停止会话监控
+          this.stopSessionMonitoring()
+          
+          console.log('认证数据及相关缓存已清除')
+        } catch (error) {
+          console.error('清除认证数据时出错:', error)
+        }
+      },
+      
+      // 初始化会话监控
+      initializeSessionMonitoring(isNewLogin = false) {
+        if (!this.isAuthenticated || !this.token) {
+          console.log('用户未登录或缺少token，跳过会话监控初始化')
+          return
+        }
+        
+        // 停止现有的会话监控
+        this.stopSessionMonitoring()
+        
+        // 使用导入的sessionService，而不是创建新实例
+        // 监听会话失效事件
         sessionService.on('sessionInvalid', (data) => {
-          console.warn('会话失效:', data.message)
-          this.sessionStatus = 'invalid'
-          this.lastSessionCheck = new Date()
-          
-          // 显示会话失效提示
-          showError(data.message || '您的会话已失效，请重新登录')
-          
-          // 清除认证数据
-          this.clearAuthData()
-          
-          // 显示登录模态框
-          this.setLoginModalVisible(true)
+          console.warn('收到会话失效通知:', data)
+          this.handleSessionInvalid(data)
         })
         
+        // 监听会话有效事件
         sessionService.on('sessionValid', () => {
-          console.log('会话有效')
-          this.sessionStatus = 'valid'
-          this.lastSessionCheck = new Date()
+          console.log('会话验证有效')
         })
         
+        // 监听会话过期事件（兼容旧版本）
         sessionService.on('sessionExpired', (data) => {
-          console.warn('会话过期:', data.message)
-          this.sessionStatus = 'invalid'
-          this.lastSessionCheck = new Date()
-          
-          // 显示会话过期提示
-          showError(data.message || '您的会话已过期，请重新登录')
+          console.warn('收到会话过期通知:', data)
+          this.handleSessionInvalid(data)
+        })
+        
+        // 初始化会话服务，传递isNewLogin参数
+        sessionService.initialize(this.token, isNewLogin)
+        this.isSessionMonitoring = true
+        console.log('会话监控已初始化', isNewLogin ? '(新登录)' : '(重连)')
+      },
+      
+      // 处理会话失效
+      handleSessionInvalid(data) {
+        console.warn('会话失效:', data)
+        
+        // 防止重复处理会话失效
+        if (this.isHandlingSessionInvalid) {
+          console.log('会话失效正在处理中，跳过重复处理')
+          return
+        }
+        
+        this.isHandlingSessionInvalid = true
+        
+        try {
+          // 使用自定义的被顶号对话框替代默认alert
+          if (window.showSessionInvalidDialog) {
+            window.showSessionInvalidDialog()
+          }
           
           // 清除认证数据
           this.clearAuthData()
           
+          // 强制登出：阻止用户继续访问需要认证的页面
+          this.forceLogout()
+          
+          // 延迟重置处理标志，防止短时间内重复处理
+          setTimeout(() => {
+            this.isHandlingSessionInvalid = false
+          }, 1000)
+        } catch (error) {
+          console.error('处理会话失效时出错:', error)
+          this.isHandlingSessionInvalid = false
+        }
+      },
+      
+      // 强制登出功能
+      forceLogout() {
+        console.log('执行强制登出操作')
+        
+        // 设置强制登出标记，防止用户绕过登录
+        localStorage.setItem('forceLogout', 'true')
+        sessionStorage.setItem('forceLogout', 'true')
+        
+        // 如果当前不在登录页面，则跳转到首页并显示登录模态框
+        if (window.location.pathname !== '/login') {
           // 显示登录模态框
           this.setLoginModalVisible(true)
-        })
-        
-        sessionService.on('websocketConnected', () => {
-          console.log('WebSocket连接已建立')
-        })
-        
-        sessionService.on('websocketDisconnected', () => {
-          console.log('WebSocket连接已断开')
-        })
-        
-        // 初始化会话服务
-        sessionService.initialize(this.token)
-        this.isSessionMonitoring = true
-        this.sessionStatus = 'valid'
-        this.lastSessionCheck = new Date()
+          
+          // 如果当前在需要认证的页面，跳转到首页
+          const protectedRoutes = ['/profile', '/upload', '/admin', '/settings', '/favorites', '/history']
+          if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
+            window.location.href = '/'
+          }
+        }
       },
       
       // 停止会话监控
       stopSessionMonitoring() {
         if (!this.isSessionMonitoring) {
+          console.log('会话监控未运行，无需停止')
           return
         }
         
-        sessionService.cleanup()
-        this.isSessionMonitoring = false
-        this.sessionStatus = 'unknown'
+        try {
+          // 停止导入的sessionService
+          if (sessionService && typeof sessionService.cleanup === 'function') {
+            sessionService.cleanup()
+            console.log('停止会话监控')
+          }
+          
+          // 检查并停止全局会话服务
+          if (window.sessionService && window.sessionService !== sessionService) {
+            if (typeof window.sessionService.cleanup === 'function') {
+              window.sessionService.cleanup()
+            }
+            window.sessionService = null
+            console.log('停止全局会话监控')
+          }
+          
+          this.isSessionMonitoring = false
+          this.sessionStatus = 'unknown'
+          console.log('会话监控已停止')
+        } catch (error) {
+          console.error('停止会话监控时出错:', error)
+        }
       },
       
       // 获取会话状态

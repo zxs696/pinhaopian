@@ -65,10 +65,16 @@ public class SessionWebSocketManager {
             if (userIdLong != null) {
                 this.userId = String.valueOf(userIdLong);
                 
-                // 如果该用户已有连接，先关闭旧连接
+                // 如果该用户已有连接，先发送下线通知再关闭旧连接
                 SessionWebSocketManager oldConnection = userSessionMap.get(this.userId);
-                if (oldConnection != null) {
+                if (oldConnection != null && oldConnection != this) {
                     try {
+                        // 向旧连接发送下线通知
+                        String jsonMessage = String.format("{\"type\":\"SESSION_INVALID\",\"message\":\"账号在其他设备登录\"}");
+                        oldConnection.sendMessage(jsonMessage);
+                        log.info("已向用户{}的旧连接发送下线通知", this.userId);
+                        
+                        // 延迟关闭旧连接，确保通知能够发送
                         oldConnection.session.close();
                     } catch (IOException e) {
                         log.error("关闭旧连接失败: {}", e.getMessage());

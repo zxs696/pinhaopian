@@ -297,6 +297,16 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String generateToken(String username) {
+        return generateToken(username, null);
+    }
+    
+    /**
+     * 生成token并可选择将旧token加入黑名单
+     * @param username 用户名
+     * @param oldToken 旧token（可选）
+     * @return 新token
+     */
+    public String generateToken(String username, String oldToken) {
         try {
             if (username == null || username.trim().isEmpty()) {
                 logger.warn("Attempting to generate token for null or empty username");
@@ -310,6 +320,21 @@ public class AuthServiceImpl implements AuthService {
             if (user == null) {
                 logger.warn("User not found for username: {}", username);
                 return null;
+            }
+            
+            // 如果提供了旧token，将其加入黑名单（实现被顶号功能）
+            if (oldToken != null && !oldToken.isEmpty()) {
+                try {
+                    redisUtils.set("blacklist:" + oldToken, "1", 24, TimeUnit.HOURS);
+                    logger.info("Old token added to blacklist for user: {}", username);
+                    
+                    // 从用户的token集合中移除旧token
+                    String userTokenKey = "user_tokens:" + user.getUserId();
+                    redisUtils.removeSet(userTokenKey, oldToken);
+                } catch (Exception e) {
+                    // Redis不可用时记录日志但不影响token生成
+                    logger.warn("Failed to blacklist old token: {}", e.getMessage());
+                }
             }
             
             // 使用带用户ID的token生成方法
@@ -407,6 +432,22 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             logger.error("Error fetching user from token: {}", e.getMessage(), e);
             return null;
+        }
+    }
+    
+    @Override
+    public boolean isTokenBlacklisted(String token) {
+        try {
+            if (token == null) {
+                return false;
+            }
+            
+            // 检查token是否在黑名单中
+            return redisUtils.hasKey("blacklist:" + token);
+        } catch (Exception e) {
+            logger.error("Error checking token blacklist: {}", e.getMessage(), e);
+            // 出现异常时，默认不在黑名单中，避免误判
+            return false;
         }
     }
 }
