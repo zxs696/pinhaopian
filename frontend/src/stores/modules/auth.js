@@ -13,7 +13,8 @@ export const useAuthStore = defineStore('auth', {
     isInitialized: false, // 添加初始化状态标记
     sessionStatus: 'unknown', // 会话状态: unknown, valid, invalid
     lastSessionCheck: null, // 最后一次会话检查时间
-    isSessionMonitoring: false // 是否正在监控会话状态
+    isSessionMonitoring: false, // 是否正在监控会话状态
+    isHandlingSessionInvalid: false // 是否正在处理会话失效
   }),
 
   getters: {
@@ -263,6 +264,32 @@ export const useAuthStore = defineStore('auth', {
         this.isInitialized = true
       },
 
+      /**
+       * 初始化会话监控
+       * @param {boolean} isNewLogin 是否为新登录
+       */
+      initializeSessionMonitoring(isNewLogin = false) {
+        // 检查用户是否已登录
+        if (!this.isAuthenticated) {
+          console.warn('[Auth] 用户未登录，无法初始化会话监控')
+          return
+        }
+      
+        // 停止现有监控
+        this.stopSessionMonitoring()
+      
+        // 初始化会话服务
+        sessionService.initialize(this.token, isNewLogin)
+      
+        // 监听会话事件
+        sessionService.on('sessionInvalid', this.handleSessionInvalid)
+        
+        // 添加延迟，确保会话监控完全初始化后再处理后续事件
+        setTimeout(() => {
+          console.log('[Auth] 会话监控初始化完成')
+        }, 500)
+      },
+
       clearAuthData() {
         // 防止重复清除
         if (!this.user && !this.token && !this.isSessionMonitoring) {
@@ -311,46 +338,6 @@ export const useAuthStore = defineStore('auth', {
         }
       },
       
-      // 初始化会话监控
-      initializeSessionMonitoring(isNewLogin = false) {
-        if (!this.isAuthenticated || !this.token) {
-          console.log('用户未登录或缺少token，跳过会话监控初始化')
-          return
-        }
-        
-        // 如果已经在监控且不是新登录，跳过初始化避免重复断开连接
-        if (this.isSessionMonitoring && !isNewLogin) {
-          console.log('会话监控已在运行且非新登录，跳过重复初始化')
-          return
-        }
-        
-        // 停止现有的会话监控
-        this.stopSessionMonitoring()
-        
-        // 使用导入的sessionService，而不是创建新实例
-        // 监听会话失效事件
-        sessionService.on('sessionInvalid', (data) => {
-          console.warn('收到会话失效通知:', data)
-          this.handleSessionInvalid(data)
-        })
-        
-        // 监听会话有效事件
-        sessionService.on('sessionValid', () => {
-          console.log('会话验证有效')
-        })
-        
-        // 监听会话过期事件（兼容旧版本）
-        sessionService.on('sessionExpired', (data) => {
-          console.warn('收到会话过期通知:', data)
-          this.handleSessionInvalid(data)
-        })
-        
-        // 初始化会话服务，传递isNewLogin参数
-        sessionService.initialize(this.token, isNewLogin)
-        this.isSessionMonitoring = true
-        console.log('会话监控已初始化', isNewLogin ? '(新登录)' : '(重连)')
-      },
-      
       // 处理会话失效
       handleSessionInvalid(data) {
         console.warn('会话失效:', data)
@@ -365,8 +352,13 @@ export const useAuthStore = defineStore('auth', {
         
         try {
           // 使用自定义的被顶号对话框替代默认alert
+          // 确保在所有窗口中都能显示对话框，即使是非活跃窗口
           if (window.showSessionInvalidDialog) {
             window.showSessionInvalidDialog()
+          } else {
+            // 如果对话框方法不可用，则使用原生alert作为备选方案
+            console.warn('SessionInvalidDialog不可用，使用alert作为备选方案');
+            alert(data?.message || '您的账号在其他设备登录，当前会话已失效');
           }
           
           // 清除认证数据

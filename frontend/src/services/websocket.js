@@ -22,6 +22,9 @@ class WebSocketService {
     this.isConnected = false
     this.connectionId = null // 连接ID，用于区分不同的连接
     this.lastMessageTime = null
+    // 添加消息处理相关属性
+    this.processedMessages = new Set() // 存储已处理的消息ID
+    this.messageIdCounter = 0 // 消息ID计数器
     this.initCrossWindowCommunication()
   }
 
@@ -225,27 +228,65 @@ class WebSocketService {
       if (event && event.data) {
         data = JSON.parse(event.data)
         
-        // 通知其他窗口收到消息
+        // 通知其他窗口收到消息，但添加消息ID避免重复处理
+        const messageId = this.generateMessageId(data)
         crossWindowService.broadcast('websocketMessage', {
+          messageId,
           type: data.type,
           data: data,
           timestamp: Date.now()
         })
       } 
       // 处理来自跨窗口的消息
-      else if (event && event.type) {
-        data = event;
+      else if (event && typeof event === 'object') {
+        // 检查是否已处理过此消息（避免重复处理）
+        if (event.messageId && this.hasProcessedMessage(event.messageId)) {
+          console.log('消息已处理过，跳过:', event.messageId)
+          return
+        }
+        
+        // 跨窗口消息可能有多种格式，统一处理
+        if (event.type) {
+          // 格式1: {type: 'xxx', data: {...}}
+          data = event;
+        } else if (event.payload && event.payload.type) {
+          // 格式2: {payload: {type: 'xxx', data: {...}}}
+          data = event.payload;
+        } else if (event.data && event.data.type) {
+          // 格式3: {data: {type: 'xxx', ...}}
+          data = event.data;
+        } else {
+          // 无法识别的格式，记录警告并跳过
+          console.warn('收到无法识别的跨窗口消息格式:', event)
+          return;
+        }
       } 
       // 其他情况，直接使用event作为data
       else {
         data = event;
       }
       
+      // 确保data存在且具有type属性
+      if (!data || typeof data !== 'object' || !data.type) {
+        console.warn('无效的消息格式:', data)
+        return;
+      }
+      
+      // 记录已处理的消息
+      if (event.messageId) {
+        this.markMessageAsProcessed(event.messageId)
+      }
+      
       // 处理特定类型的消息
       if (data.type === 'SESSION_INVALID') {
         console.warn('收到会话失效通知:', data.message)
-        this.emit('sessionInvalid', { message: data.message })
-        this.handleSessionInvalid(data.message)
+        // 检查是否是强制下线通知（新增的forceLogout标志）
+        const isForceLogout = data.forceLogout || false
+        this.emit('sessionInvalid', { 
+          message: data.message,
+          forceLogout: isForceLogout
+        })
+        this.handleSessionInvalid(data.message, isForceLogout)
       } else if (data.type === 'HEARTBEAT_RESPONSE') {
         // 心跳响应，无需特殊处理
         console.log('收到心跳响应')
@@ -261,19 +302,16 @@ class WebSocketService {
   /**
    * 处理会话失效
    * @param {string} message 失效原因
+   * @param {boolean} isForceLogout 是否是强制下线
    */
-  handleSessionInvalid(message) {
-    console.warn('处理WebSocket会话失效:', message)
+  handleSessionInvalid(message, isForceLogout = false) {
+    console.warn('处理WebSocket会话失效:', message, '强制下线:', isForceLogout)
     
-    // 检查是否是来自同一IP的会话冲突，如果是则不需要处理
-    // 因为现在支持同IP多窗口登录，只有真正不同设备登录才需要处理
-    if (message && message.includes('同IP')) {
-      console.log('检测到同IP多窗口连接，忽略会话失效通知')
-      return
+    // 如果是强制下线，立即断开连接
+    if (isForceLogout) {
+      console.log('强制下线，立即断开连接')
+      this.disconnect()
     }
-    
-    // 断开WebSocket连接
-    this.disconnect()
     
     // 清除认证状态
     const authStore = useAuthStore()
@@ -414,6 +452,44 @@ class WebSocketService {
   }
 
   /**
+   * 生成消息ID
+   * @param {Object} data 消息数据
+   * @returns {string} 消息ID
+   */
+  generateMessageId(data) {
+    // 使用消息类型、时间戳和计数器生成唯一ID
+    const timestamp = Date.now()
+    const type = data.type || 'unknown'
+    this.messageIdCounter++
+    return `${type}_${timestamp}_${this.messageIdCounter}_${Math.random().toString(36).substr(2, 6)}`
+  }
+
+  /**
+   * 检查消息是否已处理过
+   * @param {string} messageId 消息ID
+   * @returns {boolean} 是否已处理过
+   */
+  hasProcessedMessage(messageId) {
+    return this.processedMessages.has(messageId)
+  }
+
+  /**
+   * 标记消息为已处理
+   * @param {string} messageId 消息ID
+   */
+  markMessageAsProcessed(messageId) {
+    this.processedMessages.add(messageId)
+    
+    // 限制已处理消息集合的大小，避免内存泄漏
+    if (this.processedMessages.size > 1000) {
+      // 删除最旧的一半消息
+      const entries = Array.from(this.processedMessages)
+      this.processedMessages.clear()
+      entries.slice(500).forEach(id => this.processedMessages.add(id))
+    }
+  }
+
+  /**
    * 断开WebSocket连接
    */
   disconnect() {
@@ -514,3 +590,7 @@ class WebSocketService {
 const webSocketService = new WebSocketService()
 
 export default webSocketService
+
+
+
+

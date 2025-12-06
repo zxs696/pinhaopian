@@ -31,21 +31,28 @@
 <script setup>
 import { ref } from 'vue'
 import { WarningFilled } from '@element-plus/icons-vue'
-import { useAuthStore } from '@/stores/modules/auth'
+import { useAuthStore } from '../../stores/modules/auth.js'
 
+// 使用auth store
 const authStore = useAuthStore()
+
+// 控制对话框显示
 const dialogVisible = ref(false)
 
-// 显示对话框
+// 显示对话框的方法
 const showDialog = () => {
   dialogVisible.value = true
 }
 
 // 处理确认按钮点击
 const handleConfirm = () => {
+  // 隐藏对话框
   dialogVisible.value = false
+  
+  // 清除当前认证状态，确保用户重新登录前状态正确
+  authStore.clearAuthData()
+  
   // 打开登录模态框
-  const authStore = useAuthStore()
   authStore.setLoginModalVisible(true)
 }
 

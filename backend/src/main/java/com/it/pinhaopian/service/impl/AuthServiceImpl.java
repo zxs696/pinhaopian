@@ -344,8 +344,8 @@ public class AuthServiceImpl implements AuthService {
                     String userTokenKey = "user_tokens:" + userId;
                     redisUtils.removeSet(userTokenKey, oldToken);
                     
-                    // 通知所有连接的客户端该用户已被顶号
-                    SessionWebSocketManager.sendSessionInvalidNotification(String.valueOf(userId), "您的账号已在其他设备登录，请重新登录");
+                    // 使用改进的用户级广播通知所有连接的客户端该用户已被顶号
+                    SessionWebSocketManager.sendSessionInvalidNotificationToAllConnections(String.valueOf(userId), "您的账号已在其他设备登录，请重新登录");
                 } catch (Exception e) {
                     // Redis不可用时记录日志但不影响token生成
                     logger.warn("Failed to blacklist old token: {}", e.getMessage());
