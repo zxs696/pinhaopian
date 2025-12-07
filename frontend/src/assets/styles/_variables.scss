@@ -54,8 +54,56 @@ $dark-theme: (
     theme-switcher-bg-hover: #404040,
 );
 
+// 响应式断点（笔记本及以上设备保持不变，仅优化更小设备）
+$breakpoints: (
+  // 平板设备（横向）
+  lg: 1200px,
+  // 平板设备（纵向）
+  md: 768px,
+  // 手机设备（横向）
+  sm: 576px,
+  // 手机设备（纵向）
+  xs: 480px
+);
+
+// 响应式工具函数
+@mixin respond-to($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @media (max-width: map-get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  }
+}
+
 // 全局样式变量
 $border-radius: 8px;
 $shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 $transition: all 0.3s ease;
 $container-width: 1600px;
+
+// 响应式容器宽度
+$container-responsive: (
+  lg: 90%,
+  md: 95%,
+  sm: 98%,
+  xs: 100%
+);
+
+// 响应式间距变量
+$spacing: (
+  xs: 4px,
+  sm: 8px,
+  md: 16px,
+  lg: 24px,
+  xl: 32px
+);
+
+// 响应式字体大小
+$font-sizes: (
+  xs: 12px,
+  sm: 14px,
+  md: 16px,
+  lg: 18px,
+  xl: 24px,
+  xxl: 32px
+);

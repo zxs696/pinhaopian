@@ -140,3 +140,97 @@ ol {
 .mr-10 {
     margin-right: 10px;
 }
+
+// 响应式工具类
+// 响应式显示/隐藏
+
+// 仅在大屏显示（笔记本及以上）
+@media (max-width: 1200px) {
+    .hidden-lg {
+        display: none !important;
+    }
+}
+
+// 仅在中屏显示（平板）
+@media (max-width: 768px) {
+    .hidden-md {
+        display: none !important;
+    }
+}
+
+// 仅在小屏显示（手机）
+@media (max-width: 576px) {
+    .hidden-sm {
+        display: none !important;
+    }
+}
+
+// 仅在极小屏显示
+@media (max-width: 480px) {
+    .hidden-xs {
+        display: none !important;
+    }
+}
+
+// 响应式文本大小
+.text-xs {
+    font-size: 12px;
+}
+
+.text-sm {
+    font-size: 14px;
+}
+
+.text-md {
+    font-size: 16px;
+}
+
+.text-lg {
+    font-size: 18px;
+}
+
+.text-xl {
+    font-size: 24px;
+}
+
+// 响应式容器
+.responsive-container {
+    width: 100%;
+    max-width: theme.$container-width;
+    margin: 0 auto;
+    padding: 0 20px;
+    
+    @media (max-width: 1200px) {
+        max-width: 90%;
+    }
+    
+    @media (max-width: 768px) {
+        max-width: 95%;
+        padding: 0 15px;
+    }
+    
+    @media (max-width: 576px) {
+        max-width: 98%;
+        padding: 0 10px;
+    }
+    
+    @media (max-width: 480px) {
+        max-width: 100%;
+        padding: 0 5px;
+    }
+}
+
+// 响应式弹性布局
+.flex-responsive {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    
+    @media (max-width: 768px) {
+        gap: 12px;
+    }
+    
+    @media (max-width: 576px) {
+        gap: 8px;
+    }
+}

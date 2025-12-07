@@ -715,7 +715,7 @@ onUnmounted(() => {
 .icon-view::before { content: '👁'; }
 .icon-like::before { content: '❤'; }
 
-/* 响应式设计 */
+/* 响应式设计 - 保持笔记本及以上设备布局不变 */
 @media (max-width: 1200px) {
   .main-content {
     max-width: 1200px;
@@ -736,6 +736,22 @@ onUnmounted(() => {
   .category-grid {
     grid-template-columns: repeat(6, 1fr);
   }
+  
+  /* 视频卡片样式优化 */
+  .video-card {
+    .video-info {
+      padding: 8px;
+    }
+    
+    .video-title {
+      font-size: 14px;
+      line-height: 1.3;
+    }
+    
+    .video-meta {
+      font-size: 12px;
+    }
+  }
 }
 
 @media (max-width: 768px) {
@@ -747,6 +763,16 @@ onUnmounted(() => {
     padding: 0 15px;
   }
   
+  /* 分区导航样式优化 */
+  .section-nav {
+    margin: 20px 0 15px;
+    
+    .nav-item {
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+  }
+  
   .content-grid {
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(8, 160px);
@@ -756,57 +782,137 @@ onUnmounted(() => {
   .carousel-card {
     grid-column: 1 / 3;
     grid-row: 1 / 3;
+    height: 332px; /* 调整轮播图高度 */
+  }
+  
+  /* 轮播图信息优化 */
+  .carousel-video-info {
+    padding: 15px 15px 50px 15px;
+  }
+  
+  .carousel-video-title {
+    font-size: 16px;
+  }
+  
+  .carousel-video-desc {
+    font-size: 13px;
   }
   
   .category-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+    gap: 12px;
   }
   
   .category-item {
-    padding: 15px 10px;
+    padding: 12px 8px;
   }
   
   .category-icon {
     font-size: 20px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   
   .category-name {
     font-size: 12px;
   }
   
-  .carousel-title {
-    font-size: 18px;
+  /* 视频卡片样式优化 */
+  .video-card {
+    .video-thumbnail {
+      border-radius: 6px;
+    }
+    
+    .video-info {
+      padding: 6px;
+    }
+    
+    .video-title {
+      font-size: 13px;
+      line-height: 1.2;
+      display: -webkit-box;
+      display: -moz-box;
+      display: box;
+      -webkit-line-clamp: 2;
+      -moz-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      -moz-box-orient: vertical;
+      box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .video-meta {
+      font-size: 11px;
+      flex-wrap: wrap;
+    }
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .home-top-background {
     height: 80px;
   }
   
   .main-content {
-    padding: 10px;
+    padding: 0 10px;
+  }
+  
+  /* 分区导航样式优化 */
+  .section-nav {
+    margin: 15px 0 10px;
+    overflow-x: auto;
+    
+    .nav-item {
+      padding: 6px 10px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
   }
   
   .content-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(17, 150px);
+    grid-template-rows: repeat(17, 180px);
     gap: 10px;
   }
   
   .carousel-card {
     grid-column: 1 / 2;
     grid-row: 1 / 3;
+    height: 350px; /* 调整轮播图高度 */
+  }
+  
+  /* 轮播图信息优化 */
+  .carousel-video-info {
+    padding: 15px;
+  }
+  
+  .carousel-video-title {
+    font-size: 16px;
+    margin-bottom: 5px;
+  }
+  
+  .carousel-video-desc {
+    font-size: 12px;
+  }
+  
+  /* 轮播图控制优化 */
+  .carousel-indicators {
+    left: 15px;
+    bottom: 15px;
+  }
+  
+  .carousel-nav-buttons {
+    right: 15px;
+    bottom: 15px;
   }
   
   .category-grid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
   }
   
   .category-item {
-    padding: 12px 8px;
+    padding: 10px 6px;
   }
   
   .category-icon {
@@ -817,12 +923,20 @@ onUnmounted(() => {
     font-size: 11px;
   }
   
-  .carousel-title {
-    font-size: 16px;
-  }
-  
-  .carousel-overlay {
-    padding: 20px;
+  /* 视频卡片样式优化 */
+  .video-card {
+    .video-info {
+      padding: 8px;
+    }
+    
+    .video-title {
+      font-size: 14px;
+      line-height: 1.3;
+    }
+    
+    .video-meta {
+      font-size: 12px;
+    }
   }
 }
 </style>

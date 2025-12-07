@@ -166,21 +166,22 @@
     
     <!-- 移动端下拉菜单 -->
     <div v-if="showMobileMenu" class="mobile-menu">
-      <ul class="mobile-menu-list">
-        <li v-for="nav in navItems" :key="nav.key" class="mobile-nav-item">
-          <router-link 
-            :to="nav.path" 
-            class="mobile-link"
-            @click="showMobileMenu = false"
-          >
-            {{ nav.label }}
-          </router-link>
-        </li>
-        <li v-if="!authStore.isLoggedIn" class="mobile-nav-item mobile-login-item">
-          <el-button link @click="goToLogin">登录</el-button>
-          <el-button type="primary" @click="goToRegister">注册</el-button>
-        </li>
-      </ul>
+      <div class="mobile-menu-content">
+        <ul class="mobile-menu-list">
+          <li v-for="nav in navItems" :key="nav.key" class="mobile-nav-item">
+            <router-link 
+              :to="nav.path" 
+              class="mobile-link"
+              @click="showMobileMenu = false"
+            >
+              <span class="mobile-link-text">{{ nav.label }}</span>
+              <el-icon class="mobile-link-arrow">
+                <ArrowRight />
+              </el-icon>
+            </router-link>
+          </li>
+        </ul>
+      </div>
     </div>
   </nav>
 </template>
@@ -190,7 +191,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/modules/auth'
-import { Search, Moon, Sunny, ArrowDown, Bell, Plus, Menu, CircleClose, Tools, User, Clock, Star, Setting, SwitchButton } from '@element-plus/icons-vue'
+import { Search, Moon, Sunny, ArrowDown, Bell, Plus, Menu, CircleClose, Tools, User, Clock, Star, Setting, SwitchButton, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { showSuccess, showInfo } from '@/utils/message'
 import CircleAvatar from '@/components/layout/index/CircleAvatar.vue'
@@ -1012,28 +1013,73 @@ const handleScroll = () => {
   .mobile-menu {
     background-color: var(--color-background);
     border-top: 1px solid var(--color-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    animation: slideDown 0.3s ease-out;
+    
+    .mobile-menu-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 8px 0;
+    }
+    
+    .mobile-menu-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
     
     .mobile-nav-item {
-      border-bottom: 1px solid var(--color-border);
+      border-bottom: none;
       
       .mobile-link {
         color: var(--color-text);
-        font-size: 15px;
-        padding: 12px 0;
-        display: block;
+        font-size: 16px;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        margin: 4px 12px;
         
         &:hover {
           color: var(--color-primary);
+          background-color: var(--color-hover);
+          transform: translateX(4px);
+        }
+        
+        .mobile-link-text {
+          font-weight: 500;
+        }
+        
+        .mobile-link-arrow {
+          font-size: 14px;
+          opacity: 0.6;
+          transition: all 0.3s ease;
+        }
+        
+        &:hover .mobile-link-arrow {
+          opacity: 1;
+          transform: translateX(4px);
         }
       }
     }
-    
-    .mobile-login-item {
-      padding: 12px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--color-border);
+  }
+  
+  // 移动端菜单动画
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
@@ -1131,33 +1177,153 @@ const handleScroll = () => {
   justify-content: center;
 }
 
-// 响应式设计
-// 隐藏默认的移动菜单按钮（在所有屏幕尺寸）
+/* 响应式设计 */
+/* 隐藏默认的移动菜单按钮（在所有屏幕尺寸） */
 .mobile-menu-btn {
   display: none;
 }
 
+/* 平板设备优化 (1200px以下) */
+@media (max-width: 1200px) {
+  .navbar {
+    /* 调整导航栏高度 */
+    height: 60px;
+    
+    .container {
+      padding: 0 12px;
+    }
+    
+    /* 缩小Logo */
+    .logo {
+      width: 90px;
+      height: 90px;
+    }
+    
+    /* 调整左侧区域宽度 */
+    .left-section {
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      
+      .main-nav {
+        width: 120px;
+        min-width: 120px;
+        max-width: 120px;
+      }
+    }
+    
+    /* 调整导航按钮区域 */
+    .nav-actions {
+      width: 250px;
+      min-width: 250px;
+      max-width: 250px;
+    }
+    
+    /* 缩小搜索框 */
+    .search-box {
+      max-width: 300px;
+      margin: 0 16px;
+    }
+  }
+}
+
+/* 小屏平板/手机横屏优化 (768px以下) */
 @media (max-width: 768px) {
   .navbar {
-    padding: 0 16px;
+    height: 56px;
+    padding: 0 12px;
     
+    .container {
+      padding: 0 8px;
+    }
+    
+    /* 缩小Logo */
+    .logo {
+      width: 80px;
+      height: 80px;
+    }
+      
+    /* 调整左侧区域宽度 */
+    .left-section {
+      width: 200px;
+      min-width: 200px;
+      max-width: 200px;
+      
+      .main-nav {
+        display: none;
+      }
+    }
+      
+    /* 隐藏搜索框 */
     .search-box {
       display: none;
     }
-    
-    .main-nav {
-      display: none;
-    }
-    
+      
+    /* 调整导航按钮区域 */
     .nav-actions {
+      width: 200px;
+      min-width: 200px;
+      max-width: 200px;
+      
       .upload-btn,
       .register-btn {
         display: none;
       }
       
-      // 仅在移动端显示菜单按钮
+      /* 仅在移动端显示菜单按钮 */
       .mobile-menu-btn {
         display: inline-flex;
+      }
+    }
+  }
+}
+
+/* 手机竖屏优化 (576px以下) */
+@media (max-width: 576px) {
+  .navbar {
+    padding: 0 8px;
+    
+    .container {
+      padding: 0 4px;
+    }
+    
+    /* 进一步缩小Logo */
+    .logo {
+      width: 70px;
+      height: 70px;
+    }
+    
+    /* 调整左侧区域宽度 */
+    .left-section {
+      width: 120px;
+      min-width: 120px;
+      max-width: 120px;
+    }
+    
+    /* 调整导航按钮区域 */
+    .nav-actions {
+      width: 150px;
+      min-width: 150px;
+      max-width: 150px;
+      
+      .nav-icon-btn {
+        min-width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+    }
+    
+    /* 移动端菜单样式优化 */
+    .mobile-menu {
+      .mobile-nav-item {
+        .mobile-link {
+          padding: 10px 16px;
+          font-size: 14px;
+        }
+      }
+      
+      .mobile-login-item {
+        padding: 10px 16px;
       }
     }
   }

@@ -85,7 +85,7 @@
           <!-- 注册表单 -->
           <div class="form-panel register-panel">
             <div class="form-header">
-              <h3 class="form-title">手机号注册</h3>
+              <h3 class="form-title">账号注册</h3>
             </div>
 
             <div class="form-content">
@@ -317,6 +317,10 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 模态框容器 */
@@ -324,10 +328,25 @@ onUnmounted(() => {
   position: relative;
   background: var(--color-background);
   border-radius: 24px;
-  width: 800px;
+  width: 100%;
+  max-width: 800px;
   box-shadow: var(--shadow);
   overflow: hidden;
-  transition: background-color var(--transition);
+  transition: background-color var(--transition), transform 0.3s ease;
+  transform: scale(1);
+  animation: modalFadeIn 0.3s ease;
+}
+
+/* 模态框淡入动画 */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* 关闭按钮 */
@@ -358,7 +377,8 @@ onUnmounted(() => {
 /* 内容容器 */
 .auth-content-wrapper {
   display: flex;
-  height: 520px;
+  min-height: 520px;
+  height: auto;
 }
 
 /* Element Plus 输入框样式调整 - 下划线样式 */
@@ -904,8 +924,9 @@ onUnmounted(() => {
 /* 响应式调整 */
 @media (max-width: 768px) {
   .auth-modal-container {
-    width: 90vw;
+    width: 100%;
     max-width: 400px;
+    margin: 20px auto;
   }
   
   .auth-content-wrapper {
@@ -917,13 +938,39 @@ onUnmounted(() => {
     display: none;
   }
   
-  .phone-section {
+  .form-panel {
     padding: 40px 30px;
   }
   
   .close-btn {
     top: 15px;
     right: 15px;
+  }
+}
+
+/* 确保在非常小的屏幕上也能正常显示 */
+@media (max-width: 480px) {
+  .auth-modal-overlay {
+    padding: 10px;
+  }
+  
+  .auth-modal-container {
+    border-radius: 16px;
+  }
+  
+  .form-panel {
+    padding: 30px 20px;
+  }
+  
+  .form-title {
+    font-size: 20px;
+  }
+}
+
+/* 防止模态框在高屏设备上过高 */
+@media (min-height: 800px) {
+  .auth-content-wrapper {
+    max-height: 70vh;
   }
 }
 </style>
