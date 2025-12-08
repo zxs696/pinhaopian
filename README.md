@@ -153,11 +153,11 @@ npm install
 npm run dev
 ```
 
-前端服务将在 http://localhost:3000 启动（如果端口被占用会自动使用下一个可用端口）
+前端服务将在 http://localhost:8888 启动
 
 ### 4. 访问应用
-- 前台页面: http://localhost:3000
-- 管理后台: http://localhost:3000/admin
+- 前台页面: http://localhost:8888
+- 管理后台: http://localhost:8888/admin
 
 ## ⚙️ 配置说明
 
@@ -198,7 +198,7 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     host: '0.0.0.0',
-    port: 3000,
+    port: 8888,
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
