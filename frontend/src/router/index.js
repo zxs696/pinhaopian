@@ -62,6 +62,17 @@ const routes = [
     }
   },
   
+  // 热门页面
+  {
+    path: '/hot',
+    name: 'Hot',
+    component: () => import('../views/index/VideoList.vue'),
+    meta: {
+      title: '热门 - 拼好片',
+      layout: 'DEFAULT'
+    }
+  },
+  
   // 社交相关页面
   {
     path: '/dynamic',
@@ -505,6 +516,27 @@ const routes = [
       type: 'ADMIN',
       requiresAuth: true,
       requiresAdmin: true
+    }
+  },
+  
+  // ==================== 测试页面路由 ====================
+  
+  {
+    path: '/test/responsive',
+    name: 'ResponsiveTest',
+    component: () => import('../views/test/ResponsiveTest.vue'),
+    meta: {
+      title: '响应式测试 - 拼好片',
+      layout: 'DEFAULT'
+    }
+  },
+  {
+    path: '/test/responsive-mixins',
+    name: 'ResponsiveMixinTest',
+    component: () => import('../views/test/ResponsiveMixinTest.vue'),
+    meta: {
+      title: '响应式 Mixin 测试 - 拼好片',
+      layout: 'DEFAULT'
     }
   },
   

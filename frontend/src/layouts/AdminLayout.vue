@@ -164,6 +164,9 @@
         </el-main>
       </el-container>
     </el-container>
+    
+    <!-- 断点指示器 -->
+    <BreakpointIndicator />
   </div>
 </template>
 
@@ -175,6 +178,7 @@ import { useTabsStore } from '@/stores/modules/tabs'
 import { useThemeStore } from '@/stores/theme'
 import { useMenuStore } from '@/stores/modules/menu'
 import Breadcrumb from '@/components/layout/admin/Breadcrumb.vue'
+import BreakpointIndicator from '@/components/common/BreakpointIndicator.vue'
 import { 
   House, 
   VideoPlay, 

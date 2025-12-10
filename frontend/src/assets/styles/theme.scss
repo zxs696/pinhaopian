@@ -1,34 +1,106 @@
-// 使用@use导入变量文件（带下划线的部分文件）
+// ============================================================================
+// 主题系统 - Theme System
+// ============================================================================
+// 管理亮色/暗色主题切换和CSS变量映射
+// ============================================================================
+
+// 导入Sass内置模块
+@use "sass:map";
+
+// 导入变量文件
 @use "./_variables" as vars;
 
 // 转发变量供其他文件使用
 @forward "./_variables";
 
-// 主题混入
+// ============================================================================
+// 主题混入 - 将SCSS Map转换为CCS变量
+// ============================================================================
 @mixin theme($theme) {
-    --color-primary: map-get($theme, primary);
-    --color-secondary: map-get($theme, secondary);
-    --color-background: map-get($theme, background);
-    // 移除color-card-bg，统一使用color-background
-    --color-text-primary: map-get($theme, text-primary);
-    --color-text-secondary: map-get($theme, text-secondary);
-    --color-border: map-get($theme, border-color);
-    --color-hover: map-get($theme, hover-color);
-    --border-radius: vars.$border-radius;
-    --shadow: vars.$shadow;
-    --transition: vars.$transition;
+    // 主色调
+    --color-primary: #{map.get($theme, primary)};
+    --color-secondary: #{map.get($theme, secondary)};
+    
+    // 背景色
+    --color-background: #{map.get($theme, background)};
+    --color-background-elevated: #{map.get($theme, background-elevated)};
+    
+    // 文字颜色
+    --color-text-primary: #{map.get($theme, text-primary)};
+    --color-text-secondary: #{map.get($theme, text-secondary)};
+    --color-text-tertiary: #{map.get($theme, text-tertiary)};
+    --color-text-disabled: #{map.get($theme, text-disabled)};
+    
+    // 边框与分割线
+    --color-border: #{map.get($theme, border-color)};
+    --color-divider: #{map.get($theme, divider)};
+    
+    // 交互状态
+    --color-hover: #{map.get($theme, hover-color)};
+    --color-active: #{map.get($theme, active-color)};
+    --color-focus: #{map.get($theme, focus-color)};
+    
+    // 功能色
+    --color-success: #{map.get($theme, success)};
+    --color-warning: #{map.get($theme, warning)};
+    --color-error: #{map.get($theme, error)};
+    --color-info: #{map.get($theme, info)};
     
     // 组件背景色变量
-    --avatar-bg: map-get($theme, avatar-bg);
-    --avatar-bg-hover: map-get($theme, avatar-bg-hover);
-    --message-bg: map-get($theme, message-bg);
-    --message-bg-hover: map-get($theme, message-bg-hover);
-    --theme-switcher-bg: map-get($theme, theme-switcher-bg);
-    --theme-switcher-bg-hover: map-get($theme, theme-switcher-bg-hover);
+    --avatar-bg: #{map.get($theme, avatar-bg)};
+    --avatar-bg-hover: #{map.get($theme, avatar-bg-hover)};
+    --message-bg: #{map.get($theme, message-bg)};
+    --message-bg-hover: #{map.get($theme, message-bg-hover)};
+    --theme-switcher-bg: #{map.get($theme, theme-switcher-bg)};
+    --theme-switcher-bg-hover: #{map.get($theme, theme-switcher-bg-hover)};
+    
+    // 遮罩层
+    --color-overlay: #{map.get($theme, overlay)};
+    --color-overlay-light: #{map.get($theme, overlay-light)};
+    
+    // 设计基础变量
+    --border-radius-sm: #{vars.$border-radius-sm};
+    --border-radius: #{vars.$border-radius};
+    --border-radius-md: #{vars.$border-radius-md};
+    --border-radius-lg: #{vars.$border-radius-lg};
+    --border-radius-xl: #{vars.$border-radius-xl};
+    --border-radius-full: #{vars.$border-radius-full};
+    
+    // 阴影
+    --shadow-sm: #{vars.$shadow-sm};
+    --shadow: #{vars.$shadow};
+    --shadow-md: #{vars.$shadow-md};
+    --shadow-lg: #{vars.$shadow-lg};
+    --shadow-xl: #{vars.$shadow-xl};
+    
+    // 过渡动画
+    --transition-fast: #{vars.$transition-fast};
+    --transition: #{vars.$transition};
+    --transition-slow: #{vars.$transition-slow};
+    --transition-bounce: #{vars.$transition-bounce};
+    
+    // 字体
+    --font-family-base: #{vars.$font-family-base};
+    --font-family-mono: #{vars.$font-family-mono};
+    
+    // 层级
+    --z-index-dropdown: #{vars.$z-index-dropdown};
+    --z-index-sticky: #{vars.$z-index-sticky};
+    --z-index-fixed: #{vars.$z-index-fixed};
+    --z-index-modal-backdrop: #{vars.$z-index-modal-backdrop};
+    --z-index-modal: #{vars.$z-index-modal};
+    --z-index-popover: #{vars.$z-index-popover};
+    --z-index-tooltip: #{vars.$z-index-tooltip};
+    --z-index-toast: #{vars.$z-index-toast};
 }
 
+// ============================================================================
+// 主题应用
+// ============================================================================
+
 // 浅色主题（默认）
-.light-theme {
+.light-theme,
+:root {
     @include theme(vars.$light-theme);
 }
 
@@ -37,24 +109,140 @@
     @include theme(vars.$dark-theme);
 }
 
-// 全局样式应用
+// 系统主题偏好自动切换
+@media (prefers-color-scheme: dark) {
+    .theme-auto {
+        @include theme(vars.$dark-theme);
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    .theme-auto {
+        @include theme(vars.$light-theme);
+    }
+}
+
+// ============================================================================
+// 全局基础样式
+// ============================================================================
+
 body {
     background-color: var(--color-background);
     color: var(--color-text-primary);
-    font-family: "Microsoft YaHei", sans-serif;
-    transition: var(--transition);
+    font-family: var(--font-family-base);
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-// 通用组件样式
+// ============================================================================
+// Element Plus 组件主题覆盖
+// ============================================================================
+
 .el-card {
-    background-color: var(--color-background);
+    background-color: var(--color-background-elevated);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .el-button {
-    --el-button-primary-bg-color: var(--color-primary);
-    --el-button-primary-border-color: var(--color-primary);
-    --el-button-primary-hover-bg-color: #f9537b;
+    --el-button-bg-color: var(--color-background-elevated);
+    --el-button-border-color: var(--color-border);
+    --el-button-text-color: var(--color-text-primary);
+    --el-button-hover-bg-color: var(--color-hover);
+    --el-button-hover-border-color: var(--color-primary);
+    --el-button-hover-text-color: var(--color-primary);
+}
+
+.el-button--primary {
+    --el-button-bg-color: var(--color-primary);
+    --el-button-border-color: var(--color-primary);
+    --el-button-text-color: #ffffff;
+    --el-button-hover-bg-color: #f9537b;
+    --el-button-hover-border-color: #f9537b;
+}
+
+.el-input {
+    --el-input-bg-color: var(--color-background-elevated);
+    --el-input-border-color: var(--color-border);
+    --el-input-text-color: var(--color-text-primary);
+    --el-input-placeholder-color: var(--color-text-tertiary);
+    --el-input-hover-border-color: var(--color-primary);
+    --el-input-focus-border-color: var(--color-primary);
+}
+
+.el-menu {
+    --el-menu-bg-color: var(--color-background);
+    --el-menu-text-color: var(--color-text-primary);
+    --el-menu-hover-bg-color: var(--color-hover);
+    --el-menu-active-color: var(--color-primary);
+}
+
+.el-dropdown-menu {
+    background-color: var(--color-background-elevated);
+    border: 1px solid var(--color-border);
+}
+
+.el-dialog {
+    --el-dialog-bg-color: var(--color-background-elevated);
+    --el-dialog-title-font-size: 18px;
+}
+
+.el-notification {
+    --el-notification-bg-color: var(--color-background-elevated);
+    --el-notification-border-color: var(--color-border);
+}
+
+.el-message {
+    --el-message-bg-color: var(--color-background-elevated);
+    --el-message-border-color: var(--color-border);
+}
+
+// ============================================================================
+// 主题过渡效果 - 丝滑的主题变化
+// ============================================================================
+
+// 当添加 theme-transition 类时，启用全局过渡
+html.theme-transition,
+html.theme-transition * {
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                background-image 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+// 禁用某些元素的过渡以避免闪烁
+html.theme-transition input,
+html.theme-transition textarea,
+html.theme-transition select,
+html.theme-transition .no-theme-transition {
+    transition: none !important;
+}
+
+// 通用元素的平滑过渡
+a,
+button,
+input,
+select,
+textarea,
+.el-button,
+.el-input,
+.el-select,
+.el-card,
+.el-dialog,
+.el-menu,
+.el-dropdown,
+.el-tabs,
+.el-tag {
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

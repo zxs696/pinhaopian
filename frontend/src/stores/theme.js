@@ -58,10 +58,14 @@ export const useThemeStore = defineStore('theme', {
     applyTheme() {
       const theme = this.actualTheme
       
+      // 添加过渡类到HTML元素
+      const html = document.documentElement
+      html.classList.add('theme-transition')
+      
       // 移除旧的主题类
-      document.documentElement.classList.remove('light-theme', 'dark-theme')
+      html.classList.remove('light-theme', 'dark-theme')
       // 添加新的主题类
-      document.documentElement.classList.add(`${theme}-theme`)
+      html.classList.add(`${theme}-theme`)
       
       // 设置CSS变量
       this.updateCssVariables(theme)
@@ -71,6 +75,11 @@ export const useThemeStore = defineStore('theme', {
       if (themeColorMeta) {
         themeColorMeta.content = theme === 'dark' ? '#121212' : '#ffffff'
       }
+      
+      // 过渡完成后移除过渡类
+      setTimeout(() => {
+        html.classList.remove('theme-transition')
+      }, 500)
     },
 
     // 更新CSS变量

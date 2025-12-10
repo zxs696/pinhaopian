@@ -29,7 +29,11 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         // 添加Sass新API配置
-        api: 'modern'
+        api: 'modern',
+        // 全局注入响应式系统，每个Vue组件都能直接使用mixins
+        additionalData: `
+          @use "@/assets/styles/main" as *;
+        `
       }
     }
   },
@@ -80,10 +84,34 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
         configure: (proxy, options) => {
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log(`[API请求] ${req.method} ${req.url} -> ${options.target}${req.url}`);
+            // 只记录客户端信息
+            const userAgent = req.headers['user-agent'] || '未知客户端';
+            // 简化客户端名称提取
+            let clientName = '未知客户端';
+            if (userAgent.includes('Chrome')) {
+              clientName = 'Chrome';
+            } else if (userAgent.includes('Firefox')) {
+              clientName = 'Firefox';
+            } else if (userAgent.includes('Safari')) {
+              clientName = 'Safari';
+            } else if (userAgent.includes('Edge')) {
+              clientName = 'Edge';
+            } else if (userAgent.includes('Opera')) {
+              clientName = 'Opera';
+            } else if (userAgent.includes('Postman')) {
+              clientName = 'Postman';
+            } else if (userAgent.includes('curl')) {
+              clientName = 'curl';
+            }
+            
+            // 存储客户端名称到请求对象，便于响应日志使用
+            req.clientName = clientName;
+            console.log(`[API请求] ${req.method} ${req.url} - 客户端: ${clientName}`);
           });
+          
+          // 记录响应状态码
           proxy.on('proxyRes', (proxyRes, req, res) => {
-            console.log(`[API响应] ${req.method} ${req.url} -> ${proxyRes.statusCode} ${proxyRes.statusMessage}`);
+            console.log(`[API响应] ${req.method} ${req.url} - 客户端: ${req.clientName || '未知客户端'} - 状态码: ${proxyRes.statusCode}`);
           });
         }
       },
@@ -98,20 +126,11 @@ export default defineConfig({
     },
     // 添加自定义中间件显示API路径状态
     configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        // 只记录API请求
-        if (req.url.startsWith('/api/')) {
-          const timestamp = new Date().toLocaleTimeString();
-          console.log(`[${timestamp}] ${req.method} ${req.url}`);
-        }
-        next();
-      });
-      
       console.log('\n🚀 服务器配置信息:');
       console.log(`   - 本地地址: http://localhost:${server.config.server.port}`);
       console.log(`   - API代理: http://localhost:8080`);
       console.log(`   - WebSocket: ws://localhost:8080/ws`);
-      console.log('   - API请求日志已启用\n');
+      console.log('   - API请求客户端日志已启用\n');
     }
   },
   // 优化依赖预构建

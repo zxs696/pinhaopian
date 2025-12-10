@@ -10,19 +10,21 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ErrorLayout'
-}
+<script setup>
+import { useThemeStore } from '@/stores/theme'
+
+// 使用主题 store
+const themeStore = useThemeStore()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .error-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   width: 100vw;
-  background-color: #f5f5f5;
+  background-color: var(--color-background); // 使用主题变量替换硬编码颜色
+  color: var(--color-text-primary); // 添加文字颜色主题变量
 }
 
 /* 头部已移除 */

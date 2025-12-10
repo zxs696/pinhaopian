@@ -1,0 +1,617 @@
+// ============================================================================
+// 响应式设计系统 - Responsive Design System
+// ============================================================================
+// 该文件集中管理所有响应式相关的变量、断点、媒体查询和工具类
+// 确保跨设备一致的用户体验和界面表现
+// ============================================================================
+
+// 导入Sass内置模块
+@use "sass:map";
+@use "sass:list";
+
+// ============================================================================
+// 1. 断点定义 (Breakpoints)
+// ============================================================================
+// 采用移动优先(Mobile First)策略，从小屏幕向大屏幕扩展
+// 断点值参考主流设备分辨率
+
+// 断点数值定义
+$breakpoint-xs: 480px;   // 超小屏幕 - 小型手机（竖屏）
+$breakpoint-sm: 576px;   // 小屏幕 - 大型手机/小型平板（竖屏）
+$breakpoint-md: 768px;   // 中等屏幕 - 平板设备（竖屏）
+$breakpoint-lg: 992px;   // 大屏幕 - 平板设备（横屏）/小型笔记本
+$breakpoint-xl: 1200px;  // 超大屏幕 - 笔记本/桌面显示器
+$breakpoint-xxl: 1400px; // 超超大屏幕 - 大型桌面显示器
+$breakpoint-3xl: 1920px; // 超宽屏幕 - 2K/4K显示器
+
+// 断点映射表（用于循环和动态访问）
+$breakpoints: (
+  'xs': $breakpoint-xs,
+  'sm': $breakpoint-sm,
+  'md': $breakpoint-md,
+  'lg': $breakpoint-lg,
+  'xl': $breakpoint-xl,
+  'xxl': $breakpoint-xxl,
+  '3xl': $breakpoint-3xl
+);
+
+// 断点描述（用于开发文档和调试）
+$breakpoint-names: (
+  'xs': '超小屏幕（小型手机）',
+  'sm': '小屏幕（大型手机）',
+  'md': '中等屏幕（平板竖屏）',
+  'lg': '大屏幕（平板横屏/小笔记本）',
+  'xl': '超大屏幕（笔记本/桌面）',
+  'xxl': '超超大屏幕（大型桌面）',
+  '3xl': '超宽屏幕（2K/4K显示器）'
+);
+
+// ============================================================================
+// 2. 媒体查询 Mixins
+// ============================================================================
+
+// 向下断点（max-width）- 从大屏幕向下适配
+// 用法: @include respond-down(lg) { ... }
+@mixin respond-down($breakpoint) {
+  @if map.has-key($breakpoints, $breakpoint) {
+    @media (max-width: #{map.get($breakpoints, $breakpoint) - 0.02px}) {
+      @content;
+    }
+  } @else {
+    @warn "未知的断点: #{$breakpoint}";
+  }
+}
+
+// 向上断点（min-width）- 移动优先，从小屏幕向上适配
+// 用法: @include respond-up(md) { ... }
+@mixin respond-up($breakpoint) {
+  @if map.has-key($breakpoints, $breakpoint) {
+    @media (min-width: map.get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  } @else {
+    @warn "未知的断点: #{$breakpoint}";
+  }
+}
+
+// 范围断点（between）- 在两个断点之间
+// 用法: @include respond-between(sm, lg) { ... }
+@mixin respond-between($lower, $upper) {
+  @if map.has-key($breakpoints, $lower) and map.has-key($breakpoints, $upper) {
+    @media (min-width: map.get($breakpoints, $lower)) and (max-width: #{map.get($breakpoints, $upper) - 0.02px}) {
+      @content;
+    }
+  } @else {
+    @warn "未知的断点: #{$lower} 或 #{$upper}";
+  }
+}
+
+// 仅在特定断点范围内
+// 用法: @include respond-only(md) { ... }
+@mixin respond-only($breakpoint) {
+  $keys: map.keys($breakpoints);
+  $index: list.index($keys, $breakpoint); /* 改用 list.index */
+  
+  @if $index {
+    $lower: map.get($breakpoints, $breakpoint);
+    
+    @if $index < list.length($keys) { /* 改用 list.length */
+      $next-key: list.nth($keys, $index + 1); /* 改用 list.nth */
+      $upper: map.get($breakpoints, $next-key);
+      
+      @media (min-width: $lower) and (max-width: #{$upper - 0.02px}) {
+        @content;
+      }
+    } @else {
+      @media (min-width: $lower) {
+        @content;
+      }
+    }
+  } @else {
+    @warn "未知的断点: #{$breakpoint}";
+  }
+}
+
+// 横屏/竖屏检测
+@mixin landscape {
+  @media (orientation: landscape) {
+    @content;
+  }
+}
+
+@mixin portrait {
+  @media (orientation: portrait) {
+    @content;
+  }
+}
+
+// 高分辨率屏幕（Retina）
+@mixin retina {
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    @content;
+  }
+}
+
+// 悬停能力检测（触摸设备 vs 桌面设备）
+@mixin hover-supported {
+  @media (hover: hover) and (pointer: fine) {
+    @content;
+  }
+}
+
+@mixin touch-device {
+  @media (hover: none) and (pointer: coarse) {
+    @content;
+  }
+}
+
+// 暗色模式偏好检测
+@mixin prefers-dark {
+  @media (prefers-color-scheme: dark) {
+    @content;
+  }
+}
+
+@mixin prefers-light {
+  @media (prefers-color-scheme: light) {
+    @content;
+  }
+}
+
+// 减少动画偏好检测
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+// ============================================================================
+// 3. 响应式容器配置
+// ============================================================================
+
+// 容器最大宽度配置
+$container-widths: (
+  'xs': 100%,
+  'sm': 540px,
+  'md': 720px,
+  'lg': 960px,
+  'xl': 1500px,  // 修改为1600px以匹配设计需求
+  'xxl': 1500px,
+  '3xl': 1500px
+);
+
+// 容器内边距配置
+$container-paddings: (
+  'xs': 12px,
+  'sm': 16px,
+  'md': 20px,
+  'lg': 24px,
+  'xl': 24px,
+  'xxl': 24px,
+  '3xl': 32px
+);
+
+// ============================================================================
+// 4. 响应式间距系统
+// ============================================================================
+
+// 基础间距单位
+$spacing-unit: 4px;
+
+// 间距比例
+$spacing-scale: (
+  '0': 0,
+  '1': $spacing-unit,           // 4px
+  '2': $spacing-unit * 2,       // 8px
+  '3': $spacing-unit * 3,       // 12px
+  '4': $spacing-unit * 4,       // 16px
+  '5': $spacing-unit * 5,       // 20px
+  '6': $spacing-unit * 6,       // 24px
+  '8': $spacing-unit * 8,       // 32px
+  '10': $spacing-unit * 10,     // 40px
+  '12': $spacing-unit * 12,     // 48px
+  '16': $spacing-unit * 16,     // 64px
+  '20': $spacing-unit * 20,     // 80px
+  '24': $spacing-unit * 24      // 96px
+);
+
+// 响应式间距缩放因子
+$spacing-scale-factors: (
+  'xs': 0.75,
+  'sm': 0.85,
+  'md': 0.9,
+  'lg': 0.95,
+  'xl': 1,
+  'xxl': 1,
+  '3xl': 1.1
+);
+
+// ============================================================================
+// 5. 响应式字体系统
+// ============================================================================
+
+// 基础字体大小
+$font-size-base: 16px;
+
+// 字体比例
+$font-scale: (
+  'xs': 0.75rem,     // 12px
+  'sm': 0.875rem,    // 14px
+  'base': 1rem,      // 16px
+  'lg': 1.125rem,    // 18px
+  'xl': 1.25rem,     // 20px
+  '2xl': 1.5rem,     // 24px
+  '3xl': 1.875rem,   // 30px
+  '4xl': 2.25rem,    // 36px
+  '5xl': 3rem,       // 48px
+  '6xl': 3.75rem     // 60px
+);
+
+// 响应式字体缩放因子
+$font-scale-factors: (
+  'xs': 0.85,
+  'sm': 0.9,
+  'md': 0.95,
+  'lg': 1,
+  'xl': 1,
+  'xxl': 1,
+  '3xl': 1.05
+);
+
+// 行高配置
+$line-heights: (
+  'tight': 1.25,
+  'snug': 1.375,
+  'normal': 1.5,
+  'relaxed': 1.625,
+  'loose': 2
+);
+
+// ============================================================================
+// 6. 响应式网格系统
+// ============================================================================
+
+// 网格列数
+$grid-columns: 12;
+
+// 网格间距
+$grid-gaps: (
+  'xs': 8px,
+  'sm': 12px,
+  'md': 16px,
+  'lg': 20px,
+  'xl': 24px,
+  'xxl': 24px,
+  '3xl': 32px
+);
+
+// 响应式网格配置
+$grid-configs: (
+  'xs': (columns: 1, gap: 8px),
+  'sm': (columns: 2, gap: 12px),
+  'md': (columns: 3, gap: 16px),
+  'lg': (columns: 4, gap: 20px),
+  'xl': (columns: 5, gap: 24px),
+  'xxl': (columns: 6, gap: 24px),
+  '3xl': (columns: 6, gap: 32px)
+);
+
+// ============================================================================
+// 7. 响应式工具函数
+// ============================================================================
+
+// 获取响应式间距值
+@function get-spacing($size, $breakpoint: 'xl') {
+  $base: map.get($spacing-scale, $size);
+  $factor: map.get($spacing-scale-factors, $breakpoint);
+  @return $base * $factor;
+}
+
+// 获取响应式字体大小
+@function get-font-size($size, $breakpoint: 'xl') {
+  $base: map.get($font-scale, $size);
+  $factor: map.get($font-scale-factors, $breakpoint);
+  @return $base * $factor;
+}
+
+// 获取容器宽度
+@function get-container-width($breakpoint) {
+  @return map.get($container-widths, $breakpoint);
+}
+
+// 获取容器内边距
+@function get-container-padding($breakpoint) {
+  @return map.get($container-paddings, $breakpoint);
+}
+
+// ============================================================================
+// 8. 响应式 Mixins
+// ============================================================================
+
+// 响应式容器
+@mixin responsive-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: get-container-padding('xs');
+  padding-right: get-container-padding('xs');
+  
+  @include respond-up(sm) {
+    max-width: get-container-width('sm');
+    padding-left: get-container-padding('sm');
+    padding-right: get-container-padding('sm');
+  }
+  
+  @include respond-up(md) {
+    max-width: get-container-width('md');
+    padding-left: get-container-padding('md');
+    padding-right: get-container-padding('md');
+  }
+  
+  @include respond-up(lg) {
+    max-width: get-container-width('lg');
+    padding-left: get-container-padding('lg');
+    padding-right: get-container-padding('lg');
+  }
+  
+  @include respond-up(xl) {
+    max-width: get-container-width('xl');
+    padding-left: get-container-padding('xl');
+    padding-right: get-container-padding('xl');
+  }
+  
+  @include respond-up('xxl') {
+    max-width: get-container-width('xxl');
+    padding-left: get-container-padding('xxl');
+    padding-right: get-container-padding('xxl');
+  }
+  
+  @include respond-up('3xl') {
+    max-width: get-container-width('3xl');
+    padding-left: get-container-padding('3xl');
+    padding-right: get-container-padding('3xl');
+  }
+}
+
+// 流式容器（始终100%宽度）
+@mixin fluid-container {
+  width: 100%;
+  padding-left: get-container-padding('xs');
+  padding-right: get-container-padding('xs');
+  
+  @include respond-up('sm') {
+    padding-left: get-container-padding('sm');
+    padding-right: get-container-padding('sm');
+  }
+  
+  @include respond-up('md') {
+    padding-left: get-container-padding('md');
+    padding-right: get-container-padding('md');
+  }
+  
+  @include respond-up('lg') {
+    padding-left: get-container-padding('lg');
+    padding-right: get-container-padding('lg');
+  }
+}
+
+// 响应式字体大小
+@mixin responsive-font-size($size) {
+  font-size: get-font-size($size, 'xs');
+  
+  @include respond-up('sm') {
+    font-size: get-font-size($size, 'sm');
+  }
+  
+  @include respond-up('md') {
+    font-size: get-font-size($size, 'md');
+  }
+  
+  @include respond-up('lg') {
+    font-size: get-font-size($size, 'lg');
+  }
+  
+  @include respond-up('xl') {
+    font-size: get-font-size($size, 'xl');
+  }
+}
+
+// 响应式间距
+@mixin responsive-spacing($property, $size) {
+  #{$property}: get-spacing($size, 'xs');
+  
+  @include respond-up('sm') {
+    #{$property}: get-spacing($size, 'sm');
+  }
+  
+  @include respond-up('md') {
+    #{$property}: get-spacing($size, 'md');
+  }
+  
+  @include respond-up('lg') {
+    #{$property}: get-spacing($size, 'lg');
+  }
+  
+  @include respond-up('xl') {
+    #{$property}: get-spacing($size, 'xl');
+  }
+}
+
+// 响应式网格
+@mixin responsive-grid($min-width: 280px, $gap: 16px) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax($min-width, 1fr));
+  gap: $gap;
+  
+  @include respond-down(sm) {
+    grid-template-columns: 1fr;
+    gap: $gap * 0.75;
+  }
+}
+
+// 响应式Flexbox
+@mixin responsive-flex($direction: row, $wrap: wrap) {
+  display: flex;
+  flex-direction: $direction;
+  flex-wrap: $wrap;
+  
+  @include respond-down(md) {
+    @if $direction == row {
+      flex-direction: column;
+    }
+  }
+}
+
+// 文本截断
+@mixin text-truncate($lines: 1) {
+  @if $lines == 1 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// 隐藏滚动条但保持滚动功能
+@mixin hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// 响应式宽高比
+@mixin aspect-ratio($width, $height) {
+  aspect-ratio: $width / $height;
+  
+  // 降级方案（不支持aspect-ratio的浏览器）
+  @supports not (aspect-ratio: 1) {
+    &::before {
+      content: '';
+      display: block;
+      padding-top: percentage($height / $width);
+    }
+    
+    > * {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// 安全区域适配（针对刘海屏等设备）
+@mixin safe-area-inset($property, $value, $direction: 'all') {
+  @if $direction == 'all' {
+    #{$property}: $value;
+    #{$property}: calc(#{$value} + env(safe-area-inset-top));
+    #{$property}: calc(#{$value} + env(safe-area-inset-right));
+    #{$property}: calc(#{$value} + env(safe-area-inset-bottom));
+    #{$property}: calc(#{$value} + env(safe-area-inset-left));
+  } @else if $direction == 'top' {
+    #{$property}-top: $value;
+    #{$property}-top: calc(#{$value} + env(safe-area-inset-top));
+  } @else if $direction == 'right' {
+    #{$property}-right: $value;
+    #{$property}-right: calc(#{$value} + env(safe-area-inset-right));
+  } @else if $direction == 'bottom' {
+    #{$property}-bottom: $value;
+    #{$property}-bottom: calc(#{$value} + env(safe-area-inset-bottom));
+  } @else if $direction == 'left' {
+    #{$property}-left: $value;
+    #{$property}-left: calc(#{$value} + env(safe-area-inset-left));
+  }
+}
+
+// ============================================================================
+// 9. CSS 自定义属性（响应式变量）- Mixin 形式
+// ============================================================================
+// 该 mixin 应该在 global.scss 中调用一次，生成响应式 CSS 变量
+
+@mixin responsive-css-variables {
+  :root {
+    // 响应式间距变量
+    --spacing-xs: #{map.get($spacing-scale, '1')};
+    --spacing-sm: #{map.get($spacing-scale, '2')};
+    --spacing-md: #{map.get($spacing-scale, '4')};
+    --spacing-lg: #{map.get($spacing-scale, '6')};
+    --spacing-xl: #{map.get($spacing-scale, '8')};
+    
+    // 响应式字体变量
+    --font-size-xs: #{map.get($font-scale, 'xs')};
+    --font-size-sm: #{map.get($font-scale, 'sm')};
+    --font-size-base: #{map.get($font-scale, 'base')};
+    --font-size-lg: #{map.get($font-scale, 'lg')};
+    --font-size-xl: #{map.get($font-scale, 'xl')};
+    --font-size-2xl: #{map.get($font-scale, '2xl')};
+    
+    // 响应式容器变量
+    --container-padding: #{get-container-padding('xs')};
+    --container-max-width: 100%;
+    
+    // 响应式网格变量
+    --grid-columns: 1;
+    --grid-gap: #{map.get($grid-gaps, 'xs')};
+    
+    // 导航栏高度
+    --navbar-height: 56px;
+    --secondary-navbar-height: 48px;
+    --bottom-navbar-height: 60px;
+    
+    @include respond-up(sm) {
+      --container-padding: #{get-container-padding('sm')};
+      --grid-columns: 2;
+      --grid-gap: #{map.get($grid-gaps, 'sm')};
+    }
+    
+    @include respond-up(md) {
+      --container-padding: #{get-container-padding('md')};
+      --container-max-width: #{get-container-width('md')};
+      --grid-columns: 3;
+      --grid-gap: #{map.get($grid-gaps, 'md')};
+      --navbar-height: 60px;
+      --secondary-navbar-height: 52px;
+      --bottom-navbar-height: 0; // 中等屏幕及以上不顮示底部导航栏
+    }
+    
+    @include respond-up(lg) {
+      --container-padding: #{get-container-padding('lg')};
+      --container-max-width: #{get-container-width('lg')};
+      --grid-columns: 4;
+      --grid-gap: #{map.get($grid-gaps, 'lg')};
+      --navbar-height: 64px;
+      --secondary-navbar-height: 56px;
+      --bottom-navbar-height: 0;
+    }
+    
+    @include respond-up(xl) {
+      --container-padding: #{get-container-padding('xl')};
+      --container-max-width: #{get-container-width('xl')};
+      --grid-columns: 5;
+      --grid-gap: #{map.get($grid-gaps, 'xl')};
+      --navbar-height: 70px;
+      --secondary-navbar-height: 56px;
+      --bottom-navbar-height: 0;
+    }
+    
+    @include respond-up(xxl) {
+      --container-padding: #{get-container-padding('xxl')};
+      --container-max-width: #{get-container-width('xxl')};
+      --grid-columns: 6;
+    }
+    
+    @include respond-up('3xl') {
+      --container-padding: #{get-container-padding('3xl')};
+      --container-max-width: #{get-container-width('3xl')};
+    }
+  }
+}

@@ -1,0 +1,711 @@
+// ============================================================================
+// 组件适配策略 - Component Adaptation Strategies
+// ============================================================================
+// 该文件提供统一的组件响应式适配 mixins
+// 确保组件在各种屏幕尺寸下保持一致的用户体验
+// ============================================================================
+
+@use './responsive' as r;
+
+// ============================================================================
+// 1. 导航栏适配
+// ============================================================================
+
+// 主导航栏适配
+@mixin navbar-adaptive {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-index-fixed, 1030);
+  height: var(--navbar-height);
+  background-color: var(--color-background-elevated, #ffffff);
+  transition: height 0.3s ease, box-shadow 0.3s ease;
+  
+  // 移动端调整
+  @include r.respond-down(md) {
+    // 移动端可能需要更紧凑的布局
+    .navbar-brand {
+      font-size: 18px;
+    }
+    
+    .navbar-actions {
+      gap: 8px;
+    }
+  }
+  
+  @include r.respond-down(sm) {
+    .navbar-search {
+      display: none;
+    }
+    
+    .navbar-user-info {
+      display: none;
+    }
+  }
+}
+
+// 二级导航栏适配
+@mixin secondary-navbar-adaptive {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  right: 0;
+  z-index: calc(var(--z-index-fixed, 1030) - 1);
+  background-color: var(--color-background, #f5f5f5);
+  height: var(--secondary-navbar-height);
+  
+  @include r.respond-down(md) {
+    // 平板端调整
+    .nav-icon-tabs {
+      padding-right: 12px;
+    }
+    
+    .category-item {
+      min-width: 60px;
+      padding: 0 10px;
+      font-size: 11px;
+    }
+  }
+  
+  @include r.respond-down(sm) {
+    // 手机端隐藏图标标签
+    .nav-icon-tabs {
+      display: none;
+    }
+    
+    .category-item {
+      min-width: 50px;
+      padding: 0 8px;
+    }
+  }
+}
+
+// 侧边栏适配
+@mixin sidebar-adaptive {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  bottom: 0;
+  width: 240px;
+  background-color: var(--color-background-elevated, #ffffff);
+  z-index: calc(var(--z-index-fixed, 1030) - 2);
+  transition: transform 0.3s ease, width 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  // 平板端收起侧边栏
+  @include r.respond-down(lg) {
+    width: 64px;
+    
+    .sidebar-text {
+      display: none;
+    }
+    
+    .sidebar-item {
+      justify-content: center;
+      padding: 12px 0;
+    }
+  }
+  
+  // 移动端完全隐藏，使用抽屉式
+  @include r.respond-down(md) {
+    transform: translateX(-100%);
+    width: 280px;
+    
+    &.is-open {
+      transform: translateX(0);
+    }
+    
+    .sidebar-text {
+      display: block;
+    }
+  }
+}
+
+// ============================================================================
+// 2. 卡片组件适配
+// ============================================================================
+
+// 视频卡片适配
+@mixin video-card-adaptive {
+  position: relative;
+  border-radius: var(--border-radius, 8px);
+  overflow: hidden;
+  background-color: var(--color-background-elevated, #ffffff);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  // 封面区域
+  .video-cover {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  
+  // 信息区域
+  .video-info {
+    padding: 12px;
+    
+    @include r.respond-down(md) {
+      padding: 10px;
+    }
+    
+    @include r.respond-down(sm) {
+      padding: 8px;
+    }
+  }
+  
+  // 标题
+  .video-title {
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0 0 8px;
+    
+    @include r.respond-down(md) {
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    
+    @include r.respond-down(sm) {
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+  }
+  
+  // 元信息
+  .video-meta {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    
+    @include r.respond-down(sm) {
+      font-size: 11px;
+    }
+  }
+  
+  // 悬停效果（仅桌面端）
+  @include r.hover-supported {
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      
+      .video-cover img {
+        transform: scale(1.05);
+      }
+    }
+  }
+}
+
+// 通用卡片适配
+@mixin card-adaptive($padding: 16px) {
+  background-color: var(--color-background-elevated, #ffffff);
+  border-radius: var(--border-radius, 8px);
+  padding: $padding;
+  box-shadow: var(--shadow);
+  
+  @include r.respond-down(md) {
+    padding: $padding * 0.85;
+    border-radius: var(--border-radius-sm, 6px);
+  }
+  
+  @include r.respond-down(sm) {
+    padding: $padding * 0.7;
+  }
+}
+
+// ============================================================================
+// 3. 网格布局适配
+// ============================================================================
+
+// 视频网格适配
+@mixin video-grid-adaptive {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns, 5), 1fr);
+  gap: var(--grid-gap, 20px);
+  
+  // 具体列数控制
+  @include r.respond-up(3xl) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  @include r.respond-between(xl, 3xl) {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  @include r.respond-between(lg, xl) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  @include r.respond-between(md, lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @include r.respond-between(sm, md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @include r.respond-down(sm) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// 分类网格适配
+@mixin category-grid-adaptive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  
+  @include r.respond-down(md) {
+    gap: 8px;
+  }
+  
+  @include r.respond-down(sm) {
+    gap: 6px;
+  }
+  
+  .category-item {
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    
+    @include r.respond-down(md) {
+      padding: 6px 14px;
+      font-size: 13px;
+    }
+    
+    @include r.respond-down(sm) {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+  }
+}
+
+// ============================================================================
+// 4. 表单组件适配
+// ============================================================================
+
+// 搜索框适配
+@mixin search-input-adaptive {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-hover, #f0f0f0);
+  border-radius: var(--border-radius-full, 9999px);
+  padding: 0 16px;
+  height: 40px;
+  min-width: 400px;
+  transition: all 0.3s ease;
+  
+  @include r.respond-down(xl) {
+    min-width: 300px;
+  }
+  
+  @include r.respond-down(lg) {
+    min-width: 200px;
+  }
+  
+  @include r.respond-down(md) {
+    min-width: 150px;
+    height: 36px;
+    padding: 0 12px;
+  }
+  
+  @include r.respond-down(sm) {
+    display: none; // 移动端使用图标按钮
+  }
+  
+  input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+    
+    @include r.respond-down(md) {
+      font-size: 13px;
+    }
+  }
+}
+
+// 表单容器适配
+@mixin form-adaptive {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  
+  @include r.respond-down(md) {
+    gap: 12px;
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 16px;
+    
+    @include r.respond-down(sm) {
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+  
+  .form-item {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .form-label {
+    font-size: 14px;
+    margin-bottom: 8px;
+    
+    @include r.respond-down(sm) {
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+  }
+}
+
+// ============================================================================
+// 5. 弹窗/对话框适配
+// ============================================================================
+
+// 模态框适配
+@mixin modal-adaptive($max-width: 560px) {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: $max-width;
+  max-height: 90vh;
+  background-color: var(--color-background-elevated, #ffffff);
+  border-radius: var(--border-radius-lg, 16px);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  
+  @include r.respond-down(sm) {
+    width: 95%;
+    max-height: 95vh;
+    border-radius: var(--border-radius-md, 12px);
+  }
+  
+  // 移动端全屏模式
+  &.modal-fullscreen-mobile {
+    @include r.respond-down(sm) {
+      width: 100%;
+      height: 100%;
+      max-height: 100vh;
+      border-radius: 0;
+      top: 0;
+      left: 0;
+      transform: none;
+    }
+  }
+  
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border);
+    
+    @include r.respond-down(sm) {
+      padding: 16px 20px;
+    }
+  }
+  
+  .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    
+    @include r.respond-down(sm) {
+      padding: 20px;
+    }
+  }
+  
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    
+    @include r.respond-down(sm) {
+      padding: 12px 20px;
+      flex-direction: column-reverse;
+      
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 6. 按钮组件适配
+// ============================================================================
+
+// 按钮适配
+@mixin button-adaptive($size: 'medium') {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--border-radius, 8px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-weight: 500;
+  white-space: nowrap;
+  
+  @if $size == 'small' {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12px;
+    
+    @include r.respond-down(sm) {
+      height: 26px;
+      padding: 0 10px;
+      font-size: 11px;
+    }
+  } @else if $size == 'large' {
+    height: 44px;
+    padding: 0 24px;
+    font-size: 16px;
+    
+    @include r.respond-down(sm) {
+      height: 40px;
+      padding: 0 20px;
+      font-size: 15px;
+    }
+  } @else {
+    // medium (default)
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+    
+    @include r.respond-down(sm) {
+      height: 32px;
+      padding: 0 14px;
+      font-size: 13px;
+    }
+  }
+  
+  // 触摸设备优化
+  @include r.touch-device {
+    min-height: 44px; // iOS最小触摸目标
+  }
+}
+
+// 图标按钮适配
+@mixin icon-button-adaptive($size: 36px) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  
+  @include r.respond-down(sm) {
+    width: $size * 0.9;
+    height: $size * 0.9;
+  }
+  
+  @include r.touch-device {
+    width: max($size, 44px);
+    height: max($size, 44px);
+  }
+}
+
+// ============================================================================
+// 7. 轮播图适配
+// ============================================================================
+
+@mixin carousel-adaptive {
+  position: relative;
+  width: 100%;
+  border-radius: var(--border-radius, 8px);
+  overflow: hidden;
+  
+  .carousel-item {
+    width: 100%;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  
+  // 指示器
+  .carousel-indicators {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    display: flex;
+    gap: 8px;
+    
+    @include r.respond-down(sm) {
+      bottom: 12px;
+      left: 12px;
+      gap: 6px;
+    }
+  }
+  
+  // 导航按钮
+  .carousel-nav {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    
+    @include r.respond-down(sm) {
+      bottom: 12px;
+      right: 12px;
+    }
+  }
+  
+  // 信息覆盖层
+  .carousel-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 60px 20px 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    color: white;
+    
+    @include r.respond-down(sm) {
+      padding: 40px 16px 16px;
+    }
+  }
+}
+
+// ============================================================================
+// 8. 页面布局适配
+// ============================================================================
+
+// 主内容区域适配
+@mixin main-content-adaptive {
+  padding-top: var(--navbar-height);
+  min-height: 100vh;
+  
+  // 有二级导航时
+  &.with-secondary-nav {
+    padding-top: calc(var(--navbar-height) + var(--secondary-navbar-height));
+  }
+  
+  // 有侧边栏时
+  &.with-sidebar {
+    margin-left: 240px;
+    
+    @include r.respond-down(lg) {
+      margin-left: 64px;
+    }
+    
+    @include r.respond-down(md) {
+      margin-left: 0;
+    }
+  }
+}
+
+// 页面头部适配
+@mixin page-header-adaptive {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--color-border);
+  
+  @include r.respond-down(md) {
+    padding: 20px 0;
+  }
+  
+  @include r.respond-down(sm) {
+    padding: 16px 0;
+  }
+  
+  .page-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    
+    @include r.respond-down(md) {
+      font-size: 22px;
+    }
+    
+    @include r.respond-down(sm) {
+      font-size: 20px;
+    }
+  }
+}
+
+// ============================================================================
+// 9. 列表适配
+// ============================================================================
+
+// 列表项适配
+@mixin list-item-adaptive {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+  transition: background-color 0.25s ease;
+  
+  @include r.respond-down(sm) {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  
+  @include r.hover-supported {
+    &:hover {
+      background-color: var(--color-hover);
+    }
+  }
+  
+  // 触摸设备上的点击反馈
+  @include r.touch-device {
+    &:active {
+      background-color: var(--color-active);
+    }
+  }
+}
+
+// ============================================================================
+// 10. Tab/标签页适配
+// ============================================================================
+
+@mixin tabs-adaptive {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  
+  @include r.hide-scrollbar;
+  
+  .tab-item {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border-bottom: 2px solid transparent;
+    
+    @include r.respond-down(sm) {
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+    
+    &.is-active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+    
+    @include r.hover-supported {
+      &:hover:not(.is-active) {
+        color: var(--color-primary);
+        background-color: var(--color-hover);
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+// ============================================================================
+// SCSS 主入口 - Main Entry Point
+// ============================================================================
+// 该文件提供统一的导入入口，方便在组件中使用响应式系统
+// 
+// 使用方式（组件中）：
+// 由于已在 vite.config.js 中全局注入，可以直接使用 mixins、变量和函数
+// ============================================================================
+
+// 转发所有模块，供组件使用
+@forward './responsive';
+@forward './_variables';
+@forward './_components';
+
+// 导入以获取命名空间访问
+@use './responsive' as r;
+@use './_variables' as vars;
+@use './_components' as comp;
+
+// ============================================================================
+// 快捷 Mixins（无需命名空间即可使用）
+// ============================================================================
+
+// 响应式断点快捷方式（向下断点）
+@mixin xs { @include r.respond-down(xs) { @content; } }
+@mixin sm { @include r.respond-down(sm) { @content; } }
+@mixin md { @include r.respond-down(md) { @content; } }
+@mixin lg { @include r.respond-down(lg) { @content; } }
+@mixin xl { @include r.respond-down(xl) { @content; } }
+@mixin xxl { @include r.respond-down(xxl) { @content; } }
+
+// 向上断点快捷方式
+@mixin xs-up { @include r.respond-up(xs) { @content; } }
+@mixin sm-up { @include r.respond-up(sm) { @content; } }
+@mixin md-up { @include r.respond-up(md) { @content; } }
+@mixin lg-up { @include r.respond-up(lg) { @content; } }
+@mixin xl-up { @include r.respond-up(xl) { @content; } }
+@mixin xxl-up { @include r.respond-up(xxl) { @content; } }
+
+// 设备类型快捷方式
+@mixin mobile { @include r.respond-down(md) { @content; } }
+@mixin tablet { @include r.respond-between(md, lg) { @content; } }
+@mixin desktop { @include r.respond-up(lg) { @content; } }
+@mixin touch { @include r.touch-device { @content; } }
+@mixin hover { @include r.hover-supported { @content; } }

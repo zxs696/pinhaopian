@@ -154,33 +154,6 @@
             <Moon v-else />
           </el-icon>
         </el-button>
-        
-        <!-- 移动端菜单按钮 -->
-        <el-button link class="mobile-menu-btn" @click="toggleMobileMenu">
-          <el-icon class="nav-icon">
-            <Menu />
-          </el-icon>
-        </el-button>
-      </div>
-    </div>
-    
-    <!-- 移动端下拉菜单 -->
-    <div v-if="showMobileMenu" class="mobile-menu">
-      <div class="mobile-menu-content">
-        <ul class="mobile-menu-list">
-          <li v-for="nav in navItems" :key="nav.key" class="mobile-nav-item">
-            <router-link 
-              :to="nav.path" 
-              class="mobile-link"
-              @click="showMobileMenu = false"
-            >
-              <span class="mobile-link-text">{{ nav.label }}</span>
-              <el-icon class="mobile-link-arrow">
-                <ArrowRight />
-              </el-icon>
-            </router-link>
-          </li>
-        </ul>
       </div>
     </div>
   </nav>
@@ -191,7 +164,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/modules/auth'
-import { Search, Moon, Sunny, ArrowDown, Bell, Plus, Menu, CircleClose, Tools, User, Clock, Star, Setting, SwitchButton, ArrowRight } from '@element-plus/icons-vue'
+import { Search, Moon, Sunny, ArrowDown, Bell, Plus, Menu, CircleClose, Tools, User, Clock, Star, Setting, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { showSuccess, showInfo } from '@/utils/message'
 import CircleAvatar from '@/components/layout/index/CircleAvatar.vue'
@@ -204,7 +177,6 @@ const authStore = useAuthStore()
 // 响应式数据
 const keyword = ref('')
 const isSearchFocused = ref(false)
-const showMobileMenu = ref(false)
 const searchSuggestions = ref([])
 const isTransparent = ref(route.path === '/') // 导航栏透明状态，仅首页透明
 
@@ -342,9 +314,9 @@ const handleUserCommand = (command) => {
 }
 
 // 移动端菜单
-const toggleMobileMenu = () => {
-  showMobileMenu.value = !showMobileMenu.value
-}
+// const toggleMobileMenu = () => {
+//   showMobileMenu.value = !showMobileMenu.value
+// }
 
 // 通知相关
 const toggleNotification = () => {
@@ -359,14 +331,9 @@ const toggleTheme = () => {
 // 点击外部关闭搜索建议和移动端菜单
 const handleClickOutside = (event) => {
   const searchBox = event.target.closest('.search-box')
-  const mobileMenuBtn = event.target.closest('.mobile-menu-btn')
   
   if (!searchBox) {
     isSearchFocused.value = false
-  }
-  
-  if (!mobileMenuBtn && !event.target.closest('.mobile-menu')) {
-    showMobileMenu.value = false
   }
 }
 
@@ -402,11 +369,15 @@ const handleScroll = () => {
 </script>
 
 <style scoped lang="scss">
+// 响应式设计
+@use '@/assets/styles/_responsive.scss' as *;
+
 .navbar {
-  background-color: var(--color-background);
+  background-color: var(--color-background-elevated);
+  color: var(--color-text-primary);
   border-bottom: 1px solid var(--color-border);
-  transition: all 0.3s ease;
-  height: 70px; /* 增加导航栏纵向宽度 */
+  transition: height 0.15s ease-out, background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);  /* 优化：更短的过渡时间减低闪烁，并添加背景色和边框色过渡 */
+  height: var(--navbar-height, 70px);  /* 使用CSS变量，不要硬编码 */
   position: fixed; /* 固定定位，实现滚动冻结效果 */
   top: 0; /* 固定在顶部 */
   left: 0; /* 固定在左侧 */
@@ -417,10 +388,7 @@ const handleScroll = () => {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   /* 防止布局偏移的关键属性 */
-    /* 移除 contain 属性，避免影响固定定位 */
-    /* 移除 will-change 属性，避免影响固定定位效果 */
     backface-visibility: hidden; /* 防止闪烁 */
-    /* 移除 transform 属性，避免影响固定定位效果 */
   /* 防止滚动条重载导致的布局偏移 */
   padding-left: calc(16px + env(scrollbar-width));
   padding-right: calc(16px + env(scrollbar-width));
@@ -429,6 +397,7 @@ const handleScroll = () => {
     padding-left: calc(16px + 15px);
     padding-right: calc(16px + 15px);
   }
+  will-change: height;  /* 优化：明确告诉浏览器height属性会变化 */
 }
 
 /* 透明导航栏样式 */
@@ -447,7 +416,7 @@ const handleScroll = () => {
 .navbar.navbar-transparent .menu-toggle,
 .navbar.navbar-transparent .user-info,
 .navbar.navbar-transparent .notification-bell {
-  color: var(--color-text) !important; /* 使用主题变量，跟随主题变化 */
+  color: var(--color-text-primary) !important; /* 使用主题变量，跟随主题变化 */
 }
 
 /* 透明导航栏下的搜索框样式 */
@@ -498,7 +467,7 @@ const handleScroll = () => {
 .dark .navbar.navbar-transparent .menu-toggle,
 .dark .navbar.navbar-transparent .user-info,
 .dark .navbar.navbar-transparent .notification-bell {
-  color: var(--color-text) !important; /* 使用主题变量，跟随主题变化 */
+  color: var(--color-text-primary) !important; /* 使用主题变量，跟随主题变化 */
 }
 
 /* 暗色主题下透明导航栏的搜索框样式 - 与非透明状态保持一致 */
@@ -545,14 +514,30 @@ const handleScroll = () => {
   height: 100%; /* 让容器高度占满导航栏 */
   /* 防止布局偏移的关键属性 */
   width: 100%;
-  min-width: 100%;
   box-sizing: border-box;
-  /* 移除 contain 属性，避免影响固定定位 */
-  /* 防止滚动条重载导致的布局偏移 */
-  width: calc(100% - 2 * env(scrollbar-width));
-  /* 兼容WebKit浏览器 */
-  @supports (-webkit-appearance: none) {
-    width: calc(100% - 30px);
+  /* 关键修复：溢出滚动以防止裁剪 */
+  overflow: visible;
+  min-width: 0;
+  
+  // 添加更细致的响应式调整，确保容器内的元素能够更好地适应
+  @include respond-down(xl) {
+    padding: 0 12px;
+  }
+  
+  @include respond-down(lg) {
+    padding: 0 10px;
+  }
+  
+  @include respond-down(md) {
+    padding: 0 8px;
+  }
+  
+  @include respond-down(sm) {
+    padding: 0 6px;
+  }
+  
+  @include respond-down(xs) {
+    padding: 0 4px;
   }
 }
 
@@ -587,6 +572,40 @@ const handleScroll = () => {
   max-width: 350px;
   box-sizing: border-box;
   /* 移除 contain 属性，避免影响固定定位 */
+  overflow: visible;
+  
+  // 响应式调整左侧区域宽度
+  @include respond-down(xl) {
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
+  }
+  
+  @include respond-down(lg) {
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+  }
+  
+  @include respond-down(md) {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+  }
+  
+  @include respond-down(sm) {
+    width: 80px;  /* 在手机上只显示logo，隐藏导航文字，为右侧留出更多空间 */
+    min-width: 80px;
+    max-width: 80px;
+    flex: 0 0 auto;
+  }
+  
+  @include respond-down(xs) {
+    width: 70px;
+    min-width: 70px;
+    max-width: 70px;
+    flex: 0 0 auto;
+  }
   
   .main-nav {
     margin-left: 24px;
@@ -599,140 +618,282 @@ const handleScroll = () => {
     min-width: 150px;
     max-width: 150px;
     box-sizing: border-box;
+    
+    // 响应式调整主导航宽度
+    @include respond-down(xl) {
+      width: 120px;
+      min-width: 120px;
+      max-width: 120px;
+    }
+    
+    @include respond-down(lg) {
+      width: 100px;
+      min-width: 100px;
+      max-width: 100px;
+    }
+    
+    @include respond-down(md) {
+      width: 80px;
+      min-width: 80px;
+      max-width: 80px;
+    }
+    
+    @include respond-down(sm) {
+      display: none;
+    }
   }
 }
 
 // 导航按钮样式
-  .nav-actions {
-    display: flex;
-    align-items: center;
-    /* 防止布局偏移的关键属性 */
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    /* 移除 contain 属性，避免影响固定定位 */
-    justify-content: flex-end; /* 右对齐 */
-    
-    > * {
-      margin-left: 8px;
-    }
-    
-    .nav-icon-btn {
-      min-width: 40px;
-      height: 40px;
-      font-size: 16px;
-      color: var(--color-text);
-      border-radius: 50%;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
-      &:hover {
-        color: var(--color-primary);
-        background-color: var(--color-hover);
-        transform: scale(1.05);
-      }
-    }
-    
-    .notification {
-      position: relative;
-      
-      .notification-badge {
-        position: absolute;
-        top: -2px;
-        right: -2px;
-        background-color: var(--color-primary);
-        color: white;
-        font-size: 10px;
-        padding: 2px 4px;
-        border-radius: 8px;
-        min-width: 16px;
-        text-align: center;
-        animation: bounce 1s infinite;
-      }
-    }
+.nav-actions {
+  display: flex;
+  align-items: center;
+  /* 防止布局偏移的关键属性 */
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  justify-content: flex-end; /* 右对齐 */
+  overflow: visible;
+  
+  > * {
+    margin-left: 8px;
   }
   
-  // 按钮样式优化
-  .upload-btn,
-  .register-btn {
-    font-size: 14px;
-    padding: 0 16px;
-    height: 36px;
-    border-radius: 18px;
-    transition: all 0.2s ease;
+  // 响应式调整右侧功能区的最小宽度
+  @include respond-down(xl) {
+    min-width: 280px;
+  }
+  
+  @include respond-down(lg) {
+    min-width: 250px;
+  }
+  
+  @include respond-down(md) {
+    min-width: 220px;
+  }
+  
+  @include respond-down(sm) {
+    width: auto;
+    min-width: auto;
+    max-width: none;
+    flex: 1 1 auto;  /* 在手机上让右侧区域占据可用空间 */
+    gap: 4px;  /* 减少按钮间距 */
+  }
+  
+  @include respond-down(xs) {
+    width: auto;
+    min-width: auto;
+    max-width: none;
+    flex: 1 1 auto;
+    gap: 2px;
+  }
+  
+  .nav-icon-btn {
+    min-width: 40px;
+    height: 40px;
+    font-size: 16px;
+    color: var(--color-text-primary);
+    border-radius: 50%;
+    transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* 手机上找核据按钮大小 */
+    @include respond-down(sm) {
+      min-width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+    
+    @include respond-down(xs) {
+      min-width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
     
     &:hover {
+      color: var(--color-primary);
+      background-color: var(--color-hover);
       transform: scale(1.05);
     }
   }
   
-  .upload-btn:hover {
-    box-shadow: 0 2px 8px rgba(22, 119, 255, 0.3);
-  }
-  
-  .login-btn {
-    color: var(--color-text);
+  .notification {
+    position: relative;
     
-    &:hover {
-      color: var(--color-primary);
-      background-color: transparent;
+    .notification-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background-color: var(--color-primary);
+      color: white;
+      font-size: 10px;
+      padding: 2px 4px;
+      border-radius: 8px;
+      min-width: 16px;
+      text-align: center;
+      animation: bounce 1s infinite;
     }
   }
+}
+
+// 按钮样式优化
+.upload-btn,
+.register-btn {
+  font-size: 14px;
+  padding: 0 16px;
+  height: 36px;
+  border-radius: 18px;
+  transition: all 0.2s ease;
   
-  // 用户认证按钮样式
-  .auth-buttons {
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.upload-btn:hover {
+  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.3);
+}
+
+.login-btn {
+  color: var(--color-text);
+  
+  &:hover {
+    color: var(--color-primary);
+    background-color: transparent;
+  }
+}
+
+// 用户认证按钮样式
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  
+  > * {
+    margin-left: 8px;
+  }
+}
+
+// 搜索框样式调整
+.search-box {
+  margin: 0 24px;
+  flex: 1;
+  // 设置固定最大宽度，防止在大屏幕上过于宽大
+  max-width: 400px;
+  // 设置固定高度，防止布局偏移
+  height: 36px;
+  position: relative;
+  // 设置最小宽度，防止布局偏移
+  min-width: 200px;
+  // 修改overflow属性，防止搜索建议框被裁剪
+  overflow: visible;
+  /* 防止布局偏移的关键属性 */
+  width: 100%;
+  box-sizing: border-box;
+  /* 移除 contain 属性，避免影响固定定位 */
+  /* 移除 will-change 属性，避免影响固定定位 */
+  /* 额外的防偏移属性 */
+  flex-shrink: 1; /* 允许搜索框在空间不足时收缩 */
+  flex-grow: 1;
+  flex-basis: 200px;
+  /* 移除 isolation 属性，避免创建新的层叠上下文 */
+  /* 移除 transform 属性，避免影响固定定位 */
+  /* 添加更严格的尺寸控制 */
+  min-height: 36px;
+  max-height: 36px;
+  vertical-align: top;
+  /* 防止字体加载导致的偏移 */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 36px;
+  
+  // 响应式调整搜索框的最大宽度
+  @include respond-down(xl) {
+    max-width: 350px;
+  }
+  
+  @include respond-down(lg) {
+    max-width: 300px;
+  }
+  
+  @include respond-down(md) {
+    max-width: 250px;
+  }
+  
+  // 在小屏幕设备上进一步减小搜索框宽度
+  @include respond-down(sm) {
+    max-width: 200px;  // 充分利用左侧空出来的空间
+    min-width: 140px;  // 保持最低可用性
+    margin: 0 8px;
+    flex: 1 1 auto;    // 允许搜索框灵活伸缩
+  }
+  
+  @include respond-down(xs) {
+    max-width: 140px;  // 超小屏上控制宽度
+    min-width: 100px;  // 保持最低可用性
+    margin: 0 4px;
+  }
+  
+  // 添加更细致的响应式控制，解决在断点之间过渡时遮挡导航的问题
+  @media (max-width: 1100px) and (min-width: 993px) {
+    max-width: 280px;
+  }
+  
+  @media (max-width: 1000px) and (min-width: 993px) {
+    max-width: 250px;
+  }
+  
+  @media (max-width: 900px) and (min-width: 769px) {
+    max-width: 220px;
+    min-width: 180px;
+  }
+  
+  @media (max-width: 850px) and (min-width: 769px) {
+    max-width: 200px;
+    min-width: 160px;
+  }
+  
+  @media (max-width: 800px) and (min-width: 769px) {
+    max-width: 180px;
+    min-width: 150px;
+  }
+  
+  @media (max-width: 700px) and (min-width: 577px) {
+    max-width: 170px;
+    min-width: 140px;
+    margin: 0 10px;
+  }
+  
+  @media (max-width: 650px) and (min-width: 577px) {
+    max-width: 160px;
+    min-width: 130px;
+    margin: 0 8px;
+  }
+  
+  // 为极小屏幕设备提供更好的适配
+  @media (max-width: 500px) {
+    max-width: 150px;
+    min-width: 120px;
+    margin: 0 6px;
+  }
+  
+  @media (max-width: 400px) {
+    max-width: 140px;
+    min-width: 110px;
+    margin: 0 4px;
+  }
+}
+
+// 主导航样式
+.main-nav {
     display: flex;
     align-items: center;
+    // 为导航菜单设置固定高度，防止布局偏移
+    height: 70px; // 与导航栏高度一致
     
-    > * {
-      margin-left: 8px;
-    }
-  }
-  
-  // 搜索框样式调整
-  .search-box {
-    margin: 0 24px;
-    flex: 1;
-    max-width: 400px;
-    // 设置固定高度，防止布局偏移
-    height: 36px;
-    position: relative;
-    // 设置最小宽度，防止布局偏移
-    min-width: 200px;
-    // 修改overflow属性，防止搜索建议框被裁剪
-    overflow: visible;
-    /* 防止布局偏移的关键属性 */
-    width: 100%;
-    box-sizing: border-box;
-    /* 移除 contain 属性，避免影响固定定位 */
-    /* 移除 will-change 属性，避免影响固定定位 */
-    /* 额外的防偏移属性 */
-    flex-shrink: 0;
-    flex-grow: 1;
-    flex-basis: 200px;
-    /* 移除 isolation 属性，避免创建新的层叠上下文 */
-    /* 移除 transform 属性，避免影响固定定位 */
-    /* 添加更严格的尺寸控制 */
-    min-height: 36px;
-    max-height: 36px;
-    vertical-align: top;
-    /* 防止字体加载导致的偏移 */
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 14px;
-    line-height: 36px;
-  }
-  
-  // 主导航样式
-  .main-nav {
-      display: flex;
-      align-items: center;
-      // 为导航菜单设置固定高度，防止布局偏移
-      height: 70px; // 与导航栏高度一致
-      
     .nav-item {
         position: relative;
         margin-right: 16px;
@@ -743,64 +904,117 @@ const handleScroll = () => {
         justify-content: center; /* 水平居中 */
         text-align: center; /* 文本居中 */
         
+        // 添加响应式调整，使导航项在空间不足时能够收缩
+        @include respond-down(xl) {
+            margin-right: 12px;
+            min-width: 45px;
+        }
+        
+        @include respond-down(lg) {
+            margin-right: 10px;
+            min-width: 40px;
+        }
+        
+        @include respond-down(md) {
+            margin-right: 8px;
+            min-width: 35px;
+        }
+        
+        // 确保最后一个导航项与搜索框之间有足够的间距
+        &:last-child {
+            margin-right: 24px; // 增加右边距，确保与搜索框之间有足够的间距
+            
+            @include respond-down(xl) {
+                margin-right: 20px;
+            }
+            
+            @include respond-down(lg) {
+                margin-right: 18px;
+            }
+            
+            @include respond-down(md) {
+                margin-right: 16px;
+            }
+            
+            @include respond-down(sm) {
+                margin-right: 12px;
+            }
+        }
+        
         &:hover {
-          .nav-link {
-            color: var(--color-primary);
-          }
-          .nav-arrow {
-            transform: rotate(180deg);
-          }
+            .nav-link {
+                color: var(--color-primary);
+            }
+            .nav-arrow {
+                transform: rotate(180deg);
+            }
         }
         
         .nav-link {
-          font-size: 14px;
-          color: var(--color-text);
-          font-weight: bold; /* 设置字体加粗 */
-          padding: 8px 16px;
-          position: relative;
-          transition: color 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center; /* 内容居中 */
-          width: 100%; /* 宽度充满父元素 */
-          height: 100%; /* 高度充满父元素 */
-          white-space: nowrap; /* 防止文字换行 */
-          
-          &.active {
-            color: var(--color-primary);
-            font-weight: bold; /* 保持加粗，修复字体变细问题 */
+            font-size: 14px;
+            color: var(--color-text-primary);
+            font-weight: bold; /* 设置字体加粗 */
+            padding: 8px 16px;
+            position: relative;
+            transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center; /* 内容居中 */
+            width: 100%; /* 宽度充满父元素 */
+            height: 100%; /* 高度充满父元素 */
+            white-space: nowrap; /* 防止文字换行 */
             
-            &::after {
-              content: '';
-              position: absolute;
-              bottom: -5px;
-              left: 50%;
-              transform: translateX(-50%);
-              width: 12px;
-              height: 2px;
-              background-color: var(--color-primary);
-              border-radius: 1px;
+            // 响应式调整导航链接的内边距
+            @include respond-down(xl) {
+                padding: 8px 14px;
+                font-size: 13px;
             }
-          }
+            
+            @include respond-down(lg) {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            
+            @include respond-down(md) {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+            
+            &.active {
+                color: var(--color-primary);
+                font-weight: bold; /* 保持加粗，修复字体变细问题 */
+                
+                &::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -5px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 12px;
+                    height: 2px;
+                    background-color: var(--color-primary);
+                    border-radius: 1px;
+                }
+            }
         }
         
         .nav-arrow {
-          margin-left: 4px;
-          font-size: 12px;
-          transition: transform 0.2s ease;
+            margin-left: 4px;
+            font-size: 12px;
+            transition: transform 0.2s ease;
         }
         
         .new-tag {
-          animation: pulse 2s infinite;
-          margin-left: 4px;
-          font-size: 10px;
-          background-color: var(--color-primary);
-          color: white;
-          padding: 0 4px;
-          border-radius: 2px;
+            animation: pulse 2s infinite;
+            margin-left: 4px;
+            font-size: 10px;
+            background-color: var(--color-primary);
+            color: white;
+            padding: 0 4px;
+            border-radius: 2px;
         }
-      }
     }
+}
 
   // 自定义搜索框样式
   .custom-search-input {
@@ -831,6 +1045,7 @@ const handleScroll = () => {
         margin-left: 12px;
         color: var(--color-text-secondary);
         font-size: 16px;
+        flex-shrink: 0; // 防止图标被压缩
       }
       
       .search-input-field {
@@ -842,9 +1057,29 @@ const handleScroll = () => {
         padding: 0 12px;
         font-size: 14px;
         color: var(--color-text-primary);
+        min-width: 0; // 允许输入框收缩
+        
+        // 在小屏幕下调整字体大小和内边距
+        @include respond-down(sm) {
+          font-size: 13px;
+          padding: 0 8px;
+        }
+        
+        @include respond-down(xs) {
+          font-size: 12px;
+          padding: 0 6px;
+        }
         
         &::placeholder {
           color: var(--color-text-secondary);
+          // 在小屏幕下调整占位符文本
+          @include respond-down(sm) {
+            font-size: 13px;
+          }
+          
+          @include respond-down(xs) {
+            font-size: 12px;
+          }
         }
       }
       
@@ -854,7 +1089,8 @@ const handleScroll = () => {
         font-size: 16px;
         cursor: pointer;
         transition: color 0.2s ease;
-        
+        flex-shrink: 0; // 防止清除图标被压缩
+      
         &:hover {
           color: var(--color-primary);
         }
@@ -911,6 +1147,29 @@ const handleScroll = () => {
     font-size: 14px;
     line-height: 36px;
     
+    // 响应式调整右侧功能区的最小宽度
+    @include respond-down(xl) {
+      min-width: 180px;
+    }
+    
+    @include respond-down(lg) {
+      min-width: 160px;
+    }
+    
+    @include respond-down(md) {
+      min-width: 140px;
+    }
+    
+    @include respond-down(sm) {
+      min-width: 120px;
+      gap: 4px;
+    }
+    
+    @include respond-down(xs) {
+      min-width: 100px;
+      gap: 2px;
+    }
+    
     .nav-icon-btn {
       min-width: 36px;
       height: 36px;
@@ -958,7 +1217,7 @@ const handleScroll = () => {
     }
     
     .login-btn {
-      color: var(--color-text);
+      color: var(--color-text-primary);
       
       &:hover {
         color: var(--color-primary);
@@ -1005,68 +1264,6 @@ const handleScroll = () => {
       &:hover {
         transform: scale(1.05);
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-      }
-    }
-  }
-  
-  // 移动端菜单
-  .mobile-menu {
-    background-color: var(--color-background);
-    border-top: 1px solid var(--color-border);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 999;
-    animation: slideDown 0.3s ease-out;
-    
-    .mobile-menu-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 8px 0;
-    }
-    
-    .mobile-menu-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    
-    .mobile-nav-item {
-      border-bottom: none;
-      
-      .mobile-link {
-        color: var(--color-text);
-        font-size: 16px;
-        padding: 16px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: all 0.3s ease;
-        border-radius: 8px;
-        margin: 4px 12px;
-        
-        &:hover {
-          color: var(--color-primary);
-          background-color: var(--color-hover);
-          transform: translateX(4px);
-        }
-        
-        .mobile-link-text {
-          font-weight: 500;
-        }
-        
-        .mobile-link-arrow {
-          font-size: 14px;
-          opacity: 0.6;
-          transition: all 0.3s ease;
-        }
-        
-        &:hover .mobile-link-arrow {
-          opacity: 1;
-          transform: translateX(4px);
-        }
       }
     }
   }
@@ -1178,28 +1375,33 @@ const handleScroll = () => {
 }
 
 /* 响应式设计 */
+
 /* 隐藏默认的移动菜单按钮（在所有屏幕尺寸） */
 .mobile-menu-btn {
   display: none;
 }
 
-/* 平板设备优化 (1200px以下) */
-@media (max-width: 1200px) {
+/* 大屏幕 (lg) */
+@include respond-up(lg) {
   .navbar {
-    /* 调整导航栏高度 */
-    height: 60px;
+    /* height由CSS变量--navbar-height处理 */
+  }
+}
+
+/* 中等屏幕 (md) 及其他响应式内容调整 */
+@include respond-only(md) {
+  .navbar {
+    padding: 0 12px;
     
     .container {
-      padding: 0 12px;
+      padding: 0 8px;
     }
     
-    /* 缩小Logo */
     .logo {
       width: 90px;
       height: 90px;
     }
     
-    /* 调整左侧区域宽度 */
     .left-section {
       width: 280px;
       min-width: 280px;
@@ -1212,74 +1414,67 @@ const handleScroll = () => {
       }
     }
     
-    /* 调整导航按钮区域 */
+    .search-box {
+      max-width: 200px;
+      min-width: 150px;
+      margin: 0 16px;
+    }
+    
     .nav-actions {
       width: 250px;
       min-width: 250px;
       max-width: 250px;
     }
-    
-    /* 缩小搜索框 */
-    .search-box {
-      max-width: 300px;
-      margin: 0 16px;
-    }
   }
 }
 
-/* 小屏平板/手机横屏优化 (768px以下) */
-@media (max-width: 768px) {
+/* 小屏幕 (sm) - 平板竖屏及以下 */
+@include respond-down(md) {
   .navbar {
-    height: 56px;
-    padding: 0 12px;
     
     .container {
       padding: 0 8px;
     }
     
-    /* 缩小Logo */
     .logo {
       width: 80px;
       height: 80px;
     }
-      
-    /* 调整左侧区域宽度 */
+    
     .left-section {
-      width: 200px;
-      min-width: 200px;
+      width: auto;
+      min-width: auto;
       max-width: 200px;
+      flex: 0 0 auto;
       
       .main-nav {
         display: none;
       }
     }
-      
-    /* 隐藏搜索框 */
+    
     .search-box {
-      display: none;
+      max-width: 150px;
+      min-width: 100px;
+      margin: 0 12px;
     }
-      
-    /* 调整导航按钮区域 */
+    
     .nav-actions {
-      width: 200px;
-      min-width: 200px;
-      max-width: 200px;
+      width: auto;
+      min-width: auto;
+      max-width: none;
+      flex: 0 1 auto;
+      justify-content: flex-end;
       
       .upload-btn,
       .register-btn {
         display: none;
       }
-      
-      /* 仅在移动端显示菜单按钮 */
-      .mobile-menu-btn {
-        display: inline-flex;
-      }
     }
   }
 }
 
-/* 手机竖屏优化 (576px以下) */
-@media (max-width: 576px) {
+/* 超小屏幕 (xs) - 手机竖屏 */
+@include respond-down(sm) {
   .navbar {
     padding: 0 8px;
     
@@ -1287,33 +1482,51 @@ const handleScroll = () => {
       padding: 0 4px;
     }
     
-    /* 进一步缩小Logo */
     .logo {
       width: 70px;
       height: 70px;
     }
     
-    /* 调整左侧区域宽度 */
     .left-section {
-      width: 120px;
-      min-width: 120px;
+      width: auto;
+      min-width: auto;
       max-width: 120px;
+      flex: 0 0 auto;
+      
+      .main-nav {
+        display: none;
+      }
     }
     
-    /* 调整导航按钮区域 */
+    .search-box {
+      max-width: 120px;
+      min-width: 80px;
+      margin: 0 8px;
+    }
+    
     .nav-actions {
-      width: 150px;
-      min-width: 150px;
-      max-width: 150px;
+      width: auto;
+      min-width: auto;
+      max-width: none;
+      flex: 0 1 auto;
+      justify-content: flex-end;
       
       .nav-icon-btn {
         min-width: 36px;
         height: 36px;
         font-size: 14px;
       }
+      
+      .notification {
+        .notification-badge {
+          top: -4px;
+          right: -4px;
+          font-size: 8px;
+          padding: 1px 3px;
+        }
+      }
     }
     
-    /* 移动端菜单样式优化 */
     .mobile-menu {
       .mobile-nav-item {
         .mobile-link {
@@ -1329,18 +1542,132 @@ const handleScroll = () => {
   }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
+/* 旧媒体查询 - 移除硬编码height */
+@media (max-width: 1200px) {
   .navbar {
-    .main-nav {
-      .nav-item {
-        &:nth-child(n+6) {
-          display: none;
-        }
+    /* height由CSS变量处理 */
+    
+    .container {
+      padding: 0 12px;
+    }
+    
+    .logo {
+      width: 90px;
+      height: 90px;
+    }
+    
+    .left-section {
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      
+      .main-nav {
+        width: 120px;
+        min-width: 120px;
+        max-width: 120px;
       }
     }
     
     .search-box {
       max-width: 200px;
+      min-width: 150px;
+      margin: 0 16px;
+    }
+    
+    .nav-actions {
+      width: 250px;
+      min-width: 250px;
+      max-width: 250px;
+    }
+  }
+}
+
+/* 旧媒体查询 - 移除硬编码height */
+@media (max-width: 768px) {
+  .navbar {
+    /* height由CSS变量处理 */
+    padding: 0 12px;
+    
+    .container {
+      padding: 0 8px;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+    }
+    
+    .left-section {
+      width: auto;
+      min-width: auto;
+      max-width: 200px;
+      flex: 0 0 auto;
+      
+      .main-nav {
+        display: none;
+      }
+    }
+    
+    .search-box {
+      max-width: 150px;
+      min-width: 100px;
+      margin: 0 12px;
+    }
+    
+    .nav-actions {
+      width: auto;
+      min-width: auto;
+      max-width: none;
+      flex: 0 1 auto;
+      justify-content: flex-end;
+      
+      .upload-btn,
+      .register-btn {
+        display: none;
+      }
+    }
+  }
+}
+
+/* 手机竖屏优化 (576px以下) - 旧媒体查询保留兼容性 */
+@media (max-width: 576px) {
+  .navbar {
+    padding: 0 8px;
+    
+    .container {
+      padding: 0 4px;
+    }
+    
+    .logo {
+      width: 70px;
+      height: 70px;
+    }
+    
+    .left-section {
+      width: auto;
+      min-width: auto;
+      max-width: 120px;
+      flex: 0 0 auto;
+    }
+    
+    .search-box {
+      max-width: 120px;
+      min-width: 80px;
+      margin: 0 8px;
+    }
+    
+    .nav-actions {
+      width: auto;
+      min-width: auto;
+      max-width: none;
+      flex: 0 1 auto;
+      justify-content: flex-end;
+      
+      .nav-icon-btn {
+        min-width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
     }
   }
 }

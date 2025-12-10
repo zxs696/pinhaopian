@@ -30,7 +30,9 @@ export const useCategoriesStore = defineStore('categories', {
       videos: false
     },
     // 错误信息
-    error: null
+    error: null,
+    // 是否正在获取分类数据（防止并发请求）
+    isFetchingCategories: false
   }),
 
   getters: {
@@ -64,22 +66,34 @@ export const useCategoriesStore = defineStore('categories', {
      * @returns {Promise<Array>} 分类列表
      */
     async fetchAllCategories() {
-      if (this.isCategoriesLoaded) {
+      // 如果数据已加载，则直接返回
+      if (this.categories && this.categories.length > 0) {
         return this.categories
       }
       
+      // 如果正在获取数据，则等待
+      if (this.isFetchingCategories) {
+        while (this.isFetchingCategories) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        return this.categories
+      }
+      
+      this.isFetchingCategories = true
       this.loading.list = true
       this.error = null
       
       try {
         const categories = await categoriesAPI.getAllCategories()
-        this.categories = categories
-        return categories
+        // 确保是数组
+        this.categories = Array.isArray(categories) ? categories : []
+        return this.categories
       } catch (error) {
         this.error = error.message || '获取分类列表失败'
         throw error
       } finally {
         this.loading.list = false
+        this.isFetchingCategories = false
       }
     },
 

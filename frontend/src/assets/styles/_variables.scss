@@ -1,95 +1,190 @@
-// 主题变量（默认浅色主题）
+// ============================================================================
+// 主题与基础变量 - Theme & Base Variables
+// ============================================================================
+// 该文件定义主题颜色和基础设计变量
+// 响应式相关变量已迁移到 _responsive.scss
+// ============================================================================
+
+// ============================================================================
+// 1. 主题颜色定义
+// ============================================================================
+
+// 浅色主题（默认）
 $light-theme: (
-    primary: #fb7299,
-    // B站粉色主色
-    secondary: #23ade5,
-    // 辅助色（蓝色）
-    background: #f5f5f5,
-    // 背景色（同时用于卡片背景）
-    text-primary: #18191c,
-    // 主要文字色
-    text-secondary: #666666,
-    // 次要文字色
-    border-color: #e5e9ef,
-    // 边框色
-    hover-color: #f0f0f0,
-    //  hover色
+    // 主色调
+    primary: #fb7299,           // B站粉色主色
+    secondary: #23ade5,         // 辅助色（蓝色）
+    
+    // 背景色
+    background: #f5f5f5,        // 页面背景色
+    background-elevated: #ffffff, // 突出背景色（卡片、弹窗）
+    
+    // 文字颜色
+    text-primary: #18191c,      // 主要文字色
+    text-secondary: #666666,    // 次要文字色
+    text-tertiary: #999999,     // 辅助文字色
+    text-disabled: #cccccc,     // 禁用文字色
+    
+    // 边框与分割线
+    border-color: #e5e9ef,      // 边框色
+    divider: #e5e9ef,           // 分割线色
+    
+    // 交互状态
+    hover-color: #f0f0f0,       // 悬停状态背景
+    active-color: #e8e8e8,      // 激活状态背景
+    focus-color: rgba(251, 114, 153, 0.2), // 焦点状态轮廓
+    
+    // 功能色
+    success: #52c41a,           // 成功色
+    warning: #faad14,           // 警告色
+    error: #ff4d4f,             // 错误色
+    info: #1890ff,              // 信息色
     
     // 组件背景色变量
-    // 头像组件背景色
     avatar-bg: #d0d0d0,
     avatar-bg-hover: #c0c0c0,
-    
-    // 消息组件背景色
     message-bg: #e8e8e8,
     message-bg-hover: #d8d8d8,
-    
-    // 主题切换组件背景色
     theme-switcher-bg: #f0f0f0,
     theme-switcher-bg-hover: #e0e0e0,
+    
+    // 遮罩层
+    overlay: rgba(0, 0, 0, 0.5),
+    overlay-light: rgba(0, 0, 0, 0.2)
 );
 
 // 深色主题
 $dark-theme: (
+    // 主色调
     primary: #fb7299,
     secondary: #23ade5,
+    
+    // 背景色
     background: #121212,
-    // 背景色（同时用于卡片背景）
+    background-elevated: #1e1e1e,
+    
+    // 文字颜色
     text-primary: #f5f5f5,
     text-secondary: #aaaaaa,
+    text-tertiary: #777777,
+    text-disabled: #555555,
+    
+    // 边框与分割线
     border-color: #333333,
+    divider: #2d2d2d,
+    
+    // 交互状态
     hover-color: #2d2d2d,
+    active-color: #3a3a3a,
+    focus-color: rgba(251, 114, 153, 0.3),
+    
+    // 功能色
+    success: #52c41a,
+    warning: #faad14,
+    error: #ff4d4f,
+    info: #1890ff,
     
     // 组件背景色变量
-    // 头像组件背景色
     avatar-bg: #404040,
     avatar-bg-hover: #505050,
-    
-    // 消息组件背景色
     message-bg: #2a2a2a,
     message-bg-hover: #3a3a3a,
-    
-    // 主题切换组件背景色
     theme-switcher-bg: #333333,
     theme-switcher-bg-hover: #404040,
+    
+    // 遮罩层
+    overlay: rgba(0, 0, 0, 0.7),
+    overlay-light: rgba(0, 0, 0, 0.4)
 );
 
-// 响应式断点（笔记本及以上设备保持不变，仅优化更小设备）
-$breakpoints: (
-  // 平板设备（横向）
+// ============================================================================
+// 2. 设计基础变量
+// ============================================================================
+
+// 圆角规范
+$border-radius-sm: 4px;
+$border-radius: 8px;
+$border-radius-md: 12px;
+$border-radius-lg: 16px;
+$border-radius-xl: 24px;
+$border-radius-full: 9999px;
+
+// 阴影规范
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+$shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
+
+// 过渡动画
+$transition-fast: all 0.15s ease;
+$transition: all 0.3s ease;
+$transition-slow: all 0.5s ease;
+$transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+// 导航栏高度（由响应式系统通过CSS变量控制）
+$navbar-height-mobile: 56px;
+$navbar-height-tablet: 60px;
+$navbar-height-desktop: 70px;
+
+// 侧边栏宽度
+$sidebar-width-collapsed: 64px;
+$sidebar-width-expanded: 240px;
+
+// ============================================================================
+// 3. 字体规范
+// ============================================================================
+
+// 字体家族
+$font-family-base: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+$font-family-mono: 'Fira Code', 'Source Code Pro', Consolas, monospace;
+
+// 字体粗细
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ============================================================================
+// 4. 其他规范
+// ============================================================================
+
+// 层级规范（z-index）
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+$z-index-toast: 1080;
+
+// 容器最大宽度（旧版兼容，新项目建议使用响应式系统）
+$container-width: 1500px;
+
+// ============================================================================
+// 5. 旧版兼容变量（已废弃，保留向后兼容）
+// ============================================================================
+
+// 响应式断点（已迁移到 _responsive.scss，保留别名以兼容旧代码）
+$breakpoints-legacy: (
   lg: 1200px,
-  // 平板设备（纵向）
   md: 768px,
-  // 手机设备（横向）
   sm: 576px,
-  // 手机设备（纵向）
   xs: 480px
 );
 
-// 响应式工具函数
-@mixin respond-to($breakpoint) {
-  @if map-has-key($breakpoints, $breakpoint) {
-    @media (max-width: map-get($breakpoints, $breakpoint)) {
+// 旧版响应式工具函数（建议使用 _responsive.scss 中的新版本）
+@mixin respond-to-legacy($breakpoint) {
+  @if map.has-key($breakpoints-legacy, $breakpoint) {
+    @media (max-width: map.get($breakpoints-legacy, $breakpoint)) {
       @content;
     }
   }
 }
 
-// 全局样式变量
-$border-radius: 8px;
-$shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-$transition: all 0.3s ease;
-$container-width: 1600px;
-
-// 响应式容器宽度
-$container-responsive: (
-  lg: 90%,
-  md: 95%,
-  sm: 98%,
-  xs: 100%
-);
-
-// 响应式间距变量
+// 旧版间距变量（已迁移到 _responsive.scss）
 $spacing: (
   xs: 4px,
   sm: 8px,
@@ -98,7 +193,7 @@ $spacing: (
   xl: 32px
 );
 
-// 响应式字体大小
+// 旧版字体大小变量（已迁移到 _responsive.scss）
 $font-sizes: (
   xs: 12px,
   sm: 14px,
@@ -106,4 +201,12 @@ $font-sizes: (
   lg: 18px,
   xl: 24px,
   xxl: 32px
+);
+
+// 旧版容器宽度变量
+$container-responsive: (
+  lg: 90%,
+  md: 95%,
+  sm: 98%,
+  xs: 100%
 );

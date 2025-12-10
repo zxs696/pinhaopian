@@ -1,4 +1,3 @@
-import { createPinia } from 'pinia'
 import { useAuthStore } from './modules/auth'
 import { useVideosStore } from './modules/videos'
 import { useUsersStore } from './modules/users'
@@ -7,9 +6,6 @@ import { useCategoriesStore } from './modules/categories'
 import { useThemeStore } from './theme'
 import { useTabsStore } from './modules/tabs'
 import { useLayoutStore } from './modules/layout'
-
-// 创建pinia实例
-const pinia = createPinia()
 
 /**
  * 初始化所有Store的方法
@@ -39,7 +35,10 @@ export async function initializeStores(app, router) {
     // 实际业务中，视频分类通常是公开数据，不需要认证
     // 即使请求失败（如401），也不应该阻止应用继续运行
     try {
-      await categoriesStore.fetchAllCategories()
+      // 只有在分类数据未加载且没有正在加载时才获取
+      if (!categoriesStore.categories || categoriesStore.categories.length === 0) {
+        await categoriesStore.fetchAllCategories()
+      }
     } catch (error) {
       console.error('获取分类数据失败:', error)
       // 分类数据获取失败不应阻止应用其他功能
@@ -65,8 +64,4 @@ export {
   useLayoutStore
 }
 
-// 导出pinia实例
-export { pinia }
-
-// 默认导出pinia，保持向后兼容性
-export default pinia
+// 不再导出pinia实例，使用main.js中创建的实例

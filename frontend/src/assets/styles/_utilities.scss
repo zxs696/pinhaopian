@@ -1,0 +1,487 @@
+// ============================================================================
+// 响应式工具类 - Responsive Utility Classes
+// ============================================================================
+// 提供一系列可直接在HTML中使用的响应式工具类
+// 遵循 BEM 和功能优先的命名规范
+// ============================================================================
+
+// 导入Sass内置模块
+@use "sass:map";
+@use "sass:meta";
+@use './responsive' as r;
+
+// ============================================================================
+// 1. 显示/隐藏工具类
+// ============================================================================
+
+// 基础隐藏类
+.hidden { display: none !important; }
+.visible { display: block !important; }
+
+// 响应式隐藏 - 在指定断点及以下隐藏
+.hidden-xs-down { @include r.respond-down(xs) { display: none !important; } }
+.hidden-sm-down { @include r.respond-down(sm) { display: none !important; } }
+.hidden-md-down { @include r.respond-down(md) { display: none !important; } }
+.hidden-lg-down { @include r.respond-down(lg) { display: none !important; } }
+.hidden-xl-down { @include r.respond-down(xl) { display: none !important; } }
+
+// 响应式隐藏 - 在指定断点及以上隐藏
+.hidden-xs-up { @include r.respond-up(xs) { display: none !important; } }
+.hidden-sm-up { @include r.respond-up(sm) { display: none !important; } }
+.hidden-md-up { @include r.respond-up(md) { display: none !important; } }
+.hidden-lg-up { @include r.respond-up(lg) { display: none !important; } }
+.hidden-xl-up { @include r.respond-up(xl) { display: none !important; } }
+
+// 响应式显示 - 仅在指定断点及以下显示
+.visible-xs-down { display: none !important; @include r.respond-down(xs) { display: block !important; } }
+.visible-sm-down { display: none !important; @include r.respond-down(sm) { display: block !important; } }
+.visible-md-down { display: none !important; @include r.respond-down(md) { display: block !important; } }
+.visible-lg-down { display: none !important; @include r.respond-down(lg) { display: block !important; } }
+.visible-xl-down { display: none !important; @include r.respond-down(xl) { display: block !important; } }
+
+// 响应式显示 - 仅在指定断点及以上显示
+.visible-sm-up { display: none !important; @include r.respond-up(sm) { display: block !important; } }
+.visible-md-up { display: none !important; @include r.respond-up(md) { display: block !important; } }
+.visible-lg-up { display: none !important; @include r.respond-up(lg) { display: block !important; } }
+.visible-xl-up { display: none !important; @include r.respond-up(xl) { display: block !important; } }
+.visible-xxl-up { display: none !important; @include r.respond-up(xxl) { display: block !important; } }
+
+// 仅移动端显示/隐藏
+.mobile-only {
+  display: block !important;
+  @include r.respond-up(lg) { display: none !important; }
+}
+
+.desktop-only {
+  display: none !important;
+  @include r.respond-up(lg) { display: block !important; }
+}
+
+// 触摸设备/桌面设备显示
+.touch-only {
+  display: none !important;
+  @include r.touch-device { display: block !important; }
+}
+
+.hover-only {
+  display: none !important;
+  @include r.hover-supported { display: block !important; }
+}
+
+// ============================================================================
+// 2. 容器工具类
+// ============================================================================
+
+// 响应式容器
+.container {
+  @include r.responsive-container;
+}
+
+// 流式容器
+.container-fluid {
+  @include r.fluid-container;
+}
+
+// 窄容器（用于阅读等场景）
+.container-narrow {
+  @include r.responsive-container;
+  max-width: 800px !important;
+}
+
+// 宽容器（用于仪表盘等场景）
+.container-wide {
+  @include r.responsive-container;
+  max-width: 1800px !important;
+}
+
+// ============================================================================
+// 3. Flexbox 工具类
+// ============================================================================
+
+// 基础 Flex 容器
+.flex { display: flex; }
+.inline-flex { display: inline-flex; }
+
+// Flex 方向
+.flex-row { flex-direction: row; }
+.flex-col { flex-direction: column; }
+.flex-row-reverse { flex-direction: row-reverse; }
+.flex-col-reverse { flex-direction: column-reverse; }
+
+// Flex 换行
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+.flex-wrap-reverse { flex-wrap: wrap-reverse; }
+
+// 主轴对齐
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+.justify-evenly { justify-content: space-evenly; }
+
+// 交叉轴对齐
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.items-center { align-items: center; }
+.items-baseline { align-items: baseline; }
+.items-stretch { align-items: stretch; }
+
+// 内容对齐
+.content-start { align-content: flex-start; }
+.content-end { align-content: flex-end; }
+.content-center { align-content: center; }
+.content-between { align-content: space-between; }
+.content-around { align-content: space-around; }
+
+// 自身对齐
+.self-start { align-self: flex-start; }
+.self-end { align-self: flex-end; }
+.self-center { align-self: center; }
+.self-stretch { align-self: stretch; }
+.self-auto { align-self: auto; }
+
+// Flex 增长/收缩
+.flex-1 { flex: 1 1 0%; }
+.flex-auto { flex: 1 1 auto; }
+.flex-initial { flex: 0 1 auto; }
+.flex-none { flex: none; }
+.flex-grow { flex-grow: 1; }
+.flex-grow-0 { flex-grow: 0; }
+.flex-shrink { flex-shrink: 1; }
+.flex-shrink-0 { flex-shrink: 0; }
+
+// 常用 Flex 组合
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-around {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+// 响应式 Flex 方向
+.flex-responsive {
+  display: flex;
+  flex-direction: row;
+  
+  @include r.respond-down(md) {
+    flex-direction: column;
+  }
+}
+
+.flex-responsive-reverse {
+  display: flex;
+  flex-direction: row;
+  
+  @include r.respond-down(md) {
+    flex-direction: column-reverse;
+  }
+}
+
+// ============================================================================
+// 4. Grid 工具类
+// ============================================================================
+
+// 基础 Grid 容器
+.grid { display: grid; }
+.inline-grid { display: inline-grid; }
+
+// 响应式网格（自动填充）
+.grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--grid-gap);
+}
+
+// 固定列数网格
+@for $i from 1 through 12 {
+  .grid-cols-#{$i} {
+    display: grid;
+    grid-template-columns: repeat(#{$i}, 1fr);
+    gap: var(--grid-gap);
+  }
+}
+
+// 响应式列数
+.grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), 1fr);
+  gap: var(--grid-gap);
+}
+
+// Grid 间距
+.gap-0 { gap: 0; }
+.gap-1 { gap: map.get(r.$spacing-scale, '1'); }
+.gap-2 { gap: map.get(r.$spacing-scale, '2'); }
+.gap-3 { gap: map.get(r.$spacing-scale, '3'); }
+.gap-4 { gap: map.get(r.$spacing-scale, '4'); }
+.gap-5 { gap: map.get(r.$spacing-scale, '5'); }
+.gap-6 { gap: map.get(r.$spacing-scale, '6'); }
+.gap-8 { gap: map.get(r.$spacing-scale, '8'); }
+
+// 响应式 Gap
+.gap-responsive {
+  gap: map.get(r.$grid-gaps, 'xs');
+  
+  @include r.respond-up(sm) { gap: map.get(r.$grid-gaps, 'sm'); }
+  @include r.respond-up(md) { gap: map.get(r.$grid-gaps, 'md'); }
+  @include r.respond-up(lg) { gap: map.get(r.$grid-gaps, 'lg'); }
+  @include r.respond-up(xl) { gap: map.get(r.$grid-gaps, 'xl'); }
+}
+
+// ============================================================================
+// 5. 间距工具类
+// ============================================================================
+
+// 生成间距工具类
+$spacing-properties: (
+  'm': 'margin',
+  'mt': 'margin-top',
+  'mr': 'margin-right',
+  'mb': 'margin-bottom',
+  'ml': 'margin-left',
+  'mx': ('margin-left', 'margin-right'),
+  'my': ('margin-top', 'margin-bottom'),
+  'p': 'padding',
+  'pt': 'padding-top',
+  'pr': 'padding-right',
+  'pb': 'padding-bottom',
+  'pl': 'padding-left',
+  'px': ('padding-left', 'padding-right'),
+  'py': ('padding-top', 'padding-bottom')
+);
+
+@each $prefix, $property in $spacing-properties {
+  @each $size, $value in r.$spacing-scale {
+    .#{$prefix}-#{$size} {
+      @if meta.type-of($property) == 'list' {
+        @each $prop in $property {
+          #{$prop}: $value;
+        }
+      } @else {
+        #{$property}: $value;
+      }
+    }
+  }
+}
+
+// 自动边距
+.mx-auto { margin-left: auto; margin-right: auto; }
+.my-auto { margin-top: auto; margin-bottom: auto; }
+.ml-auto { margin-left: auto; }
+.mr-auto { margin-right: auto; }
+.mt-auto { margin-top: auto; }
+.mb-auto { margin-bottom: auto; }
+
+// ============================================================================
+// 6. 文本工具类
+// ============================================================================
+
+// 文本对齐
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-justify { text-align: justify; }
+
+// 响应式文本对齐
+@each $bp, $value in r.$breakpoints {
+  .text-#{$bp}-left { @include r.respond-up($bp) { text-align: left; } }
+  .text-#{$bp}-center { @include r.respond-up($bp) { text-align: center; } }
+  .text-#{$bp}-right { @include r.respond-up($bp) { text-align: right; } }
+}
+
+// 文本大小
+@each $size, $value in r.$font-scale {
+  .text-#{$size} { font-size: $value; }
+}
+
+// 响应式文本大小
+.text-responsive-sm { @include r.responsive-font-size('sm'); }
+.text-responsive-base { @include r.responsive-font-size('base'); }
+.text-responsive-lg { @include r.responsive-font-size('lg'); }
+.text-responsive-xl { @include r.responsive-font-size('xl'); }
+.text-responsive-2xl { @include r.responsive-font-size('2xl'); }
+
+// 文本截断
+.truncate { @include r.text-truncate(1); }
+.line-clamp-2 { @include r.text-truncate(2); }
+.line-clamp-3 { @include r.text-truncate(3); }
+.line-clamp-4 { @include r.text-truncate(4); }
+
+// 文本换行
+.whitespace-normal { white-space: normal; }
+.whitespace-nowrap { white-space: nowrap; }
+.whitespace-pre { white-space: pre; }
+.whitespace-pre-wrap { white-space: pre-wrap; }
+
+// 文本粗细
+.font-thin { font-weight: 100; }
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+
+// 行高
+@each $name, $value in r.$line-heights {
+  .leading-#{$name} { line-height: $value; }
+}
+
+// ============================================================================
+// 7. 尺寸工具类
+// ============================================================================
+
+// 宽度
+.w-auto { width: auto; }
+.w-full { width: 100%; }
+.w-screen { width: 100vw; }
+.w-min { width: min-content; }
+.w-max { width: max-content; }
+.w-fit { width: fit-content; }
+
+// 高度
+.h-auto { height: auto; }
+.h-full { height: 100%; }
+.h-screen { height: 100vh; }
+.h-min { height: min-content; }
+.h-max { height: max-content; }
+.h-fit { height: fit-content; }
+
+// 最大/最小宽度
+.max-w-full { max-width: 100%; }
+.max-w-screen { max-width: 100vw; }
+.max-w-none { max-width: none; }
+.min-w-0 { min-width: 0; }
+.min-w-full { min-width: 100%; }
+
+// 最大/最小高度
+.max-h-full { max-height: 100%; }
+.max-h-screen { max-height: 100vh; }
+.min-h-0 { min-height: 0; }
+.min-h-full { min-height: 100%; }
+.min-h-screen { min-height: 100vh; }
+
+// 宽高比
+.aspect-auto { aspect-ratio: auto; }
+.aspect-square { aspect-ratio: 1 / 1; }
+.aspect-video { aspect-ratio: 16 / 9; }
+.aspect-4-3 { aspect-ratio: 4 / 3; }
+.aspect-3-2 { aspect-ratio: 3 / 2; }
+
+// ============================================================================
+// 8. 定位工具类
+// ============================================================================
+
+.static { position: static; }
+.fixed { position: fixed; }
+.absolute { position: absolute; }
+.relative { position: relative; }
+.sticky { position: sticky; }
+
+// 定位位置
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.top-0 { top: 0; }
+.right-0 { right: 0; }
+.bottom-0 { bottom: 0; }
+.left-0 { left: 0; }
+
+// z-index
+.z-0 { z-index: 0; }
+.z-10 { z-index: 10; }
+.z-20 { z-index: 20; }
+.z-30 { z-index: 30; }
+.z-40 { z-index: 40; }
+.z-50 { z-index: 50; }
+.z-auto { z-index: auto; }
+.z-max { z-index: 9999; }
+
+// ============================================================================
+// 9. 溢出工具类
+// ============================================================================
+
+.overflow-auto { overflow: auto; }
+.overflow-hidden { overflow: hidden; }
+.overflow-visible { overflow: visible; }
+.overflow-scroll { overflow: scroll; }
+.overflow-x-auto { overflow-x: auto; }
+.overflow-y-auto { overflow-y: auto; }
+.overflow-x-hidden { overflow-x: hidden; }
+.overflow-y-hidden { overflow-y: hidden; }
+
+// 隐藏滚动条
+.scrollbar-hide { @include r.hide-scrollbar; }
+
+// ============================================================================
+// 10. 其他工具类
+// ============================================================================
+
+// 鼠标指针
+.cursor-pointer { cursor: pointer; }
+.cursor-default { cursor: default; }
+.cursor-not-allowed { cursor: not-allowed; }
+.cursor-grab { cursor: grab; }
+.cursor-grabbing { cursor: grabbing; }
+
+// 用户选择
+.select-none { user-select: none; }
+.select-text { user-select: text; }
+.select-all { user-select: all; }
+
+// 可见性
+.invisible { visibility: hidden; }
+.visible { visibility: visible; }
+
+// 透明度
+.opacity-0 { opacity: 0; }
+.opacity-25 { opacity: 0.25; }
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+
+// 边框圆角
+.rounded-none { border-radius: 0; }
+.rounded-sm { border-radius: 2px; }
+.rounded { border-radius: 4px; }
+.rounded-md { border-radius: 6px; }
+.rounded-lg { border-radius: 8px; }
+.rounded-xl { border-radius: 12px; }
+.rounded-2xl { border-radius: 16px; }
+.rounded-full { border-radius: 9999px; }
+
+// 阴影
+.shadow-none { box-shadow: none; }
+.shadow-sm { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
+.shadow { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06); }
+.shadow-md { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06); }
+.shadow-lg { box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05); }
+.shadow-xl { box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04); }
+
+// 过渡
+.transition-none { transition: none; }
+.transition-all { transition: all 0.3s ease; }
+.transition-fast { transition: all 0.15s ease; }
+.transition-slow { transition: all 0.5s ease; }
+
+// 减少动画（用于无障碍）
+@include r.reduced-motion {
+  .motion-reduce {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+

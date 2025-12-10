@@ -1,17 +1,33 @@
-import { api } from '../api'
+import api from '../api'
 
-/**
- * 分类相关API
- */
+// 用于防止重复请求的标志
+let hasFetchedCategories = false
+let categoriesCache = null
+
+// 分类相关API
 export const categoriesAPI = {
   /**
    * 获取所有分类
    * @param {Object} params - 查询参数
-   * @returns {Promise} 分类列表
+   * @returns {Promise<Array>} 分类列表
    */
-  getAllCategories: async (params = {}) => {
+  async getAllCategories(params = {}) {
+    // 如果已经获取过数据，则直接返回缓存
+    if (hasFetchedCategories && categoriesCache) {
+      return categoriesCache
+    }
+    
     const response = await api.get('/categories', params)
-    return response
+    
+    // 处理响应数据，确保返回数组
+    const data = response.data || response || []
+    const categories = Array.isArray(data) ? data : (data.categories || data.list || [])
+    
+    // 缓存数据
+    hasFetchedCategories = true
+    categoriesCache = categories
+    
+    return categories
   },
 
   /**

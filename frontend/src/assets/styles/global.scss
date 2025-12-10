@@ -1,85 +1,180 @@
-// 使用@use导入主题文件
+// ============================================================================
+// 全局样式 - Global Styles
+// ============================================================================
+// 全局基础样式、重置样式和基础工具类
+// 详细的响应式工具类请参考 _utilities.scss
+// ============================================================================
+
+// 导入主题文件
 @use "./theme" as theme;
 
-// 重置样式
+// 导入响应式系统
+@use "./_responsive" as r;
+
+// 导入工具类（会生成实际的CSS类）
+@use "./_utilities";
+
+// 生成响应式 CSS 变量（只调用一次）
+@include r.responsive-css-variables;
+
+// ============================================================================
+// 1. 重置样式
+// ============================================================================
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+// ============================================================================
+// 2. HTML/Body 基础样式
+// ============================================================================
+
 // 解决滚动条重载导致的布局偏移问题
 html {
-    // 设置为100%宽度，确保占满整个视口
     width: 100%;
-    // 始终显示滚动条，防止滚动条出现/消失导致的布局偏移
     overflow-y: scroll;
-    // 确保滚动条宽度固定
     scrollbar-gutter: stable;
+    // 平滑滚动
+    scroll-behavior: smooth;
+    // 基础字体大小（用于rem计算）
+    font-size: 16px;
+    
+    // 响应式字体大小调整
+    @include r.respond-down(md) {
+        font-size: 15px;
+    }
+    
+    @include r.respond-down(sm) {
+        font-size: 14px;
+    }
 }
 
 body {
-    // 确保页面宽度固定，占满整个视口宽度，包括滚动条区域
     width: 100vw;
-    // 防止水平滚动
+    min-height: 100vh;
     overflow-x: hidden;
-    // 确保内边距不会增加总宽度
     box-sizing: border-box;
-    // 移除默认边距
     margin: 0;
     padding: 0;
+    // 安全区域适配（针对刘海屏等设备）
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
+
+// ============================================================================
+// 3. 字体设置
+// ============================================================================
 
 // 防止字体加载导致的布局偏移
 @font-face {
     font-family: 'system-ui';
-    src: local('system-ui'), local('-apple-system'), local('BlinkMacSystemFont'), local('Segoe UI'), local('Roboto'), local('Helvetica Neue'), local('Arial'), local('Noto Sans');
+    src: local('system-ui'), local('-apple-system'), local('BlinkMacSystemFont'), 
+         local('Segoe UI'), local('Roboto'), local('Helvetica Neue'), 
+         local('Arial'), local('Noto Sans'), local('Microsoft YaHei'), 
+         local('PingFang SC');
     font-display: swap;
 }
+
+// ============================================================================
+// 4. 媒体元素样式
+// ============================================================================
 
 // 防止图片加载导致的布局偏移
 img {
     max-width: 100%;
     height: auto;
     display: block;
+    // 防止图片拖拽
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
-// 防止SVG元素导致的布局偏移
+// 响应式视频
+video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+// SVG元素
 svg {
     display: block;
     max-width: 100%;
     height: auto;
 }
 
+// 图片和视频容器（防止布局偏移）
+.media-container {
+    position: relative;
+    width: 100%;
+    
+    &::before {
+        content: '';
+        display: block;
+        padding-top: 56.25%; // 16:9 宽高比
+    }
+    
+    > img,
+    > video,
+    > iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+// ============================================================================
+// 5. 链接样式
+// ============================================================================
+
 a {
     text-decoration: none;
     color: var(--color-text-primary);
-    transition: var(--transition);
-
-    &:hover {
-        color: var(--color-primary);
+    transition: var(--transition-fast);
+    
+    // 仅在支持悬停的设备上显示悬停效果
+    @include r.hover-supported {
+        &:hover {
+            color: var(--color-primary);
+        }
+    }
+    
+    &:focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
     }
 }
+
+// ============================================================================
+// 6. 列表样式
+// ============================================================================
 
 ul,
 ol {
     list-style: none;
 }
 
-// Element Plus 滚动条样式
+// ============================================================================
+// 7. 滚动条样式
+// ============================================================================
+
+// Webkit 滚动条样式
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #909399;
+    background-color: var(--color-text-tertiary, #909399);
     border-radius: 3px;
     transition: background-color 0.2s;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background-color: #606266;
+    
+    &:hover {
+        background-color: var(--color-text-secondary, #606266);
+    }
 }
 
 ::-webkit-scrollbar-track {
@@ -87,15 +182,53 @@ ol {
     border-radius: 3px;
 }
 
-// 容器样式
-.container {
-    width: 100%;
-    max-width: theme.$container-width;
-    margin: 0 auto;
-    padding: 0 20px;
+// Firefox 滚动条样式
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-text-tertiary, #909399) transparent;
 }
 
-// 弹性布局工具类
+// 细滚动条变体（用于特定容器）
+.scrollbar-thin {
+    &::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+}
+
+// ============================================================================
+// 8. 容器样式
+// ============================================================================
+
+// 基础容器（使用CSS变量）
+.container {
+    width: 100%;
+    max-width: 1500px; /* 固定最大宽度为1600px */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-padding, 20px);
+    padding-right: var(--container-padding, 20px);
+}
+
+// 流式容器
+.container-fluid {
+    width: 100%;
+    padding-left: var(--container-padding, 20px);
+    padding-right: var(--container-padding, 20px);
+}
+
+// 窄容器（用于阅读等场景）
+.container-narrow {
+    @extend .container;
+    max-width: 800px;
+}
+
+// ============================================================================
+// 9. Flex 工具类（基础）
+// ============================================================================
+
+// 注意：更多工具类请参考 _utilities.scss
+
 .flex {
     display: flex;
     align-items: center;
@@ -107,130 +240,216 @@ ol {
     justify-content: space-between;
 }
 
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .flex-col {
     display: flex;
     flex-direction: column;
 }
 
-// 间距工具类
-.mt-5 {
-    margin-top: 5px;
-}
+// ============================================================================
+// 10. 间距工具类（基础）
+// ============================================================================
 
-.mt-10 {
-    margin-top: 10px;
-}
+// 注意：更多间距工具类请参考 _utilities.scss
 
-.mt-20 {
-    margin-top: 20px;
-}
+// Margin
+.mt-5 { margin-top: 5px; }
+.mt-10 { margin-top: 10px; }
+.mt-20 { margin-top: 20px; }
+.mb-10 { margin-bottom: 10px; }
+.mb-20 { margin-bottom: 20px; }
+.ml-10 { margin-left: 10px; }
+.mr-10 { margin-right: 10px; }
 
-.mb-10 {
-    margin-bottom: 10px;
-}
+// ============================================================================
+// 11. 响应式显示/隐藏（基础）
+// ============================================================================
 
-.mb-20 {
-    margin-bottom: 20px;
-}
-
-.ml-10 {
-    margin-left: 10px;
-}
-
-.mr-10 {
-    margin-right: 10px;
-}
-
-// 响应式工具类
-// 响应式显示/隐藏
+// 注意：更多响应式显示/隐藏类请参考 _utilities.scss
 
 // 仅在大屏显示（笔记本及以上）
-@media (max-width: 1200px) {
-    .hidden-lg {
+.hidden-lg-down {
+    @include r.respond-down(lg) {
         display: none !important;
     }
 }
 
 // 仅在中屏显示（平板）
-@media (max-width: 768px) {
-    .hidden-md {
+.hidden-md-down {
+    @include r.respond-down(md) {
         display: none !important;
     }
 }
 
 // 仅在小屏显示（手机）
-@media (max-width: 576px) {
-    .hidden-sm {
+.hidden-sm-down {
+    @include r.respond-down(sm) {
         display: none !important;
     }
 }
 
 // 仅在极小屏显示
-@media (max-width: 480px) {
-    .hidden-xs {
+.hidden-xs-down {
+    @include r.respond-down(xs) {
         display: none !important;
     }
 }
 
-// 响应式文本大小
-.text-xs {
-    font-size: 12px;
+// 仅移动端显示
+.mobile-only {
+    @include r.respond-up(lg) {
+        display: none !important;
+    }
 }
 
-.text-sm {
-    font-size: 14px;
+// 仅桌面端显示
+.desktop-only {
+    display: none !important;
+    
+    @include r.respond-up(lg) {
+        display: block !important;
+    }
 }
 
-.text-md {
-    font-size: 16px;
+// ============================================================================
+// 12. 文本工具类
+// ============================================================================
+
+.text-xs { font-size: var(--font-size-xs, 12px); }
+.text-sm { font-size: var(--font-size-sm, 14px); }
+.text-md { font-size: var(--font-size-base, 16px); }
+.text-lg { font-size: var(--font-size-lg, 18px); }
+.text-xl { font-size: var(--font-size-xl, 20px); }
+.text-2xl { font-size: var(--font-size-2xl, 24px); }
+
+// 文本截断
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.text-lg {
-    font-size: 18px;
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-.text-xl {
-    font-size: 24px;
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-// 响应式容器
+// ============================================================================
+// 13. 响应式容器（旧版兼容）
+// ============================================================================
+
+// 注意：新项目建议使用 .container 类配合CSS变量
+
 .responsive-container {
     width: 100%;
-    max-width: theme.$container-width;
+    max-width: 1500px; /* 固定最大宽度为1600px */
     margin: 0 auto;
-    padding: 0 20px;
-    
-    @media (max-width: 1200px) {
-        max-width: 90%;
-    }
-    
-    @media (max-width: 768px) {
-        max-width: 95%;
-        padding: 0 15px;
-    }
-    
-    @media (max-width: 576px) {
-        max-width: 98%;
-        padding: 0 10px;
-    }
-    
-    @media (max-width: 480px) {
-        max-width: 100%;
-        padding: 0 5px;
-    }
+    padding: 0 var(--container-padding, 20px);
 }
 
 // 响应式弹性布局
 .flex-responsive {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: var(--grid-gap, 16px);
+}
+
+// ============================================================================
+// 14. 无障碍支持
+// ============================================================================
+
+// 跳过导航链接
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: white;
+    padding: 8px 16px;
+    z-index: 10000;
+    transition: top 0.3s;
     
-    @media (max-width: 768px) {
-        gap: 12px;
+    &:focus {
+        top: 0;
+    }
+}
+
+// 仅屏幕阅读器可见
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+// 焦点可见时显示
+.sr-only-focusable {
+    &:focus,
+    &:active {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+    }
+}
+
+// 减少动画偏好
+@include r.reduced-motion {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+// ============================================================================
+// 15. 打印样式
+// ============================================================================
+
+@media print {
+    // 隐藏不需要打印的元素
+    .no-print,
+    nav,
+    .sidebar,
+    .footer {
+        display: none !important;
     }
     
-    @media (max-width: 576px) {
-        gap: 8px;
+    // 调整页面布局
+    body {
+        background: white;
+        color: black;
+    }
+    
+    // 链接显示URL
+    a[href]::after {
+        content: " (" attr(href) ")";
     }
 }
